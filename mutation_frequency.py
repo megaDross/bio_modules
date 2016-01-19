@@ -153,8 +153,9 @@ for yale_var,db_var in itertools.product(csv.reader(simplified,delimiter="\t"),d
                     print str(yale_var[0])+"\t"+database_var[0]+":"+database_var[1]+"\t"+str(ALT_database) +"\t" + AF + "\t" + "dbSNP"
                     output_dbSNP.write(str(yale_var[0])+"\t"+database_var[0]+":"+database_var[1]+"\t"+str(ALT_database) +"\t" + AF + "\t" + "dbSNP"+"\n")
         else:
-            print str(yale_var[0])+"\t"+database_var[0]+":"+database_var[1]+"\t"+str(database_var[4]) +"\t" + "None" + "\t" + "dbSNP"
-            output_dbSNP.write(str(yale_var[0])+"\t"+database_var[0]+":"+database_var[1]+"\t"+str(database_var[4]) +"\t" + "None" + "\t" + "dbSNP"+"\n")
+
+            print str(yale_var[0])+"\t"+database_var[0]+":"+database_var[1]+"\t"+str(database_var[4]) +"\t" + "unknown_AF" + "\t" + "dbSNP"
+            output_dbSNP.write(str(yale_var[0])+"\t"+database_var[0]+":"+database_var[1]+"\t"+str(database_var[4]) +"\t" + "unknown_AF" + "\t" + "dbSNP"+"\n")
 output_ESP.close()
 output_ExAC.close()
 output_dbSNP.close()
