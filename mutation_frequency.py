@@ -12,6 +12,8 @@ import itertools
 # the above output_file.txt for ExAC and ESP was used as input for the below
 # program
 
+# 20/01/16 SPLIT THIS CONFUSING MESS UP INTO MODULES, ONE FOR FIND AF/CAF IN EACH
+# DATABASE
 
 # not tested on 
 
