@@ -67,6 +67,16 @@ for (x),(pos,alt) in itertools.product(original,dic.items()):
         pos_x = cells_x[0]+":"+cells_x[1]
         alt_x = cells_x[4]
         sample_cells_x = cells_x[16:len(cells_x)]
+        sample_format = filter(lambda b: b != "./.", sample_cells_x)
+        print len(sample_format)
+        
+        
+        #if pos in pos_x and int(DP_x) > 50:
+        #    if "./." in sample_cells_x:
+        #        print pos_x + "\t"+ "found in " + \
+        #        str(len(sample_cells_x) - sample_cells_x.count("./."))\
+        #        + " samples"
+
         if pos in pos_x:
             if "./." in sample_cells_x:
                 print pos_x + "\t"+ "found in " + \
@@ -79,5 +89,3 @@ for (x),(pos,alt) in itertools.product(original,dic.items()):
 # and VCF Specification list
 #   - so only pull samples from the original if > 50 RD & Alt Genotype...
         
-
-    

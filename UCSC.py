@@ -2,27 +2,22 @@
 utilise various UCSC tools via the command line
 """
 from __future__ import division
-import urllib2
-import re
-import csv
+import urllib2, re, csv
 
 # unknown_primer wont write to the file, file empty after processing
 
-def unknown_primer(DB, input_file, output_file, delimiters=None):
+def unknown_primer(DB, input_file, output_file, delimiters="\t"):
 	'''Generates coordinates for which a primer pair bind to within the genome, 
 	and gives the PCR products size and number of potential PCR products
 		
 	Input file should be in the following format:
 		primer_name\tF-primer\tR_primer
 
-	The delimiters argument is defaulted to tab
+	The delimiters argument is defaulted to tab, it is assumed a header is present.
 	'''
-	if delimiters is None:
-		delimiters = "\t"
-		
-
-	test = open(output_file,"w")
+	output_file = open(output_file,"w")
 	reader = csv.reader(open(input_file,"r+"), delimiter=delimiters)
+	skip_header = reader.next()
 	
 	for primer in reader:
 		ispcr = urllib2.urlopen("http://genome.ucsc.edu/cgi-bin/hgPcr?db="+DB+\
@@ -33,7 +28,7 @@ def unknown_primer(DB, input_file, output_file, delimiters=None):
         	if re.search(r'No matches.*',search):
                 	output = primer[0]+"\t"+primer[1]+"\t"+primer[2]+"\t"+"none"+"\t"+"no match"+"\n"
                 	return output
-                	test.write(output)
+                	output_file.write(output)
 
         	elif re.search(r'No matches.*',search) is None:
                 	
@@ -43,8 +38,8 @@ def unknown_primer(DB, input_file, output_file, delimiters=None):
                 	size = str((int(re.split(r'[-]',region)[1]) - int(re.split(r'[:-]',region)[1]))+1)
                 	
                 	# number of PCR products
-			allz = re.findall(r'>chr.*[0-9].*',search)
-			product_number = len(allz)
+			get_product_number = re.findall(r'>chr.*[0-9].*',search)
+			product_number = len(get_product_number)
 			
 			# prep for getting amplicon info
 			product_seq = re.findall(r"[ACTGatcg]{25,54}.*",search, re.DOTALL)
@@ -61,8 +56,8 @@ def unknown_primer(DB, input_file, output_file, delimiters=None):
 			output = primer[0]+"\t"+primer[1]+"\t"+primer[2]+"\t"+size+"\t"+region\
 			+"\t"+str(product_number)+"\t"+str(GC_percent)+"\n"
                 	return output
-                	test.write(output)
-        test.close()
+                	output_file.write(output)
+        output_file.close()
 
 
 def region_extractor(input_file, output_file, delimiters=None, number_upstream=None, number_downstream=None):
