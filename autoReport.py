@@ -7,108 +7,100 @@ templates = template.get_sheet_by_name('Sheet1')
 # open variant validation database
 wb = openpyxl.load_workbook("All_Yale_&_UK_Variants.xlsx",data_only=True)
 variants = wb.get_sheet_by_name('All_Variants') # or wb["All_variants"]
-mut_ids = wb["Mutations ID"]
+mutations = wb["Mutations ID"]
 
-# list of variant aliases that will be used as input for the test
-variant_list = [variants.cell(row=i,column=1).value for i in range(3,13)]
-test_var = variant_list[5]
 
-# write the variant alias to the report
-templates["N12"] = test_var
+
+
+
 
 # search the database and find the inputted variant alias in database. If found,
 # output its row number
-for row_number in range(1,200):
-    if test_var == variants.cell(row=row_number,column=1).value:
-        row = row_number
+def get_row(query,sheet,column_num=1):
+    for row_number in range(1,200):
+        if query == sheet.cell(row=row_number,column=column_num).value:
+            return row_number
 
-# use the above row number to retrieve basic specific indformation related 
-# to this variant
-for i in range(1,100):
-    column = variants.cell(row=2,column=i).value
-    get_info =variants.cell(row=row,column=i).value
-     
-    if "Sample_Name" == column:
-        sam = get_info
-    if "Gene" == column:
-        gene = get_info
-    if "Exon_No." == column:
-        exon = get_info
-    if "HGVSc" == column:
-        HGVSc = get_info
-    if "HGVSp" == column:
-        HGVSp = get_info
-    if "Variant_Position" == column:
-        var_pos = get_info
-    if "Allele_Balance" == column:
-        AB = get_info
-    if "Allele_Depth(REF)" == column:
-        AD_REF = get_info
-    if "Allele_Depth(ALT)" == column:
-        AD_ALT = get_info
-    if "Allele_Frequency_ESP(%)" == column:
-        AF_ESP = get_info
-        if AF_ESP is None:
-            AF_ESP = "-"
-    if "Allele_Frequency_ExAC(%)" == column:
-        AF_ExAC = get_info
-        if AF_ExAC is None:
-            AF_ExAC = "-"
-    if "Allele_Frequency_dbSNP(%)" == column:
-        AF_dbSNP = get_info
-        if AF_dbSNP is None:
-            AF_dbSNP = "-"
-    if "Variant_Found" == column:
-        found = get_info
-        if "Y" or "y" in found:
-            found = "Y"
-        else:
-            found = "N"
-                    
-    if "Variant_Class" == column:
-        comment = get_info
-    if "First_Publication" == column:
-        pub = get_info
-    if "Category" == column:
-        category = get_info 
-        
-   
 
-# Handeling comments here          
-if category == "HGMD" and "DM?" in comment:
-    full_comment = comment+"\n"+pub+"\n"+"\n"
-elif category == "HGMD" or category == "ClinVarPathogenic":
-    full_comment = comment+"\n"+pub
-    print full_comment
+# Use a dictionary where the keys will be used to extract column information
+# from the above row number
+variant_header = {
+"Sample_Name": '', "Gene": '',
+"Exon_No.": '', "HGVSc": '',
+"HGVSp": '', "Variant_Position": '',
+"Allele_Balance": '', "Allele_Depth(REF)": '',
+"Allele_Depth(ALT)": '', "Allele_Frequency_ESP(%)": '',
+"Allele_Frequency_ExAC(%)": '', "Allele_Frequency_dbSNP(%)": '',
+"Variant_Found": '', "Mutation_ID": '',"Reason for Variant class change": '',
+"Category":''
+}
 
+mutation_header = {
+"Report Variant class field": '', "First Published": '',
+"Reason for Variant class change": '', "Date of variant class change": '',
+"Variant Class": ''
+}
+
+def get_variant_info(row,sheet,dic):
+    for i in range(1,100):
+        column = sheet.cell(row=2,column=i).value
+        get_info =sheet.cell(row=row,column=i).value
+        if column in dic:
+            dic[column]=get_info
+            
+            if dic.get(column) is None:
+                dic[column] = "-"
+    return dic
+
+
+var_alias_list = [ var.rstrip() for var in open("test_in.txt")]
+
+for var_alias in var_alias_list:
+    # extract the varinat info and place in variant_header dic  
+    variant_row = get_row(var_alias,variants)
+    variant_info = get_variant_info(variant_row,variants,variant_header)
+    
+    # extract the mutation info and place in mutation_header dic  
+    mut_row = get_row(variant_header.get("Mutation_ID"),mutations,2)
+    mut_info = get_variant_info(mut_row,mutations,mutation_header)
     
     
-
-       
-                      
-# add this information to the template file
-templates["E4"] =sam
-templates["E7"] = gene
-templates["E8"] = exon
-templates["E9"] = HGVSc
-templates["E10"] = HGVSp
-templates["E11"] = var_pos
-templates["E12"] = AB
-templates["E13"] = str(AD_REF)+","+str(AD_ALT)
-templates["E14"] = str(AF_ESP)+"\t"+str(AF_ExAC)+"\t"+str(AF_dbSNP)
-templates["E15"] = found
-templates["E16"] = full_comment
+    # add this information to the template file
+    templates["N12"]= var_alias
+    templates["E4"] =variant_header.get("Sample_Name")
+    templates["E7"] = variant_header.get("Gene")
+    templates["E8"] = variant_header.get("Exon_No.")
+    templates["E9"] = variant_header.get("HGVSc")
+    templates["E10"] =variant_header.get("HGVSp")
+    templates["E11"] =variant_header.get("Variant_Position")
+    templates["E12"] =variant_header.get("Allele_Balance")
+    templates["E13"] =str(variant_header.get ("Allele_Depth(REF)"))+","+str(variant_header.get("Allele_Depth(ALT)"))
+    templates["E14"] =str(variant_header.get("Allele_Frequency_ESP(%)"))+"       "+\
+    str(variant_header.get("Allele_Frequency_ExAC(%)"))+"       "+str(variant_header.get("Allele_Frequency_dbSNP(%)"))
+    templates["E15"] =variant_header.get("Variant_Found")
+    
+    
+    # add a comment about the mutation
+    if (variant_header.get("Category") == "ClinVarPathogenic") or ("HGMD"):
+        comment = mutation_header.get("Report Variant class field")+"\n"+"\n"+\
+                  variant_header.get("Category")+" ID: "+mutation_header.get("Variant Class")+"\n"+\
+                  mutation_header.get("First Published")
+        templates["E16"] = comment
+        
+        if mutation_header.get("Variant Class") == "DM?":
+            full_comment = comment + "\n"+"\n"+"Date of Variant Class Change From DM to DM?: "+\
+                           str(mutation_header.get("Date of variant class change"))+"\n"+\
+                           mutation_header.get("Reason for Variant class change")
+            templates["E16"] = full_comment
         
         
-
-        
+    
+    
+    
+    template.save(variant_header.get("Sample_Name")+".xlsx")
     
 
 
-
-        
-
     
-        
 
-template.save("crazy_fun_yo.xlsx")
+
