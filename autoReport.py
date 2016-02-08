@@ -1,5 +1,22 @@
 import openpyxl
 
+variant_header = {
+"Sample_Name": '', "Gene": '',
+"Exon_No.": '', "HGVSc": '',
+"HGVSp": '', "Variant_Position": '',
+"Allele_Balance": '', "Allele_Depth(REF)": '',
+"Allele_Depth(ALT)": '', "Allele_Frequency_ESP(%)": '',
+"Allele_Frequency_ExAC(%)": '', "Allele_Frequency_dbSNP(%)": '',
+"Variant_Found": '', "Mutation_ID": '',"Reason for Variant class change": '',
+"Category":'', "Variant_Alias":''
+}
+
+mutation_header = {
+"Report Variant class field": '', "First Published": '',
+"Reason for Variant class change": '', "Date of variant class change": '',
+"Variant Class": ''
+}
+
 # open the variant validation template workbook and worksheet
 template = openpyxl.load_workbook("VariantConfirmationReport Template_BU.xlsx")
 templates = template.get_sheet_by_name('Sheet1')
@@ -11,61 +28,34 @@ mutations = wb["Mutations ID"]
 
 
 
-
-
-
-# search the database and find the inputted variant alias in database. If found,
-# output its row number
 def get_row(query,sheet,column_num=1):
-    for row_number in range(1,200):
+    ''' Search the database/sheet and match with the query/variant_alias
+        if found, output its row number in the database
+    '''
+    for row_number in range(1,500):
         if query == sheet.cell(row=row_number,column=column_num).value:
             return row_number
-
-
-# Use a dictionary where the keys will be used to extract column information
-# from the above row number
-variant_header = {
-"Sample_Name": '', "Gene": '',
-"Exon_No.": '', "HGVSc": '',
-"HGVSp": '', "Variant_Position": '',
-"Allele_Balance": '', "Allele_Depth(REF)": '',
-"Allele_Depth(ALT)": '', "Allele_Frequency_ESP(%)": '',
-"Allele_Frequency_ExAC(%)": '', "Allele_Frequency_dbSNP(%)": '',
-"Variant_Found": '', "Mutation_ID": '',"Reason for Variant class change": '',
-"Category":''
-}
-
-mutation_header = {
-"Report Variant class field": '', "First Published": '',
-"Reason for Variant class change": '', "Date of variant class change": '',
-"Variant Class": ''
-}
+            
 
 def get_variant_info(row,sheet,dic):
+    ''' Extract information associated with the query inputted in get_row() 
+        from the database and append it to the items in variant_header dict
+    '''
     for i in range(1,100):
         column = sheet.cell(row=2,column=i).value
         get_info =sheet.cell(row=row,column=i).value
         if column in dic:
             dic[column]=get_info
-            
             if dic.get(column) is None:
                 dic[column] = "-"
     return dic
 
 
-var_alias_list = [ var.rstrip() for var in open("test_in.txt")]
 
-for var_alias in var_alias_list:
-    # extract the varinat info and place in variant_header dic  
-    variant_row = get_row(var_alias,variants)
-    variant_info = get_variant_info(variant_row,variants,variant_header)
-    
-    # extract the mutation info and place in mutation_header dic  
-    mut_row = get_row(variant_header.get("Mutation_ID"),mutations,2)
-    mut_info = get_variant_info(mut_row,mutations,mutation_header)
-    
-    
-    # add this information to the template file
+def fill_report():
+    ''' append the information placed into the variant_header dict into the 
+        template report
+    '''
     templates["N12"]= var_alias
     templates["E4"] =variant_header.get("Sample_Name")
     templates["E7"] = variant_header.get("Gene")
@@ -79,28 +69,82 @@ for var_alias in var_alias_list:
     str(variant_header.get("Allele_Frequency_ExAC(%)"))+"       "+str(variant_header.get("Allele_Frequency_dbSNP(%)"))
     templates["E15"] =variant_header.get("Variant_Found")
     
+    template.save(variant_header.get("Sample_Name")+"_"+variant_header.get("Variant_Alias")+"_"+"VariantConfirmationReport"+".xlsx")
+
+
+
+def hgmd_clinvar_comment():
+    ''' Add a comment associated with the HGMD or ClinVar accession number
+        found in the database to the template report
+    '''    
+    comment = mutation_header.get("Report Variant class field")+"\n"+"\n"+\
+                variant_header.get("Category")+" ID: "+mutation_header.get("Variant Class")+"\n"+\
+                mutation_header.get("First Published")
     
-    # add a comment about the mutation
-    if (variant_header.get("Category") == "ClinVarPathogenic") or ("HGMD"):
-        comment = mutation_header.get("Report Variant class field")+"\n"+"\n"+\
-                  variant_header.get("Category")+" ID: "+mutation_header.get("Variant Class")+"\n"+\
-                  mutation_header.get("First Published")
+    if mutation_header.get("Variant Class") == "DM?":
+        full_comment = comment + "\n"+"\n"+"Date of Variant Class Change From DM to DM?: "+\
+                        str(mutation_header.get("Date of variant class change"))+"\n"+\
+                        mutation_header.get("Reason for Variant class change")
+        templates["E16"] = full_comment
+    else:
         templates["E16"] = comment
-        
-        if mutation_header.get("Variant Class") == "DM?":
-            full_comment = comment + "\n"+"\n"+"Date of Variant Class Change From DM to DM?: "+\
-                           str(mutation_header.get("Date of variant class change"))+"\n"+\
-                           mutation_header.get("Reason for Variant class change")
-            templates["E16"] = full_comment
-        
-        
-    
-    
-    
-    template.save(variant_header.get("Sample_Name")+".xlsx")
-    
 
 
+
+def glyxy_comment():
+    ''' Add a comment associated with GLY-X-Y variants to the template report
+    '''
+    comment = "This mutation is predicted to disrupt the collagen triple helical structure and is therefore likely to be pathogenic"
+    templates["E16"] = comment
+
+
+def lof_comment():
+    '''Add a comment associated with LOF variants to the template report. Comment 
+        added is dependant upon the exon number in which the variant is within
+    '''
+    exon = variant_header.get("Exon_No.")
+    if exon != "-" or exon is not None:
+        exon_num = exon.split("/")[0]
+        exon_total = exon.split("/")[1]
+        if (exon_num == int(exon_total)-2) or int(exon_total)-1 or int(exon_total):
+            templates["E16"] = "This mutations is expected to produce a truncated product"
+        elif exon_num < int(exon_total)-2:
+            templates["E16"] = "This mutation introduces a premature stop codon and is likely to be pathogenic"
+    else:
+        templates["E16"] = "LOF mutation present, but the outcome cannot be determined without exon numbering information"
+
+
+# construct a list of variant aliases which will be used to produce
+# a variant confimration report
+var_alias_list = [ var.rstrip() for var in open("test_in.txt")]
+
+for var_alias in var_alias_list:
+    # extract the varinat info and place in variant_header dic  
+    variant_row = get_row(var_alias,variants)
+    variant_info = get_variant_info(variant_row,variants,variant_header)
+    
+    # extract the mutation info and place in mutation_header dic
+    # if the mutation ID is a HGMD or ClinVar accession number
+    if variant_header.get("Mutation_ID") != "-":  
+        mut_row = get_row(variant_header.get("Mutation_ID"),mutations,2)
+        mut_info = get_variant_info(mut_row,mutations,mutation_header)
+    
+    # append variant information to the report
+    fill_report()
+    
+    # add a the approriate comment associated with the vars category
+    if (variant_header.get("Category") == "ClinVarPathogenic") or ("HGMD"):
+        hgmd_clinvar_comment()
+    if variant_header.get("Category") == "Gly-X-Y":
+        glyxy_comment()
+    if variant_header.get("Category") == "LOF":
+        lof_comment()
+    
+    template.save(variant_header.get("Sample_Name")+"_"+variant_header.get("Variant_Alias")+"_"+"VariantConfirmationReport"+".xlsx")
+    
+
+### LOF requires EXON info or it throws a split error, try and get the 
+### exon info going
     
 
 
