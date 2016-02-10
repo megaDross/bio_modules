@@ -53,7 +53,7 @@ for x in range(1,len(seperated_exons_list)):
 
 # this gets rid of the empty lists ([]) within the list variable named 'empty'
 matches = [z for z in results if z]
-
+print matches
 # This extracts the exon ID from the matched exon 
 ID = str(matches[0]).split(",")[6]
 almost = ID.split(":")[1]
