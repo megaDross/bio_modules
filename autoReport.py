@@ -102,8 +102,8 @@ def lof_comment(templates):
             templates["E16"] = "This mutations is expected to produce a truncated product"
         elif exon_num < int(exon_total)-2:
             templates["E16"] = "This mutation introduces a premature stop codon and is likely to be pathogenic"
-    else:
-        templates["E16"] = "LOF mutation present, but the outcome cannot be determined without exon numbering information"
+        else:
+            templates["E16"] = "LOF mutation present, but the outcome cannot be determined without exon numbering information"
 
 
 
