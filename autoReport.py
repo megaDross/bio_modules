@@ -160,7 +160,6 @@ def lof_comment(templates):
 
     
 
-produce_variant_report("test_in.txt")
 
 
 ### LOF requires EXON info or it throws a split error, try and get the 

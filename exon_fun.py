@@ -1,15 +1,23 @@
 import requests, json
+from autoReport import *
 
-
-
-transcript_and_hgvs = "ENST00000316623.5:c.8504dupC"
-transcript = transcript_and_hgvs.split(":")[0][:-2]
-pos = "15:48703298"
-
-name = "LX14-AI-UKB2"
-
-# need to put it all together now
-
+def generate_exon_numbering(variant_alias,transcript_hgvs,var_position):
+    ''' 
+    '''
+    global transcript
+    global pos 
+    
+    transcript = transcript_hgvs.split(":")[0][:-2]
+    pos = var_position
+    
+    
+    generate_all_exon_data = request_ensembl(transcript)
+    exon_region = get_exon_information()
+    exon_id = get_exon_id(exon_region)
+    exon_num = exon_number(exon_id)
+    last_exon = total_exons()
+    
+    return variant_alias+"\t"+pos+"\t"+transcript+"\t"+str(exon_num)+"/"+str(last_exon)
 
 
 def request_ensembl(transcript):
@@ -25,6 +33,7 @@ def request_ensembl(transcript):
     req = requests.get(url+transcript+ext)
     req.raise_for_status()
     all_exon_data = json.loads(req.text)
+    
     
     
     
@@ -74,8 +83,9 @@ def exon_number(exon_id):
         the rank (exon number) from that dictionary.
     '''
     for y in all_exon_data:
-        if y.get("exon_id") == exon_id[0]:
+        if y.get("exon_id") == exon_id[0] and y.get("Parent") == transcript:
             exon_number = y.get("rank")
+   
     return exon_number
     
     
@@ -89,6 +99,30 @@ def total_exons():
     all_exon_ranks = [i.get("rank") for i in all_exon_data if i.get("Parent") == transcript]
     total_exons = all_exon_ranks[-1]
     return total_exons
+
+
+
+
+# 1- Below needs to become a function
+# 2- Throws up error if it can't find the exon. try and write something that
+#    if this occurs then look for intron num else cease prgram
+
+vv = ["WYN2-DW-19","LX26-ND-00","LZ10_RD-KM-54","LZ10_RD-DD-63","WYN13-DD-60",
+"WYN7-JM-47","WYN6-ME-83"]
+
+
+open_spreadsheets()
+
+for i in vv:
+    
+    variant_row = get_row(i,variants)
+    varinat_info = get_variant_info(variant_row,variants,variant_header)
+    pos = variant_header.get("Variant_Position")
+    transcript_hgvs = variant_header.get("HGVSc")
+    
+    print generate_exon_numbering(i, transcript_hgvs, pos)
+
+
 
 
 
