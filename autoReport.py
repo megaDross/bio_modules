@@ -1,22 +1,5 @@
 import openpyxl
-
-variant_header = {
-"Sample_Name": '', "Gene": '',
-"Exon_No.": '', "HGVSc": '',
-"HGVSp": '', "Variant_Position": '',
-"Allele_Balance": '', "Allele_Depth(REF)": '',
-"Allele_Depth(ALT)": '', "Allele_Frequency_ESP(%)": '',
-"Allele_Frequency_ExAC(%)": '', "Allele_Frequency_dbSNP(%)": '',
-"Variant_Found": '', "Mutation_ID": '',"Reason for Variant class change": '',
-"Category":'', "Variant_Alias":''
-}
-
-mutation_header = {
-"Report Variant class field": '', "First Published": '',
-"Reason for Variant class change": '', "Date of variant class change": '',
-"Variant Class": ''
-}
-
+from get_variant_information import *
 
 def produce_variant_report(variant_alias_list):
     ''' For each variant alias, extract the approriate variant and mutation
@@ -27,7 +10,12 @@ def produce_variant_report(variant_alias_list):
                                 variant alias.
     '''
 
-    open_spreadsheets()
+    template = openpyxl.load_workbook("VariantConfirmationReport Template_BU.xlsx")
+    templates = template.get_sheet_by_name('Sheet1')
+    
+    variants = open_variant_validation_spreadsheets()[0]
+    mutations = open_variant_validation_spreadsheets()[1]
+    
     if variant_alias_list.endswith(".txt"):
         var_alias_list = [ var.rstrip() for var in open(variant_alias_list)]
     else:
@@ -36,10 +24,11 @@ def produce_variant_report(variant_alias_list):
     for var_alias in var_alias_list: 
         variant_row = get_row(var_alias,variants)
         variant_info = get_variant_info(variant_row,variants,variant_header)
-    
+
         if variant_header.get("Mutation_ID") != "-":  
             mut_row = get_row(variant_header.get("Mutation_ID"),mutations,2)
             mut_info = get_variant_info(mut_row,mutations,mutation_header)
+        
         fill_report(template,templates,var_alias)
         
         if (variant_header.get("Category") == "ClinVarPathogenic") or ("HGMD"):
@@ -52,45 +41,6 @@ def produce_variant_report(variant_alias_list):
         template.save(variant_header.get("Sample_Name")+"_"+variant_header.get("Variant_Alias")+"_"+"VariantConfirmationReport"+".xlsx")
         
 
-def open_spreadsheets():
-    '''Open the template report workbook, variant database workbook and
-        the relevant variant and mutation sheets
-    '''
-    global template
-    global templates
-    global variants
-    global mutations
-    
-    template = openpyxl.load_workbook("VariantConfirmationReport Template_BU.xlsx")
-    templates = template.get_sheet_by_name('Sheet1')
-    
-    wb = openpyxl.load_workbook("All_Yale_&_UK_Variants.xlsx",data_only=True)
-    variants = wb.get_sheet_by_name('All_Variants') # or wb["All_variants"]
-    mutations = wb["Mutations ID"]
-
-
-
-def get_row(query,sheet,column_num=1):
-    ''' Search the database/sheet and match with the query/variant_alias
-        if found, output its row number in the database
-    '''
-    for row_number in range(1,500):
-        if query == sheet.cell(row=row_number,column=column_num).value:
-            return row_number
-    
-
-def get_variant_info(row,sheet,dic):
-    ''' Extract information associated with the query inputted in get_row() 
-        from the database and append it to the items in variant_header dict
-    '''
-    for i in range(1,100):
-        column = sheet.cell(row=2,column=i).value
-        get_info =sheet.cell(row=row,column=i).value
-        if column in dic:
-            dic[column]=get_info
-            if dic.get(column) is None:
-                dic[column] = "-"
-    return dic
 
 
 def fill_report(template,templates,var_alias):
@@ -157,8 +107,7 @@ def lof_comment(templates):
 
 
 
-
-    
+produce_variant_report("test_in.txt")
 
 
 
