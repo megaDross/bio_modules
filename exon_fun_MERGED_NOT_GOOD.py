@@ -27,22 +27,22 @@ def get_exon_number(input_file):
     
     for variant_alias in var_alias_list:
         
-        try:
+        #try:
             variant_row = get_row(variant_alias,variants)
             variant_info = get_variant_info(variant_row,variants,variant_header)
             pos = variant_header.get("Variant_Position")
             transcript_hgvs = variant_header.get("HGVSc")
             
-            exon_info.write(generate_exon_numbering(variant_alias, transcript_hgvs, pos)+"\n")
+            #exon_info.write(generate_exon_numbering(variant_alias, transcript_hgvs, pos)+"\n")
             print generate_exon_numbering(variant_alias, transcript_hgvs, pos)
             
-        except:                                 # BAD!
-            
-            exon_info.write(variant_alias +"\t"+"-"+"\n")
-            print variant_alias +"\t"+"-"
-            continue
+        #except:                                 # BAD!
+        #    
+        #    exon_info.write(variant_alias +"\t"+"-"+"\n")
+        #    print variant_alias +"\t"+"-"
+        #    continue
 
-    exon_info.close()
+    #exon_info.close()
     
     
 
@@ -56,12 +56,18 @@ def generate_exon_numbering(variant_alias,transcript_hgvs,var_position):
     
     exon_dics = request_ensembl(transcript)                 # request from REST API
     exon_region = all_exon_regions(exon_dics,transcript)# get all exon_id, start and stop exon pos
-    exon_id = get_exon_id(exon_region,pos)                  # filter for exon id in which variant is within
-    exon_num = exon_number(exon_dics,exon_id,transcript)    # use th exon_id to get exon number
-    last_exon = total_exons(exon_dics,transcript)           # get total exons of transcript
-    last_intron = int(last_exon)-1
-    
-    return variant_alias+"\t"+pos+"\t"+transcript+"\t"+str(exon_num)+"/"+str(last_exon)
+    exon_id = get_exon_id(exon_region,pos) # filter for exon id in which variant is within
+    if not exon_id:
+        sorted_exon_regions = sorted(exon_region)
+        intron_region = all_intron_regions(sorted_exon_regions)
+        intron_num = intron_number(intron_region,pos)
+        return intron_num
+    else:
+        exon_num = exon_number(exon_dics,exon_id,transcript)    # use th exon_id to get exon number
+        last_exon = total_exons(exon_dics,transcript)           # get total exons of transcript
+        last_intron = int(last_exon)-1
+        
+        return variant_alias+"\t"+pos+"\t"+transcript+"\t"+str(exon_num)+"/"+str(last_exon)
 
 
 
@@ -102,7 +108,35 @@ def all_exon_regions(exon_dics,transcript):
             
     return exon_region
     
+def all_intron_regions(sorted_exon_regions):
+    ''' Get all intron numbers, start and stop positions
+    ''' 
+    intron_region = set()
     
+    for i in range(0,len(sorted_exon_regions)):
+        for x in range(0,len(sorted_exon_regions)):
+            if x == i +1:
+                intron_number = str(sorted_exon_regions[i][0])
+                end_pos_previous_exon = str(sorted_exon_regions[i][3])
+                start_pos_next_exon = str(sorted_exon_regions[x][2])
+                if start_pos_next_exon > end_pos_previous_exon:
+                intron_region.add(intron_number +"\t"+end_pos_previous_exon +"\t"+start_pos_next_exon)
+    
+    return intron_region
+
+def intron_number(intron_region,pos):
+    ''' Returns the intron number in which the variant is within
+    '''
+    #global intron_numbering
+    for introns in intron_region:
+        intron = introns.split("\t")
+        for x in range(int(intron[1]),int(intron[2])):
+            
+            if x == int(pos.split(":")[1]):
+                
+                intron_numbering = intron[0]
+                
+    #return intron_numbering
 
 def get_exon_id(exon_region,pos):  
     ''' Get the exon id for which the variant position is within.
@@ -117,7 +151,7 @@ def get_exon_id(exon_region,pos):
         for x in range(exons[2],exons[3]):
             if x == int(pos.split(":")[1]):
                 exon_id.append(exons[1])
-
+    
     return exon_id
     
 
