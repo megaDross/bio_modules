@@ -3,7 +3,6 @@ from get_variant_information import *
 
 # Changes to be made
 
-# 2-find a way to get intron names/nums
 # 3-exception handeling
 # 4-structure
 # 5-function comment clarity
@@ -15,8 +14,25 @@ def get_exon_number(input_file):
        its transcript id and variant position from the variant database. Parse this
        information into generate_exon_numbering to return the exon number in which
        the variant resides within.
+       
+       The input file should consist of variant_aliases seperated by a newline
+       
+       Use the get_variant_information module to retireve the aformentioned 
+       row information. Below is a tree to show the codes structure:
+       
+       get_exon_number
+                |
+            generate_exon_numbering
+                    |
+                request_ensembl--->all_exon_regions--->get_exon_id--------
+                   ----->exon_num & last_exon ------------------------> OUT   
+                    |___ intron_region ---> intron_num & last_exon ---> OUT
     '''
+    
     exon_info = open("exon_info.txt","w")
+    exon_info.write("Variant_alias"+"\t"+ 
+                    "pos"+"\t"+"transcript_id"+"\t"+
+                    "intron_num"+"\t"+"exon_num"+"\n")
     
     if input_file.endswith(".txt"):
             var_alias_list = [ var.rstrip() for var in open(input_file)]
@@ -26,7 +42,6 @@ def get_exon_number(input_file):
     variants = open_variant_validation_spreadsheets()[0]
     
     for variant_alias in var_alias_list:
-        
         try:
             variant_row = get_row(variant_alias,variants)
             variant_info = get_variant_info(variant_row,variants,variant_header)
@@ -36,10 +51,10 @@ def get_exon_number(input_file):
             exon_info.write(generate_exon_numbering(variant_alias, transcript_hgvs, pos)+"\n")
             print generate_exon_numbering(variant_alias, transcript_hgvs, pos)
             
-        except:                                 # BAD!
+        except Exception,e:                                 # BAD!
+            exon_info.write(variant_alias +"\t"+"Something Happened"+"\n")
+            print variant_alias +"\t"+"Something Happened"
             
-            exon_info.write(variant_alias +"\t"+"-"+"\n")
-            print variant_alias +"\t"+"-"
             continue
 
     exon_info.close()
@@ -48,20 +63,34 @@ def get_exon_number(input_file):
 
 def generate_exon_numbering(variant_alias,transcript_hgvs,var_position):
     ''' Return the exon number from which the variant is within and the total
-        number of exons in the given transcript
+        number of exons in the given transcript. If no exon_id is found, then 
+        retrieve an intron number for the variant.
+        
+        This essentially links all the below functions to generate an exon or intron number
     '''
     transcript = transcript_hgvs.split(":")[0][:-2]
     pos = var_position
     
-    
     exon_dics = request_ensembl(transcript)                 # request from REST API
     exon_region = all_exon_regions(exon_dics,transcript)# get all exon_id, start and stop exon pos
-    exon_id = get_exon_id(exon_region,pos)                  # filter for exon id in which variant is within
-    exon_num = exon_number(exon_dics,exon_id,transcript)    # use th exon_id to get exon number
-    last_exon = total_exons(exon_dics,transcript)           # get total exons of transcript
-    last_intron = int(last_exon)-1
-    
-    return variant_alias+"\t"+pos+"\t"+transcript+"\t"+str(exon_num)+"/"+str(last_exon)
+    exon_id = get_exon_id(exon_region,pos) # filter for exon id in which variant is within
+    if not exon_id:
+        sorted_exon_regions = sorted(exon_region)
+        intron_region = all_intron_regions(sorted_exon_regions)
+        intron_num = intron_number(intron_region,pos)
+        
+        if intron_num is None:
+            return variant_alias+"\t"+pos+"\t"+transcript+"\t"+"NO INTRON/EXON MATCHED"
+        else:
+            last_exon = total_exons(exon_dics,transcript)
+            last_intron = int(last_exon)-1
+            return variant_alias+"\t"+pos+"\t"+transcript+"\t"+str(intron_num)+"/"+str(last_intron)+"\t"+"-"
+    else:
+        exon_num = exon_number(exon_dics,exon_id,transcript)    # use th exon_id to get exon number
+        last_exon = total_exons(exon_dics,transcript)           # get total exons of transcript
+        
+        
+        return variant_alias+"\t"+pos+"\t"+transcript+"\t"+"-"+"\t"+str(exon_num)+"/"+str(last_exon)
 
 
 
@@ -71,15 +100,17 @@ def request_ensembl(transcript):
         
         The resulting list of dicts will be stored as a global variable
     '''
-    
-    url = "http://grch37.rest.ensembl.org/overlap/id/"
-    ext = "?feature=exon;content-type=application/json;expand=1"
-    req = requests.get(url+transcript+ext)
-    req.raise_for_status()
-    exon_dics = json.loads(req.text)
-    return exon_dics
-    
-    
+    try:
+        url = "http://grch37.rest.ensembl.org/overlap/id/"
+        ext = "?feature=exon;content-type=application/json;expand=1"
+        req = requests.get(url+transcript+ext)
+        req.raise_for_status()
+        exon_dics = json.loads(req.text)
+        return exon_dics
+    except requests.exceptions.RequestException as e:
+        return e
+        
+        
 def all_exon_regions(exon_dics,transcript):
     '''Get every Exon_ID and its start and stop position which reside within 
        the inputted transcript ID 
@@ -95,15 +126,45 @@ def all_exon_regions(exon_dics,transcript):
             start = exon_dicts.get("start")
             end = exon_dicts.get("end")
             exon = exon_dicts.get("exon_id")
-            #exon_start_end = (exon,start,end)
             exon_start_end = (rank,exon,start,end)
             exon_region.add(exon_start_end)
-            
-            
+    
     return exon_region
     
+def all_intron_regions(sorted_exon_regions):
+    ''' Get all intron numbers, start and stop positions
+    ''' 
+    intron_region = set()
     
+    for i in range(0,len(sorted_exon_regions)):
+        for x in range(0,len(sorted_exon_regions)):
+            if x == i +1:
+                intron_number = str(sorted_exon_regions[i][0])
+                end_pos_previous_exon = str(sorted_exon_regions[i][3])
+                start_pos_next_exon = str(sorted_exon_regions[x][2])
+                intron_info = (int(intron_number),end_pos_previous_exon,\
+                start_pos_next_exon,str(int(end_pos_previous_exon)-int(start_pos_next_exon)))
+                intron_region.add(intron_info)
+    
+    return intron_region
 
+def intron_number(intron_region,pos):
+    ''' Returns the intron number in which the variant is within
+    '''
+    for intron in intron_region:
+        if int(intron[3]) > 0:
+            for x in range(int(intron[2]),int(intron[1])):   # no idea why the start and end pos are swapped, hence the need for if/else
+                if x == int(pos.split(":")[1]):              # good candidate for recursion
+                    intron_num= intron[0]
+                    return intron_num
+        else:
+            for x in range(int(intron[1]),int(intron[2])):
+                if x == int(pos.split(":")[1]):
+                    intron_num= intron[0]
+                    return intron_num  
+
+            
+                
 def get_exon_id(exon_region,pos):  
     ''' Get the exon id for which the variant position is within.
     
@@ -117,7 +178,7 @@ def get_exon_id(exon_region,pos):
         for x in range(exons[2],exons[3]):
             if x == int(pos.split(":")[1]):
                 exon_id.append(exons[1])
-
+    
     return exon_id
     
 
@@ -152,5 +213,5 @@ def total_exons(exon_dics,transcript):
 #l = ["WYN11-XX-62","WYN10-XX-00","WYN8-XX-03"]
 
 print get_exon_number("all_vars_alias.txt")
-
+#print get_exon_number("HUK10-BO")
 

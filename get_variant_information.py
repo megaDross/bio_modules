@@ -2,7 +2,7 @@ import openpyxl
 
 variant_header = {
 "Sample_Name": '', "Gene": '',
-"Exon_No.": '', "HGVSc": '',
+"Exon_No.": '', "Intron_No.": '', "HGVSc": '',
 "HGVSp": '', "Variant_Position": '',
 "Allele_Balance": '', "Allele_Depth(REF)": '',
 "Allele_Depth(ALT)": '', "Allele_Frequency_ESP(%)": '',

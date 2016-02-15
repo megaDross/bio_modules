@@ -95,16 +95,20 @@ def lof_comment(templates):
        variant lies within
     '''
     exon = variant_header.get("Exon_No.")
+    intron = variant_header.get("Intron_No.")
     if exon != "-" or exon is not None:
         exon_num = exon.split("/")[0]
         exon_total = exon.split("/")[1]
+        #intron_num = intron.split("/")[0]
+        #intron_total = intron.split("/")[1]
+        
         if (exon_num == int(exon_total)-2) or int(exon_total)-1 or int(exon_total):
             templates["E16"] = "This mutations is expected to produce a truncated product"
         elif exon_num < int(exon_total)-2:
             templates["E16"] = "This mutation introduces a premature stop codon and is likely to be pathogenic"
         else:
             templates["E16"] = "LOF mutation present, but the outcome cannot be determined without exon numbering information"
-
+    
 
 
 produce_variant_report("test_in.txt")
