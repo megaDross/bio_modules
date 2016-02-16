@@ -1,12 +1,42 @@
-"""
-utilise various UCSC tools via the command line
-"""
+#"""
+#utilise various UCSC tools via the command line
+#"""
 from __future__ import division
-import urllib2, re, csv
+import requests,bs4,re
+
+class AmbiguousBaseError(Exception):
+    pass
+    
+class NoAmplicon(Exception):
+    pass
+
+class MultipleAmplicons(Exception):
+    pass
 
 # unknown_primer wont write to the file, file empty after processing
 
-def unknown_primer(DB, input_file, output_file, delimiters="\t"):
+
+
+
+def unknown_primer(DB,input_file,output_file):
+    output = open(output_file,"w")
+    
+    for primer in open(input_file,"r"):
+        primer = primer.rstrip("\n").split("\t")
+
+        try:
+            print get_unknown_primer_info(DB,primer)
+            output.write(get_unknown_primer_info(DB,primer)+"\n")
+        except AmbiguousBaseError:
+            print "Skipping invalid base in primer:"+primer[0]
+        except NoAmplicon:
+            print "No amplicon generated from isPCR for primer: "+primer[0]
+        except MultipleAmplicons:
+            print "The following primers generate more than one amplicon:"+primer[0]
+    output.close()
+    
+    
+def get_unknown_primer_info(DB, input_file):
 	'''Generates coordinates for which a primer pair bind to within the genome, 
 	and gives the PCR products size and number of potential PCR products
 		
@@ -14,50 +44,50 @@ def unknown_primer(DB, input_file, output_file, delimiters="\t"):
 		primer_name\tF-primer\tR_primer
 
 	The delimiters argument is defaulted to tab, it is assumed a header is present.
-	'''
-	output_file = open(output_file,"w")
-	reader = csv.reader(open(input_file,"r+"), delimiter=delimiters)
-	skip_header = reader.next()
-	
-	for primer in reader:
-		ispcr = urllib2.urlopen("http://genome.ucsc.edu/cgi-bin/hgPcr?db="+DB+\
-		"&wp_target=genome&wp_f="+primer[1]+"&wp_r="+primer[2]+\
-		"&wp_size=4000&wp_perfect=15&wp_good=15&boolshad.wp_flipReverse=0")
-		search = ispcr.read()
-
-        	if re.search(r'No matches.*',search):
-                	output = primer[0]+"\t"+primer[1]+"\t"+primer[2]+"\t"+"none"+"\t"+"no match"+"\n"
-                	return output
-                	output_file.write(output)
-
-        	elif re.search(r'No matches.*',search) is None:
-                	
-                	# generate genomic region co-ordinates and PCR product size
-                	shortened = re.search(r'chr.*[0-9]&',search).group()
-                	region = shortened[:len(shortened)-1]
-                	size = str((int(re.split(r'[-]',region)[1]) - int(re.split(r'[:-]',region)[1]))+1)
-                	
-                	# number of PCR products
-			get_product_number = re.findall(r'>chr.*[0-9].*',search)
-			product_number = len(get_product_number)
-			
-			# prep for getting amplicon info
-			product_seq = re.findall(r"[ACTGatcg]{25,54}.*",search, re.DOTALL)
-                        no_special_chars = re.sub(r'([\[\]\'\, ,\\n])',"",str(product_seq))    
-                        
-                        # sequence of amplicon/PCR-product
-                        amplicon = re.search(r"[ACTG]{10,40}[actg]{25,1000}[ACTG]{10,40}",\
-                        no_special_chars, re.DOTALL).group()
-                        
-                        # GC% of the amplicon
-                        GC_percent = ((amplicon.count("G")+amplicon.count("C")+amplicon.count("c")+\
-                        amplicon.count("g"))/ len(amplicon)) * 100
-			
-			output = primer[0]+"\t"+primer[1]+"\t"+primer[2]+"\t"+size+"\t"+region\
-			+"\t"+str(product_number)+"\t"+str(GC_percent)+"\n"
-                	return output
-                	output_file.write(output)
-        output_file.close()
+	'''	
+	     
+	f_primer = input_file[1].upper()
+        r_primer = input_file[2].upper()
+        
+        if re.search(r'[^ATCG]',f_primer)or re.search(r'[^ATCG]',r_primer):
+            raise AmbiguousBaseError("Primers must contain ATGC bases only")
+            
+        
+        req = requests.get("http://genome.ucsc.edu/cgi-bin/hgPcr?db="+DB+\
+        "&wp_target=genome&wp_f="+f_primer+"&wp_r="+r_primer+\
+        "&wp_size=4000&wp_perfect=15&wp_good=15&boolshad.wp_flipReverse=0")
+        
+        req.raise_for_status()   # get the request error code if failed
+        
+        entire_url = bs4.BeautifulSoup(req.text,"html.parser")
+        
+        # if no pre_elemnts then no amplicon generated from the seqence
+        pre_elements = entire_url.select('pre') # get all <pre> elements on webpage
+        
+        if not pre_elements:
+            raise NoAmplicon("No amplicon generated")
+        
+        isPCR = pre_elements[0].getText()  # get text for first <pre> element
+        
+        
+        amplicon = "\n".join(isPCR.split("\n")[1:]) # split newlines, take 2nd to last and join back together
+        
+        amplicon_header = "\n".join(isPCR.split("\n")[:1])
+        split_header =  amplicon_header[1:].split(" ")
+        
+        region = split_header[0].replace("+","-").replace("chr","")
+        amplicon_size = split_header[1]
+        product_number = len(pre_elements)
+        
+        if product_number > 1:
+            raise MultipleAmplicons
+        
+        gc_percent = round(((amplicon.count("G")+amplicon.count("C")+amplicon.count("c")+\
+                    amplicon.count("g"))/ len(amplicon)) * 100,2)
+        
+        output = (input_file[0],region,str(amplicon_size),str(product_number),str(gc_percent)+"%")
+        return "\t".join(output)
+        
 
 
 def region_extractor(input_file, output_file, delimiters=None, number_upstream=None, number_downstream=None):
@@ -132,3 +162,4 @@ def isPCR(DB, input_file, output_file, delimiters=None):
 		answer = str(ans).split(",")
 		print primer[0] + "\t" + ans + "\t"+str(len(all))
 		
+print unknown_primer("hg19","test.txt","test_oot.txt")
