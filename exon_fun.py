@@ -43,13 +43,22 @@ def get_exon_number(input_file):
     
     for variant_alias in var_alias_list:
         try:
+            
             variant_row = get_row(variant_alias,variants)
             variant_info = get_variant_info(variant_row,variants,variant_header)
             pos = variant_header.get("Variant_Position")
             transcript_hgvs = variant_header.get("HGVSc")
             
-            exon_info.write(generate_exon_numbering(variant_alias, transcript_hgvs, pos)+"\n")
-            print generate_exon_numbering(variant_alias, transcript_hgvs, pos)
+            
+            if (pos is None or transcript_hgvs is None or
+                pos == "" or transcript_hgvs =="" or
+                pos == "-" or transcript_hgvs == "-"):
+                exon_info.write(variant_alias+"\t"+" has no variant position or transcript ID"+"\n")
+                print variant_alias+" has no variant position or transcript ID"
+                continue
+            else:
+                exon_info.write(generate_exon_numbering(variant_alias, transcript_hgvs, pos)+"\n")
+                print generate_exon_numbering(variant_alias, transcript_hgvs, pos)
             
         except Exception,e:                                 # BAD!
             exon_info.write(variant_alias +"\t"+"Something Happened"+"\n")
@@ -68,10 +77,14 @@ def generate_exon_numbering(variant_alias,transcript_hgvs,var_position):
         
         This essentially links all the below functions to generate an exon or intron number
     '''
+    
     transcript = transcript_hgvs.split(":")[0][:-2]
     pos = var_position
     
-    exon_dics = request_ensembl(transcript)                 # request from REST API
+    
+
+
+    exon_dics = request_ensembl(transcript) # request from REST API
     exon_region = all_exon_regions(exon_dics,transcript)# get all exon_id, start and stop exon pos
     exon_id = get_exon_id(exon_region,pos) # filter for exon id in which variant is within
     if not exon_id:
@@ -109,6 +122,7 @@ def request_ensembl(transcript):
         return exon_dics
     except requests.exceptions.RequestException as e:
         return e
+    
         
         
 def all_exon_regions(exon_dics,transcript):

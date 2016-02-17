@@ -1,6 +1,10 @@
 import openpyxl
 from get_variant_information import *
 
+#1- add better comments
+#2- filenames that are the same and if true then add a "gene2" some where
+
+
 def produce_variant_report(variant_alias_list):
     ''' For each variant alias, extract the approriate variant and mutation
         information and append them to the variant confirmation template
@@ -31,12 +35,23 @@ def produce_variant_report(variant_alias_list):
         
         fill_report(template,templates,var_alias)
         
+        transcript_id = variant_header.get("HGVSc")
+        hgvs = transcript_id.split(":")[1]
+        
+
         if (variant_header.get("Category") == "ClinVarPathogenic") or ("HGMD"):
             hgmd_clinvar_comment(templates)
+            templates["B8"] = "Exon"
         if variant_header.get("Category") == "Gly-X-Y":
             glyxy_comment(templates)
+            templates["B8"] = "Exon"
         if variant_header.get("Category") == "LOF":
             lof_comment(templates)
+            templates["B8"] = "Exon"
+            
+        if "-" in hgvs or "+" in hgvs:
+            templates["E16"] = "Splicing variant. This will require further investigation"
+            templates["B8"] = "Intron"
         
         template.save(variant_header.get("Sample_Name")+"_"+variant_header.get("Variant_Alias")+"_"+"VariantConfirmationReport"+".xlsx")
         
@@ -69,7 +84,6 @@ def hgmd_clinvar_comment(templates):
         found in the database to the template report
     '''    
     comment = mutation_header.get("Report Variant class field")+"\n"+"\n"+\
-                variant_header.get("Category")+" ID: "+mutation_header.get("Variant Class")+"\n"+\
                 mutation_header.get("First Published")
     
     if mutation_header.get("Variant Class") == "DM?":
@@ -94,20 +108,30 @@ def lof_comment(templates):
        particular comment added is dependant upon the exon number in which the 
        variant lies within
     '''
+
+    
     exon = variant_header.get("Exon_No.")
     intron = variant_header.get("Intron_No.")
-    if exon != "-" or exon is not None:
-        exon_num = exon.split("/")[0]
-        exon_total = exon.split("/")[1]
-        #intron_num = intron.split("/")[0]
-        #intron_total = intron.split("/")[1]
         
-        if (exon_num == int(exon_total)-2) or int(exon_total)-1 or int(exon_total):
+    if exon != "-" or exon is not None:
+        exon_num = int(exon.split("/")[0])
+        exon_total = exon.split("/")[1]
+        
+        if exon_num == int(exon_total)-2 or exon_num == int(exon_total)-1 or exon_num == int(exon_total):
             templates["E16"] = "This mutations is expected to produce a truncated product"
         elif exon_num < int(exon_total)-2:
             templates["E16"] = "This mutation introduces a premature stop codon and is likely to be pathogenic"
         else:
             templates["E16"] = "LOF mutation present, but the outcome cannot be determined without exon numbering information"
+    
+    elif intron != "-" or intron is not None:
+        templates["B8"] = "Intron"
+        templates["E16"] = "This mutation affects the intron"
+        
+    else:
+        templates["E16"] = "ERROR"
+        
+        
     
 
 
