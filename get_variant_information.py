@@ -1,14 +1,16 @@
 import openpyxl
 
+# variant found spits out the last one
+
 variant_header = {
-"Sample_Name": '', "Gene": '',
+"Sample_Name": '', "Gene": '', "UID/Index":'',
 "Exon_No.": '', "Intron_No.": '', "HGVSc": '',
 "HGVSp": '', "Variant_Position": '',
 "Allele_Balance": '', "Allele_Depth(REF)": '',
 "Allele_Depth(ALT)": '', "Allele_Frequency_ESP(%)": '',
 "Allele_Frequency_ExAC(%)": '', "Allele_Frequency_dbSNP(%)": '',
 "Variant_Found": '', "Mutation_ID": '',"Reason for Variant class change": '',
-"Category":'', "Variant_Alias":''
+"Category":'', "Variant_Alias":'', "GC%_Amplicon":'', "Plate":''
 }
 
 mutation_header = {

@@ -1,8 +1,6 @@
-#"""
-#utilise various UCSC tools via the command line
-#"""
 from __future__ import division
-import requests,bs4,re
+import requests,re, csv, urllib2
+import csv
 
 class AmbiguousBaseError(Exception):
     pass
@@ -162,4 +160,5 @@ def isPCR(DB, input_file, output_file, delimiters=None):
 		answer = str(ans).split(",")
 		print primer[0] + "\t" + ans + "\t"+str(len(all))
 		
-print unknown_primer("hg19","test.txt","test_oot.txt")
+
+region_extractor("var_160219.txt","GIVE_ME_ANSWER.txt")
