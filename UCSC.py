@@ -1,6 +1,5 @@
 from __future__ import division
-import requests,re, csv, urllib2
-import csv
+import requests,re, csv, bs4
 
 class AmbiguousBaseError(Exception):
     pass
@@ -17,7 +16,21 @@ class MultipleAmplicons(Exception):
 
 
 def unknown_primer(DB,input_file,output_file):
+    ''' For each primer pair output the: genomic region, amplicon size, number
+        of amplicons generated and GC% of the amplicon along with the primer
+        pair name to an output file
+        
+        
+        DB         -     refers to the human genome version i.e. hg19, hg38
+        input_file -     contains primer information for each pair on a newline,
+                         which should conatin primer name, forward primer sequence,
+                         reverse primer sequence (tab deliminated). 
+                         
+                         
+    '''
     output = open(output_file,"w")
+    header = ("Primer","Genomic_Position","Product_Size","Number_PCR_Products","GC%"+"\n")
+    output.write("\t".join(header))
     
     for primer in open(input_file,"r"):
         primer = primer.rstrip("\n").split("\t")
@@ -35,13 +48,12 @@ def unknown_primer(DB,input_file,output_file):
     
     
 def get_unknown_primer_info(DB, input_file):
-	'''Generates coordinates for which a primer pair bind to within the genome, 
-	and gives the PCR products size and number of potential PCR products
-		
-	Input file should be in the following format:
-		primer_name\tF-primer\tR_primer
-
-	The delimiters argument is defaulted to tab, it is assumed a header is present.
+	''' The DB, forward primer and reverse primer sequences are used as part 
+	    of the UCSC isPCR link for webscraping, which are further filtered for 
+	    pre elements containing the in silico amplicon sequence.
+	    
+	    This sequence is then further manipulated to attain the genomic position, 
+	    amplicon size, number of amplicons generated and GC% of the amplicon.
 	'''	
 	     
 	f_primer = input_file[1].upper()
@@ -85,7 +97,8 @@ def get_unknown_primer_info(DB, input_file):
         
         output = (input_file[0],region,str(amplicon_size),str(product_number),str(gc_percent)+"%")
         return "\t".join(output)
-        
+
+print unknown_primer("hg19","TAAD_Primer_Validation_Database.txt","moomoo.txt")
 
 
 def region_extractor(input_file, output_file, delimiters=None, number_upstream=None, number_downstream=None):
@@ -138,27 +151,6 @@ def region_extractor(input_file, output_file, delimiters=None, number_upstream=N
         output.close()
 
 
-def isPCR(DB, input_file, output_file, delimiters=None):
-	''' Use the UCSC isPCR tool to get primer information
-	it is basically EXACTLY the same as unknown_primer
-	consider deleting 
-	'''
-	if delimiters is None:
-                delimiters = "\t"
-
-        test = open(output_file,"w")
-        reader = csv.reader(open(input_file,"r+"), delimiter=delimiters)
-
-        for primer in reader:
-                ispcr = urllib2.urlopen("http://genome.ucsc.edu/cgi-bin/hgPcr?db="+DB+\
-                "&wp_target=genome&wp_f="+primer[1]+"&wp_r="+primer[2]+\
-                "&wp_size=4000&wp_perfect=15&wp_good=15&boolshad.wp_flipReverse=0")
-                search = ispcr.read()
-		
-		all = re.findall(r'>chr.*[0-9].*',search)
-		ans = str(all).replace("</A>","").replace(">","").replace("[","").replace("]","").replace("'","")
-		answer = str(ans).split(",")
-		print primer[0] + "\t" + ans + "\t"+str(len(all))
 		
 
-region_extractor("var_160219.txt","GIVE_ME_ANSWER.txt")
+region_extractor("all_vars_in.txt","GIVE_ME_ANSWER.txt")
