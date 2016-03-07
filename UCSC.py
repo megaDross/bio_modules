@@ -1,5 +1,5 @@
 from __future__ import division
-import requests,re, csv, bs4
+import requests,re, csv, bs4, urllib2
 
 class AmbiguousBaseError(Exception):
     pass
@@ -98,10 +98,10 @@ def get_unknown_primer_info(DB, input_file):
         output = (input_file[0],region,str(amplicon_size),str(product_number),str(gc_percent)+"%")
         return "\t".join(output)
 
-print unknown_primer("hg19","TAAD_Primer_Validation_Database.txt","moomoo.txt")
+#print unknown_primer("hg19","TAAD_Primer_Validation_Database.txt","moomoo.txt")
 
 
-def region_extractor(input_file, output_file, delimiters=None, number_upstream=None, number_downstream=None):
+def region_extractor(input_file, output_file, number_downstream=20, number_upstream=20, DB="hg19", delimiters="\t"):
         ''' Produces a sequence 20bp upstream and downstream from
         the defined variant position in the input_file
 
@@ -112,45 +112,56 @@ def region_extractor(input_file, output_file, delimiters=None, number_upstream=N
         The delimiters argument is defaulted to tab
         number_upstream & number_downstream defaulted to 20
         '''
-        if delimiters is None:
-                delimiters = "\t"
-                
-        if number_upstream is None:
-                number_upstream = 20
         
-        if number_downstream is None:
-                number_downstream = 20
         
-        alt_T=[]
-        # change dir manually in python
-        T = open(input_file,"r+")
         output=open(output_file,"w")
 
 
-        reader = csv.reader(T, delimiter=delimiters)
-        for changes in reader:
-            nospace = changes[1].replace(" ","")
+        for changes in open(input_file,"r+"):
+            changes = changes.split(delimiters)
+            seq_name = changes[0]
+            var_pos = changes[1]
+            
+            seq_range = create_region(var_pos,number_downstream,number_upstream)
+            answer = get_region_info(seq_range,number_downstream,number_upstream,DB)
+            out = "\t".join((seq_name,seq_range,answer))
+            print out
+            output.write(out+"\n")
+        output.close()
+
+
+def create_region(var_pos,number_downstream=20, number_upstream=20):
+            
+            nospace = var_pos.replace(" ","")
             chrom = nospace.split(":")[0]
             pos = nospace.split(":")[1]
             start_pos = int(pos) - number_downstream
             end_pos = int(pos) + number_upstream
-            alt_T.append(changes[0]+"\t"+chrom+":"+str(start_pos)+","+str(end_pos))
+            seq_range = chrom+":"+str(start_pos)+","+str(end_pos)
+            return seq_range
+            
+            
+def get_seq(var_pos,number_downstream=20,number_upstream=20,DB="hg19"):
+      seq_range = create_region(var_pos,number_downstream,number_upstream)
+      print get_region_info(seq_range,number_downstream,number_upstream,DB)
 
-        for alted_T in alt_T:
-                region = alted_T.split("\t")[1]
-                test = urllib2.urlopen("http://genome.ucsc.edu/cgi-bin/das/hg19/dna?segment="+region)
-                search = test.read()
-                seq = re.findall(r"[tacg{40}].*",search)[4]
-                downstream = seq[0:number_downstream]
-                var = seq[number_downstream]
-                upstream = seq[number_upstream+1:len(seq)]
-                answer = downstream+"-"+var+"-"+upstream
-                print alted_T.split("\t")[0]+"\t"+region+"\t"+answer+"\n"
-                output.write(alted_T.split("\t")[0]+"\t"+region+"\t"+answer+"\n")
-                        
-        output.close()
+def get_region_info(seq_range, number_downstream,number_upstream,DB):
+    
+        test = urllib2.urlopen("http://genome.ucsc.edu/cgi-bin/das/"+DB+"/dna?segment="+seq_range)
+        search = test.read()
+        refined_search = re.findall(r"[tacg{5}].*",search)
+        seqs = [s for s in refined_search if not s.strip("tacg")]  # filters for elements which only contain nucleotides
+        seq = "".join(seqs)
+        
+        downstream = seq[:number_downstream]
+        var = seq[number_downstream]
+        upstream = seq[number_downstream+1:len(seq)]
+        answer = downstream+"-"+var+"-"+upstream
+        return answer
+                
+          
+print region_extractor("all_vars_in.txt","GIVE_ME_ANSWER.txt",60)
 
 
-		
 
-region_extractor("all_vars_in.txt","GIVE_ME_ANSWER.txt")
+print get_seq("chr22:31000551")
