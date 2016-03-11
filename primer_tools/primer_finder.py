@@ -1,9 +1,10 @@
-import re, os.path
+import re, os.path, useful
+file_path = useful.cwd_file_path(__file__) # gives the dir/PATH of this program 
+
+# from primer_tools import primer_finder, primer_finder.matching_primer("15:4872951")
 
 
-#exception handeling and use string as input
-
-def primer_finder(input_file,primer_database,output_file=None,delimiters="\t"):
+def matching_primer(input_file,output_file=None,primer_database=file_path+"TAAD_Primer_Validation_Database.txt",delimiters="\t"):
     ''' Takes variant postion(s) and matches it with a primer in the primer 
         database. 
        
@@ -44,6 +45,7 @@ def primer_finder(input_file,primer_database,output_file=None,delimiters="\t"):
             var_pos = re.sub(r'[^0-9:]','',var.split("\t")[1])
             matched_primers = match(var_pos,all_primer_pos,var_name)
             print matched_primers
+           
             
     
         
@@ -80,27 +82,33 @@ def match(var_pos,primer_info,var_name=None):
         in all the primers in the primer database.
     '''
     
-    for i in primer_info:
-        
-        if var_name is None:   # used if a string given as input instead of a file
-            var_name = var_pos
-        
+    if var_name is None:   # used if a string given as input instead of a file
+        var_name = var_pos
+    
+   # answer = []
+    
+    for i in primer_info:   
         primer_name = i.split(" ")[0]
         primer_pos = i.split(" ")[1]
-        
         
         ## if no match then print cant find matching primer
         ## proving to be challenging, not working as expected
         ## if not Non, if != "" if not "" etc. not working, just returns None, regardless
         
         if var_pos == primer_pos:
-            answer = ",".join((var_name,primer_name))
-            return answer
+            match = ",".join((var_name,primer_name))
+            #answer.append(match)
+            return match
+    
+    #if not answer:
+    #    return  "no match found for: "+var_name
+    #else:
+    #    return answer
                  
         
     
     
     
 
-print primer_finder("2:189859300","TAAD_Primer_Validation_Database.txt")
-#print primer_finder("in.txt","TAAD_Primer_Validation_Database.txt")
+print matching_primer("chr15:48729251")
+#print matching_primer("in.txt","TAAD_Primer_Validation_Database.txt")
