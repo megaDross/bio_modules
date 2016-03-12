@@ -10,6 +10,8 @@ class NoAmplicon(Exception):
 class MultipleAmplicons(Exception):
     pass
 
+class IncorrectVariant(Exception):
+    pass
 # unknown_primer wont write to the file, file empty after processing
 
 
@@ -98,12 +100,14 @@ def get_unknown_primer_info(DB, input_file):
         output = (input_file[0],region,str(amplicon_size),str(product_number),str(gc_percent)+"%")
         return "\t".join(output)
 
-#print unknown_primer("hg19","TAAD_Primer_Validation_Database.txt","moomoo.txt")
+
 
 
 def region_extractor(input_file, output_file, number_downstream=20, number_upstream=20, DB="hg19", delimiters="\t"):
-        ''' Produces a sequence 20bp upstream and downstream from
-        the defined variant position in the input_file
+        ''' Produces a sequence with a defined number of base pairs upstream and downstream from
+        the given variant position in the input_file by utilising the UCSC DAS Server. Output
+        all as a text file containing the sample name, genomic range and sequence.
+
 
         The input_file should be in the following format:
                 sample_name\tchromosome_number:nucleotide_number
@@ -111,27 +115,33 @@ def region_extractor(input_file, output_file, number_downstream=20, number_upstr
 
         The delimiters argument is defaulted to tab
         number_upstream & number_downstream defaulted to 20
+        DB is defaulted to hg19
         '''
-        
-        
+                
         output=open(output_file,"w")
 
-
         for changes in open(input_file,"r+"):
-            changes = changes.split(delimiters)
-            seq_name = changes[0]
-            var_pos = changes[1]
-            
-            seq_range = create_region(var_pos,number_downstream,number_upstream)
-            answer = get_region_info(seq_range,number_downstream,number_upstream,DB)
-            out = "\t".join((seq_name,seq_range,answer))
-            print out
-            output.write(out+"\n")
+            try:
+                changes = changes.split(delimiters)
+                seq_name = changes[0]
+                var_pos = changes[1]
+                
+                seq_range = create_region(var_pos,number_downstream,number_upstream)
+                answer = get_region_info(seq_range,number_downstream,number_upstream,DB)
+                out = "\t".join((seq_name,seq_range,answer))
+                print out
+                output.write(out+"\n")
+            except IncorrectVariant:
+                print var_pos+" is not recognised by UCSC"
+                
         output.close()
 
 
 def create_region(var_pos,number_downstream=20, number_upstream=20):
-            
+            ''' use the variant position given, add and subtract the 
+                numbers given in number_downstream and number_upstream
+                to return a genomic range around the variant position.
+            '''
             nospace = var_pos.replace(" ","")
             chrom = nospace.split(":")[0]
             pos = nospace.split(":")[1]
@@ -142,14 +152,27 @@ def create_region(var_pos,number_downstream=20, number_upstream=20):
             
             
 def get_seq(var_pos,number_downstream=20,number_upstream=20,DB="hg19"):
-      seq_range = create_region(var_pos,number_downstream,number_upstream)
-      print get_region_info(seq_range,number_downstream,number_upstream,DB)
-
+    ''' Functions in the sam manner as region_extractor except it takes a string
+        instead of a file.
+        
+        i.e get_seq("chr22:31000551")
+    '''
+    try:
+        seq_range = create_region(var_pos,number_downstream,number_upstream)
+        print get_region_info(seq_range,number_downstream,number_upstream,DB)
+    except IncorrectVariant:
+        print " ".join((var_pos,"is not recognised by UCSC"))
+        
 def get_region_info(seq_range, number_downstream,number_upstream,DB):
-    
+        ''' From a genomic range and human genome version, use UCSC DAS server
+            to retrieve the sequence found in the given genomic range.
+        '''
         test = urllib2.urlopen("http://genome.ucsc.edu/cgi-bin/das/"+DB+"/dna?segment="+seq_range)
         search = test.read()
         refined_search = re.findall(r"[tacg{5}].*",search)
+        confirm_error = re.findall(r"nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn",search)
+        if confirm_error:
+            raise IncorrectVariant("Variant not recognised by UCSC")
         seqs = [s for s in refined_search if not s.strip("tacg")]  # filters for elements which only contain nucleotides
         seq = "".join(seqs)
         
@@ -160,8 +183,3 @@ def get_region_info(seq_range, number_downstream,number_upstream,DB):
         return answer
                 
           
-print region_extractor("all_vars_in.txt","GIVE_ME_ANSWER.txt",60)
-
-
-
-print get_seq("chr22:31000551")
