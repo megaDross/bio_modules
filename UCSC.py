@@ -183,3 +183,9 @@ def get_region_info(seq_range, number_downstream,number_upstream,DB):
         return answer
                 
           
+#print region_extractor("all_vars_in.txt","GIVE_ME_ANSWER.txt",60)
+
+
+
+#print get_seq("chr22:31000551")
+
