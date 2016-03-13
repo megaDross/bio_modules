@@ -1,5 +1,27 @@
-import re, os.path, sys, useful
-file_path = useful.cwd_file_path(__file__) # gives the dir/PATH of this program, will be used to find the defaulted primer_database 
+import re, os.path, sys
+import useful 
+import click
+
+# gives the dir/PATH of this program, will be used to find the defaulted primer_database
+file_path = useful.cwd_file_path(__file__) 
+
+
+# allows one to use this as a command line tool
+# renders the program unuseable in a python terminal
+@click.command() #decorator converts the function into a command
+
+@click.option('--input_file', 
+              help="input; should be a variant position string or a file")
+              
+@click.option('--output_file',
+              default="matching_primers_output.txt",
+              help="output; defaulted as matching_primers_output.txt")
+              
+@click.option('--primer_database',
+              default=file_path+"TAAD_Primer_Validation_Database.txt",
+              help="defaulted to TAAD primer DB")
+              
+@click.option('--delimiters', default="\t",help="defaulted to tab")
 
 
 def matching_primer(input_file,
@@ -37,10 +59,15 @@ def matching_primer(input_file,
         --------------------------------------------------------------------------
         from primer_tools import primer_finder 
         
-        
         primer_finder.matching_primer("15:48729400")
         
         primer_finder.matching_primer("variant_positions.txt,"matched_primers.txt")
+        
+        OR
+        
+        using click:
+        
+        python primer_finder --input_file 15:48729400 --primer_database primer_database.txt
         
     '''
     try:
@@ -51,7 +78,9 @@ def matching_primer(input_file,
         if os.path.isfile(input_file) is False and re.search(r"[0-9]:",input_file):             
             var_pos = re.sub(r'[^0-9:]','',input_file)      # remove any characters that isn't a number or colon
             matched_primers = match(var_pos,all_primer_pos)
+            click.echo(matched_primers)
             return matched_primers
+            
     
         # if input is a file 
         if os.path.isfile(input_file) is True:
@@ -171,10 +200,9 @@ def match(var_pos,primer_info,var_name=None):
         return "".join(answer)
                  
         
-    
-    
-    
-#print matching_primer("chr1548729400")
-#print matching_primer("chr15:48729400")
-print matching_primer("in.txt","oo")
+        
 
+# required for click to be useable, dont know why
+if __name__ == '__main__':
+    matching_primer()
+    
