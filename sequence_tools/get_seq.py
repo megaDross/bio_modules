@@ -1,28 +1,27 @@
 from __future__ import division
-import os,re, urllib2, click
+import os, sys,re, urllib2, click
 
-class IncorrectVariant():
-    pass
 
 #### exception handeling and commenting still needed
+#### CREATE ANOTHER FUNCTION THAT HANDLES ALL ARGUMENT ERRORS
 
 @click.command()
 @click.option('--input_file')
-@click.option('--output_file',default="region_extractor_output.txt")
+@click.option('--output_file',default="get_seq_output.txt")
 @click.option('--upstream', default=20)
 @click.option('--downstream',default=20)
 @click.option('--hg_version',default="hg19")
 @click.option('--delimiters',default="\t")
 @click.option('--dash',default="Y")
 
-def region_extractor(input_file, 
-                     output_file="region_extractor_output.txt",
-                     upstream=20, 
-                     downstream=20, 
-                     hg_version="hg19", 
-                     delimiters="\t",
-                     dash="Y"
-                     ):
+def get_seq(input_file, 
+            output_file="get_seq_output.txt",
+            upstream=20, 
+            downstream=20, 
+            hg_version="hg19", 
+            delimiters="\t",
+            dash="Y"
+            ):
                      
         ''' Produce a sequence using the UCSC DAS server from a variant postion and 
             number of bases upstream and downstream from said position.
@@ -33,7 +32,7 @@ def region_extractor(input_file,
             
             output_file -- created only if the input is a file opposed to a string
                            if no name is sepcified for output_file, then it is 
-                           automatically named region_extractor_output.txt
+                           automatically named get_seq_output.txt
                            
             upstream -- number of bases to get upstream from the given variant position
             
@@ -55,6 +54,10 @@ def region_extractor(input_file,
             
             
         '''
+        if hg_version not in ["hg16","hg17","hg18","hg19","hg38"]:
+            print("Human genome version "+hg_version+" not recognised")
+            sys.exit(0)
+            
         # if input_file is a file
         if os.path.isfile(input_file) is True:
             output=open(output_file,"w")
@@ -65,7 +68,13 @@ def region_extractor(input_file,
                 var_pos = changes[1]
                 
                 seq_range = create_region(var_pos,upstream,downstream)
+                if seq_range is None:
+                    continue
+                    
                 answer = get_region_info(seq_range,upstream,downstream,hg_version,dash)
+                if answer is None:
+                    continue
+                    
                 sequence = "\t".join((seq_name,seq_range,answer))
                 print sequence
                 output.write(sequence+"\n")
@@ -82,7 +91,7 @@ def region_extractor(input_file,
         
         # if input_file is a genomic position
         if os.path.isfile(input_file) is False:
-            var_pos = re.sub(r'[^0-9:]','',input_file) 
+            var_pos = re.sub(r'[^0-9:]','',input_file)
             seq_range = create_region(var_pos,upstream,downstream)
             sequence = get_region_info(seq_range,upstream,downstream,hg_version,dash)
             click.echo(sequence)
@@ -104,15 +113,23 @@ def create_region(var_pos,upstream=20, downstream=20):
             
             '''
             
-            # create a genomic range 
-            nospace = var_pos.replace(" ","")
-            chrom = nospace.split(":")[0]
-            pos = nospace.split(":")[1]
-            start_pos = int(pos) - upstream
-            end_pos = int(pos) + downstream
-            seq_range = chrom+":"+str(start_pos)+","+str(end_pos)
-            return seq_range
-            
+            # create a genomic range
+            try:
+                nospace = var_pos.replace(" ","")
+                chrom = nospace.split(":")[0]
+                pos = nospace.split(":")[1]
+                start_pos = int(pos) - upstream
+                end_pos = int(pos) + downstream
+                seq_range = chrom+":"+str(start_pos)+","+str(end_pos)
+                return seq_range
+                
+            except IndexError:
+                print("A colon is required to seperate the chromosome and position"
+                " numbers in the variant position: "+var_pos)
+            except TypeError:
+                print("Ensure the string given for upstream and/or downstream are integers:\n"+
+                "\tupstream: "+str(upstream)+"\t downstream: "+str(downstream))
+                sys.exit(0)
     
         
 def get_region_info(seq_range, upstream,downstream,hg_version,dash):
@@ -142,23 +159,29 @@ def get_region_info(seq_range, upstream,downstream,hg_version,dash):
         search = test.read()
         refined_search = re.findall(r"[tacg{5}].*",search)
         confirm_error = re.findall(r"nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn",search)
+        
+        # BELOW IS REDUNDANT AS IT IS HANDLED BELOW AND IN THE TOP FUNCTION
         if confirm_error:
-            raise IncorrectVariant("Variant not recognised by UCSC")
+            return "Variant not recognised by UCSC"
             
-        # filters for elements which only contain nucleotides
+        # filters for elements which only contain nucleotides and concatenate
         seqs = [s for s in refined_search if not s.strip("tacg")] 
         seq = "".join(seqs)
         
         
         # flank the base associated with the variant position with dashes
-        if dash == "Y" or dash == "y":
-            downstream = seq[:upstream]
-            var = seq[upstream]
-            upstream = seq[upstream+1:len(seq)]
-            answer = downstream+"-"+var+"-"+upstream
-            return answer
+        try:
+            if dash == "Y" or dash == "y":
+                downstream = seq[:upstream]
+                var = seq[upstream]
+                upstream = seq[upstream+1:len(seq)]
+                answer = "".join((downstream,"-",var,"-",upstream))
+                return answer
         
-        # retrun sequence without dashes
+        except IndexError:
+            return "Variant not recognised by UCSC"
+        
+        # return sequence without dashes
         if dash == "N" or dash == "n":
             return seq
         
@@ -168,6 +191,7 @@ def get_region_info(seq_range, upstream,downstream,hg_version,dash):
         
                 
 if __name__ == '__main__':
-    region_extractor()         
+    get_seq()         
 
+#get_seq("in.txt","b", 2, 20,"hg19","\t","y")
 
