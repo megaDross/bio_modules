@@ -5,9 +5,6 @@ import os, sys,re, urllib2, click
 #### exception handeling and commenting still needed
 #### CREATE ANOTHER FUNCTION THAT HANDLES ALL ARGUMENT ERRORS
 
-#### for detcing a genomic region by finding comman use exception so that only those
-#### with one comma will be utilised; if len(input_file.split("\t")) > 2;sys.exit(0)
-
 
 @click.command()
 @click.option('--input_file')
@@ -58,10 +55,10 @@ def get_seq(input_file,
             
             
         '''
-        if hg_version not in ["hg16","hg17","hg18","hg19","hg38"]:
-            print("Human genome version "+hg_version+" not recognised")
-            sys.exit(0)
             
+        # handle any errors in the arguments    
+        handle_argument_exception(input_file,output_file,upstream,downstream,hg_version,delimiters,dash)
+        
         # if input_file is a file
         if os.path.isfile(input_file) is True:
             output=open(output_file,"w")
@@ -103,6 +100,37 @@ def get_seq(input_file,
         
         
 
+def handle_argument_exception(  input_file, 
+                                output_file="get_seq_output.txt",
+                                upstream=20, 
+                                downstream=20, 
+                                hg_version="hg19", 
+                                delimiters="\t",
+                                dash="Y"
+                                ):
+                                
+            if hg_version not in ["hg16","hg17","hg18","hg19","hg38"]:
+                raise click.ClickException("Human genome version "+hg_version+" not recognised")
+                sys.exit(0)
+                
+            if not int(upstream) or not int(downstream):
+                raise click.ClickException("Ensure the string given for upstream "+
+                "and/or downstream are integers:\n\tupstream: "+str(upstream)+
+                "\t downstream: "+str(downstream))
+                sys.exit(0)
+                
+            if os.path.isfile(input_file) is False:
+                if input_file.count(",") > 1:
+                    raise click.ClickException("too many commas in "+input_file)
+                
+                if input_file.count(":") < 1 or input_file.count(":") >1:
+                    raise click.ClickException("A single colon is required to seperate"+ 
+                    "the chromosome and position numbers in the variant position: "+
+                    input_file)
+                
+            if dash not in ["Y","N","y","n"]:
+                raise click.ClickException("Only Y or N can be used with the --dash argument")
+                sys.exit(0)
 
 def create_region(var_pos,upstream=20, downstream=20):
             ''' use the variant position given, add and subtract the 
