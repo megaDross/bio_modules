@@ -5,6 +5,10 @@ import os, sys,re, urllib2, click
 #### exception handeling and commenting still needed
 #### CREATE ANOTHER FUNCTION THAT HANDLES ALL ARGUMENT ERRORS
 
+#### for detcing a genomic region by finding comman use exception so that only those
+#### with one comma will be utilised; if len(input_file.split("\t")) > 2;sys.exit(0)
+
+
 @click.command()
 @click.option('--input_file')
 @click.option('--output_file',default="get_seq_output.txt")
