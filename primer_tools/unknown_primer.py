@@ -15,65 +15,36 @@ class IncorrectVariant(Exception):
 
 @click.command()
 
-@click.option('--input_file')
-@click.option('--output_file',default="unknown_primer_output.txt")
-@click.option('--hg_version',default="hg19")
+@click.argument('input_file',nargs=1)
+@click.option('--output_file',default="unknown_primer_output.txt",help="default: unknwon_primer_output.txt")
+@click.option('--hg_version',default="hg19",help="human geome version. default: hg19")
+@click.option('--delimiters',default=",",help="character used to split F- & R-Primer, STRING only")
 
-def unknown_primer(input_file=None,
-                   output_file="unknown_primer_output.txt",
-                   hg_version="hg19",):
+def unknown_primer(input_file=None,output_file="unknown_primer_output.txt",
+                   hg_version="hg19",delimiters=","):
                    
     ''' Takes primer sequences as input and uses the UCSC isPCR tool
         to generate amplicon sequence information.
-        
-        Arguments
-        ------------------------------------------------------------------------
-        
-        input_file -- either a string where the forward and reverse primer sequence
-                      deliminated by a comma or a tab deliminated file with the 
-                      following information:
-                         primer name   forward primer sequence   reverse primer sequence
-        
-        output_file -- created only if the inut given is a file opposed to a string.
-                       If no name is specified for output_file, then it is automatically
-                       named unknown_primer_output.txt
-        
-        hg_version -- refers to the human genome version i.e. hg19, hg38. 
-                                defaulted to hg19 
-        
-        
-        Returns
-        ------------------------------------------------------------------------
-        
-        amplicon_info -- amplicon information given in a tab deliminated format:
-                           primer_name, f_primer_seq, r_primer_seq,amplicon_size, 
-                           genomic_region, amplicon_GC%, number_products
-                           
-        Examples
-        ------------------------------------------------------------------------
-        from primer_tools import unknown_primer
-        
-        unknown_primer.unknown_primer("TAACAGATTGATGATGCATGAAATGGG,CCCATGAGTGGCTCCTAAAGCAGCTGC")
-        
-        unkown_primer.unknown_primer("primer_file.txt","primer_information.txt","hg19")
-
-        OR
-        
-        using click:
-            
-        python unknown_primer --input_file primer_file.txt --hg_version hg38
-                          
+        \b\n
+        A file or string can be used as input.
+        STRING: a forward and reverse primer deliminated by a comma.
+        FILE: deliminated file withe the primer name, F-primer seq anad R-primer seq
+        \b\n                    
+        Example:\b\n
+        python unknown_primer.py input.txt --output_file out.txt --hg_version hg38
+        python unknown_primer.py CGATCGTTGC-GCTAGTCGT --delimiters -
     '''
-    try:
-                  
-        # if input is a file
-        if os.path.isfile(input_file) is True:
-            with open(output_file,"w") as output:
-                header = ("Primer","F-Primer","R-Primer","Product_Size",
-                          "Genomic_Region","GC%","Number_PCR_Products"+"\n")
-                output.write("\t".join(header))
-                
-                for primer in open(input_file,"r"):
+    
+               
+    # if input is a file
+    if os.path.isfile(input_file) is True:
+        with open(output_file,"w") as output:
+            header = ("Primer","F-Primer","R-Primer","Product_Size",
+                        "Genomic_Region","GC%","Number_PCR_Products"+"\n")
+            output.write("\t".join(header))
+            
+            for primer in open(input_file,"r"):
+                try:
                     primer = primer.rstrip("\n").split("\t")
                     primer_name = primer[0]
                     f_primer = primer[1].upper()
@@ -82,47 +53,41 @@ def unknown_primer(input_file=None,
             
                     print amplicon_info
                     output.write(amplicon_info+"\n")
-               
-        # if input is a string    
-        if os.path.isfile(input_file) is False:
+                except IndexError as e:
+                    print e.args[0]+": Comma is defaulted to be used as a deliminator for the forward and reverse  primers. To override this use the --delimiters option"
+                except AmbiguousBaseError:
+                    print "Skipping, non-ATGC base found in: "+primer_name+"\n\ncomma is defaulted as a deliminate F&R primer. To override use the --delimiters option."
+                except NoAmplicon:
+                    print "No amplicon generated from isPCR for primer: "+primer_name
+                except MultipleAmplicons:
+                    print "The following primers generate more than one amplicon:"+primer_name
+            
+    # if input is a string    
+    if os.path.isfile(input_file) is False:
+        try:
             primer_name = "query"
-            f_primer = input_file.split(",")[0].upper()
-            r_primer = input_file.split(",")[1].upper()
+            f_primer = input_file.split(delimiters)[0].upper()
+            r_primer = input_file.split(delimiters)[1].upper()
             if re.search(r'[^ATCG,]',f_primer) or re.search(r'[^ATCG ]',r_primer):
                 raise AmbiguousBaseError
             amplicon_info = get_unknown_primer_info(primer_name,f_primer,r_primer,hg_version)
             print amplicon_info
+        
+        except IndexError as e:
+            print e.args[0]+": Comma is defaulted to be used as a deliminator for the forward and reverse  primers. To override this use the --delimiters option"
+        except AmbiguousBaseError:
+            print "Skipping, non-ATGC base found in: "+primer_name+"\n\ncomma is defaulted as a deliminate F&R primer. To override use the --delimiters option."
+        except NoAmplicon:
+            print "No amplicon generated from isPCR for primer: "+primer_name
+        except MultipleAmplicons:
+            print "The following primers generate more than one amplicon:"+primer_name
+
+
             
-    except IndexError as e:
-        print e.args[0]+": Only a comma can be used as a deliminator for the forward and reverse  primers"
-    except AmbiguousBaseError:
-        print "Skipping, non-ATGC base found in: "+primer_name+"\n\nonly a comma can be used to deliminate F&R primer"
-    except NoAmplicon:
-        print "No amplicon generated from isPCR for primer: "+primer_name
-    except MultipleAmplicons:
-        print "The following primers generate more than one amplicon:"+primer_name
-    
-    
     
 def get_unknown_primer_info(primer_name="query",f_primer=None,r_primer=None,hg_version="hg19"):
 	''' Generate an amplicon sequence from inputted primer sequences, which
-	    is further manipulated t derive inofrmation from the sequence
-	    
-	    Arguments
-	    --------------------------------------------------------------------
-	    primer_name -- defaulted to query
-	    
-	    f_primer -- forward primer sequence
-	    
-	    r-Primer -- reverse primer sequence
-	    
-            hg_version -- refers to the human genome version i.e. hg19, hg38. 
-                                defaulted to hg19 
-            
-            Returns
-            ------------------------------------------------------------------
-            output -- amplicon information derived from the web-scraping
-            
+	    is further manipulated t derive inofrmation from the sequence.
 	'''	
 	
         # ensure input is only bases

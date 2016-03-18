@@ -24,9 +24,9 @@ def get_seq(input_file, output_file="get_seq_output.txt", upstream=20, downstrea
 	FILE: deliminated file with the variant name and the variant position
          \b\n
         Example:\b\n
-           python get_seq_OOP.py chr1:169314424 --dash --hg_version hg38\n
-           python get_seq_OOP.py chr1:169314424,169314600\n
-           python get_seq_OOP.py input.txt --output_file output.txt --dash\n
+           python get_seq.py chr1:169314424 --dash --hg_version hg38\n
+           python get_seq.py chr1:169314424,169314600\n
+           python get_seq.py input.txt --output_file output.txt --dash\n
         '''
             
         # exit if any errors is found in the arguments for STRING input   
