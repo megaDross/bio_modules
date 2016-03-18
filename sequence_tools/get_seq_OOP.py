@@ -29,10 +29,13 @@ def get_seq(input_file, output_file="get_seq_output.txt", upstream=20, downstrea
            python get_seq_OOP.py input.txt --output_file output.txt --dash\n
         '''
             
-        # handle any errors in the arguments    
+        # exit if any errors is found in the arguments for STRING input   
         process = Processing(input_file,output_file,upstream,downstream,hg_version,delimiters,dash)
-        process.handle_argument_exception()
-        
+        error_check =  process.handle_argument_exception()
+        if error_check is not None:
+            print error_check
+            sys.exit(0)
+            
         # if input_file is a file
         if os.path.isfile(input_file) is True:
             output=open(output_file,"w")
@@ -42,7 +45,7 @@ def get_seq(input_file, output_file="get_seq_output.txt", upstream=20, downstrea
                 seq_name = changes[0]
                 var_pos = changes[1]
                 
-                # check each individual line of the file for errors
+                # check each individual line of the FILE for errors
                 process = Processing(var_pos,output_file,upstream,downstream,hg_version,delimiters,dash)
                 error_check = process.handle_argument_exception()
                 
@@ -62,15 +65,16 @@ def get_seq(input_file, output_file="get_seq_output.txt", upstream=20, downstrea
                     continue
                 
                 # concatenate the name and outputs from Class
-                sequence = "\t".join((seq_name,seq_range,answer))
+                sequence = " ".join((">",seq_name,var_pos,seq_range,"\n",answer,"\n"))
                 print sequence
-                output.write(sequence+"\n")
+                output.write(sequence)
                 
             output.close()
         
         
         # if input_file is a genomic range
         if os.path.isfile(input_file) is False and re.search(r",",input_file):
+            
             # remove unwanted characters from the range
             seq_range = re.sub(r'[^0-9:,]','',input_file) 
             sequence = process.get_region_info(seq_range)
@@ -80,6 +84,7 @@ def get_seq(input_file, output_file="get_seq_output.txt", upstream=20, downstrea
         
         # if input_file is a genomic position
         if os.path.isfile(input_file) is False:
+            
             # remove unwanted characters from var position
             var_pos = re.sub(r'[^0-9:]','',input_file)
             seq_range = process.create_region(var_pos)
@@ -107,6 +112,7 @@ class Processing():
     def handle_argument_exception(self):
             ''' Stores custom exceptions
             '''        
+            
             if self.hg_version not in ["hg16","hg17","hg18","hg19","hg38"]:
                 raise click.ClickException("Human genome version "+self.hg_version+" not recognised")
                 sys.exit(0)
@@ -114,12 +120,13 @@ class Processing():
             if os.path.isfile(self.input_file) is False:
                 if self.input_file.count(",") > 1:
                     return("too many commas in "+self.input_file)
-                
-                if self.input_file.count(":") < 1 or self.input_file.count(":") >1:
-                     return("A single colon is required to seperate"+ 
-                     "the chromosome and position numbers in the variant position: "+
-                     self.input_file)
-                               
+                    
+                    
+                if self.input_file.count(":") < 1 or self.input_file.count(":") >1 or "-" in self.input_file:
+                    return("A single colon is required to seperate "+ 
+                    "the chromosome and position numbers in the variant position: "+
+                    self.input_file)
+                                             
                 
     def create_region(self,var_pos):
             ''' use the variant position given, add and subtract the 
