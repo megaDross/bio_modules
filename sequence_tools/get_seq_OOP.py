@@ -8,19 +8,20 @@ import os, sys,re, urllib2, click
 @click.option('--output_file',default="get_seq_output.txt", help='default: get_seq_output.txt')
 @click.option('--upstream', default=20, help="number of bases to get upstream, default: 20") # default to an int makes option accept int only
 @click.option('--downstream',default=20, help="number of bases to get downstream, default: 20")
-@click.option('--hg_version',default="hg19", help="human geome version to get the sequence. default: hg19")
+@click.option('--hg_version',default="hg19", help="human geome version. default: hg19")
 @click.option('--delimiters',default="\t", help="file delimiter. default: tab")
 @click.option('--dash/--no_dash',default='n', help="dashes flanking the variant position base. default: --no_dash") # the slash in the option makes it a boolean
 
 def get_seq(input_file, output_file="get_seq_output.txt", upstream=20, downstream=20, hg_version="hg19", delimiters="\t",dash="n"):
                      
         ''' 
-        Produce a sequence using the UCSC DAS server from a variant postion and 
-        number of bases upstream and downstream from said position.
+        Produce a sequence using the UCSC DAS server from an inputted variant 
+	postion and defined number of bases upstream and downstream from said 
+	position.
          \b\n
-        A file or string can be used as input; STRING: either a variant position
-        or a genomic range deliminated by a comma FILE: deliminated file with the
-        varinat name and the variant position   
+        A file or string can be used as input.
+	STRING: either a variant position or a genomic range deliminated by a comma
+	FILE: deliminated file with the variant name and the variant position
          \b\n
         Example:\b\n
            python get_seq_OOP.py chr1:169314424 --dash --hg_version hg38\n
