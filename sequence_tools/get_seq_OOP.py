@@ -3,57 +3,29 @@ import os, sys,re, urllib2, click
 
 #### exception handeling and commenting still needed
 
-@click.command()
+@click.command('get_seq')
 @click.argument('input_file',nargs=1)
-@click.option('--output_file',default="get_seq_output.txt")
-@click.option('--upstream', default=20) # default to an int makes option accept int only
-@click.option('--downstream',default=20)
-@click.option('--hg_version',default="hg19")
-@click.option('--delimiters',default="\t")
-@click.option('--dash/--no_dash',default='n') # the slash in the option makes it a boolean
+@click.option('--output_file',default="get_seq_output.txt", help='default: get_seq_output.txt')
+@click.option('--upstream', default=20, help="number of bases to get upstream, default: 20") # default to an int makes option accept int only
+@click.option('--downstream',default=20, help="number of bases to get downstream, default: 20")
+@click.option('--hg_version',default="hg19", help="human geome version to get the sequence. default: hg19")
+@click.option('--delimiters',default="\t", help="file delimiter. default: tab")
+@click.option('--dash/--no_dash',default='n', help="dashes flanking the variant position base. default: --no_dash") # the slash in the option makes it a boolean
 
 def get_seq(input_file, output_file="get_seq_output.txt", upstream=20, downstream=20, hg_version="hg19", delimiters="\t",dash="n"):
                      
-        ''' Produce a sequence using the UCSC DAS server from a variant postion and 
-            number of bases upstream and downstream from said position.
-        
-            Parameters
-            --------------------------------------------------------------------
-            input_file -- a variant name and variant position tab deliminated file
-            
-            output_file -- created only if the input is a file opposed to a string
-                           if no name is sepcified for output_file, then it is 
-                           automatically named get_seq_output.txt
-                           
-            upstream -- number of bases to get upstream from the given variant position
-            
-            downstream -- number of bases to get downstream from the given varant position
-            
-            hg_version -- the version of the human genome to scrape the sequence from
-                          i.e. hg19, hg38
-                          
-            delimiters -- defaulted to tab
-                          
-            dash -- choose whether to include dashes flanking the variant positions base
-                    or not i.e. n = no, y = yes. defaulted to n
-                          
-            Returns
-            --------------------------------------------------------------------
-            sequence -- sequence associated with the given seq_range AKA genomic range
-                        with a dash flanking the base associated with the variant position
-                        
-            Examples
-            --------------------------------------------------------------------
-            from seuence_tools import get_seq.py
-            
-            get_seq.get_seq("15:48729400")
-            
-            OR
-            
-            using Click:
-            
-            python get_seq.py 15:48729400 --hg_version hg38 --no_dash --upstream 100 --downstream 100
-            
+        ''' 
+        Produce a sequence using the UCSC DAS server from a variant postion and 
+        number of bases upstream and downstream from said position.
+         \b\n
+        A file or string can be used as input; STRING: either a variant position
+        or a genomic range deliminated by a comma FILE: deliminated file with the
+        varinat name and the variant position   
+         \b\n
+        Example:\b\n
+           python get_seq_OOP.py chr1:169314424 --dash --hg_version hg38\n
+           python get_seq_OOP.py chr1:169314424,169314600\n
+           python get_seq_OOP.py input.txt --output_file output.txt --dash\n
         '''
             
         # handle any errors in the arguments    
