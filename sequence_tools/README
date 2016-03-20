@@ -1,0 +1,41 @@
+
+
+get_seq()	
+	|	determines whether or not the input is a STRING or a FILE.
+	|	STRING: creates a list [name_var,\t,var_pos/genomic_region]
+	|		and inputs it into get_seq_data()
+	|	FILE: opens the file and it is parsed into get_seq_data(). the
+	|	      returned list is iterated through so the contents can be
+	|	      written to an output_file (ONLY works if --output_file is
+	|	      utilised).
+	V
+get_seq_data()
+ |    |  |	iterate through each line, split by the delimiter (name & genomic 
+ |    |  |	pos/range) and parse into the functions contained within the 
+ |    |  |	processing class (in order; 1,2,3). handle_argument_exceptions are
+ |    |  |      handled here. create_region() is only utilised if a genomic range
+ |3   |2 |1	is inputted instead of a genomic position. 
+ |    |	 |
+ |    |	 V
+ |    |	handle_argument_exceptions()	
+ |    |                                 each line is determined whether it contains 
+ |    |					a WrongHGversion; a version of the human
+ |    |					genome which is unsupported by UCSC, a 
+ |    |					TypographyError; less/more than one colon
+ |    |					&/or more than one comma or dash, ErrorUCSC;
+ |    |					UCSC DAS server returns nothing, if so raise
+ |    |					exception
+ |    V
+ |   create_region()	
+ |                      construct a genomic range from a genomic position by subtracting
+ |			and adding the integers associated with the upstream and the
+ |			downstream variable respectively and place a comma between the
+ |			two resulting integers i.e 1:123456 --> 1:123436,123476
+ V
+get_region_info()	
+			use the hg_version and the created/inputted genomic range into 
+			the UCSC DAS server link, filter the returned info for the 
+			sequence only and determine whether to flank the genomic
+			position with a dash (if --dash BOOLEAN is selected) and return
+			to get_seq() and print to the screen.
+ 

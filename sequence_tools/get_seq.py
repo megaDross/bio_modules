@@ -16,15 +16,17 @@ class ErrorUCSC(Exception):
 @click.option('--output_file',default=None, help='give an output file, requires input to be a file')
 @click.option('--upstream', default=20, help="number of bases to get upstream, default: 20") # default to an int makes option accept int only
 @click.option('--downstream',default=20, help="number of bases to get downstream, default: 20")
-@click.option('--hg_version',default="hg19", help="human geome version. default: hg19")
+@click.option('--hg_version',default="hg19", help="human genome version. default: hg19")
 @click.option('--delimiters',default="\t", help="file delimiter. default: tab")
 @click.option('--dash/--no_dash',default='n', help="dashes flanking the variant position base. default: --no_dash") # the slash in the option makes it a boolean
 
 def get_seq(input_file, output_file=None, upstream=20, downstream=20, hg_version="hg19", delimiters="\t",dash="n"):
         ''' 
-        Produce a sequence using the UCSC DAS server from an inputted variant 
+        Produce a sequence using the UCSC DAS server from an inputted genomic 
 	postion and defined number of bases upstream and downstream from said 
-	position.
+	position. A genomic range can be used in place of a genomic position
+	and renders the upstream/downstream options irrelevant. An input file
+	can have a mixture of genomic positions and genomic ranges.
          \b\n
         A file or string can be used as input.
 	STRING: either a variant position or a genomic range deliminated by a comma
@@ -37,7 +39,7 @@ def get_seq(input_file, output_file=None, upstream=20, downstream=20, hg_version
         '''
         # if input is not a file, create a list
         if os.path.isfile(input_file) is False:
-            input_file = ["query"+"\t"+input_file]
+            input_file = ["query"+delimiters+input_file]
             return get_seq_data(input_file, output_file, upstream, downstream, hg_version, delimiters,dash)        
         
         # if input is a file, open file
@@ -83,7 +85,7 @@ def get_seq_data(input_file, output_file, upstream, downstream, hg_version, deli
                 else:   
                     seq_range = process.create_region(var_pos)
                 
-                # use UCSC isPCR tool to get the genomic ranges sequence
+                # use UCSC to get the genomic ranges sequence
                 answer = process.get_region_info(seq_range)
                 
                 # concatenate the name and outputs from Class
@@ -98,7 +100,7 @@ def get_seq_data(input_file, output_file, upstream, downstream, hg_version, deli
                 print("Only one colon and no more than one comma/dash is allowed for "
                         +var_pos+" in "+seq_name+"\n")    
             except ErrorUCSC:
-                print(var_pos+" in "+seq_name+" is not recognised by UCSCs isPCR tool"+"\n")
+                print(var_pos+" in "+seq_name+" is not recognised by UCSC"+"\n")
             
         return sequence_data
             
