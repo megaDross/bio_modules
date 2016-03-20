@@ -1,8 +1,6 @@
 from __future__ import division, print_function
 import os, sys,re, urllib2, click
 
-#### error handeling of "variant not recognised by UCSC" may need to be rethought
-
 class WrongHGversion(Exception):
     pass
 
@@ -15,7 +13,7 @@ class ErrorUCSC(Exception):
     
 @click.command('get_seq')
 @click.argument('input_file',nargs=1)
-@click.option('--output_file',default=None, help='default: get_seq_output.txt')
+@click.option('--output_file',default=None, help='give an output file, requires input to be a file')
 @click.option('--upstream', default=20, help="number of bases to get upstream, default: 20") # default to an int makes option accept int only
 @click.option('--downstream',default=20, help="number of bases to get downstream, default: 20")
 @click.option('--hg_version',default="hg19", help="human geome version. default: hg19")
@@ -40,12 +38,12 @@ def get_seq(input_file, output_file=None, upstream=20, downstream=20, hg_version
         # if input is not a file, create a list
         if os.path.isfile(input_file) is False:
             input_file = ["query"+"\t"+input_file]
-            return get_seq_data(input_file, output_file, upstream, downstream, hg_version, delimiters,dash,genomic_range)        
+            return get_seq_data(input_file, output_file, upstream, downstream, hg_version, delimiters,dash)        
         
         # if input is a file, open file
         if os.path.isfile(input_file) is True:
             input_file = open(input_file,"r+")
-            sequence_data = get_seq_data(input_file, output_file, upstream, downstream, hg_version, delimiters,dash,genomic_range)
+            sequence_data = get_seq_data(input_file, output_file, upstream, downstream, hg_version, delimiters,dash)
             
             # if the --output_file option is used, write the sequence_data to a file
             if output_file is not None:
@@ -60,19 +58,21 @@ def get_seq(input_file, output_file=None, upstream=20, downstream=20, hg_version
         
 
 
-def get_seq_data(input_file, output_file, upstream, downstream, hg_version, delimiters,dash,genomic_range):
+def get_seq_data(input_file, output_file, upstream, downstream, hg_version, delimiters,dash):
         '''
-        loop
+        Read get_seq description, should be here (for the sake of click --help page it isn't). 
         ''' 
+        # adds all scrapped data to a list, which is written to an output file if option is selected
         sequence_data = []
         
         for changes in input_file:
             try:
+                # split data up into name and position, remove bad characters from position
                 changes = changes.split(delimiters)
                 seq_name = changes[0]
                 var_pos = re.sub(r'[^0-9:,-]','',changes[1])
                 
-                # check each individual line of the FILE for errors
+                # check each individual line of the FILE for custom errors
                 process = Processing(var_pos,output_file,upstream,downstream,hg_version,delimiters,dash)
                 error_check = process.handle_argument_exception()
                 
@@ -90,7 +90,6 @@ def get_seq_data(input_file, output_file, upstream, downstream, hg_version, deli
                 sequence = " ".join((">",seq_name,var_pos,seq_range,"\n",answer,"\n"))
                 print(sequence)
                 sequence_data.append(sequence)
-                
                 
             except WrongHGversion:
                 print("Human genome version "+hg_version+" not recognised")
