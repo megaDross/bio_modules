@@ -1,19 +1,28 @@
-from __future__ import division
+from __future__ import division, print_function
 import os, sys,re, urllib2, click
 
 #### error handeling of "variant not recognised by UCSC" may need to be rethought
 
+class WrongHGversion(Exception):
+    pass
+
+class TypographyError(Exception):
+    pass
+    
+class ErrorUCSC(Exception):
+    pass
+    
+    
 @click.command('get_seq')
 @click.argument('input_file',nargs=1)
-@click.option('--output_file',default="get_seq_output.txt", help='default: get_seq_output.txt')
+@click.option('--output_file',default=None, help='default: get_seq_output.txt')
 @click.option('--upstream', default=20, help="number of bases to get upstream, default: 20") # default to an int makes option accept int only
 @click.option('--downstream',default=20, help="number of bases to get downstream, default: 20")
 @click.option('--hg_version',default="hg19", help="human geome version. default: hg19")
 @click.option('--delimiters',default="\t", help="file delimiter. default: tab")
 @click.option('--dash/--no_dash',default='n', help="dashes flanking the variant position base. default: --no_dash") # the slash in the option makes it a boolean
 
-def get_seq(input_file, output_file="get_seq_output.txt", upstream=20, downstream=20, hg_version="hg19", delimiters="\t",dash="n"):
-                     
+def get_seq(input_file, output_file=None, upstream=20, downstream=20, hg_version="hg19", delimiters="\t",dash="n"):
         ''' 
         Produce a sequence using the UCSC DAS server from an inputted variant 
 	postion and defined number of bases upstream and downstream from said 
@@ -28,74 +37,73 @@ def get_seq(input_file, output_file="get_seq_output.txt", upstream=20, downstrea
            python get_seq.py chr1:169314424,169314600\n
            python get_seq.py input.txt --output_file output.txt --dash\n
         '''
-            
-        # exit if any errors is found in the arguments for STRING input   
-        process = Processing(input_file,output_file,upstream,downstream,hg_version,delimiters,dash)
-        error_check =  process.handle_argument_exception()
-        if error_check is not None:
-            print error_check
-            sys.exit(0)
-            
-        # if input_file is a file
+        # if input is not a file, create a list
+        if os.path.isfile(input_file) is False:
+            input_file = ["query"+"\t"+input_file]
+            return get_seq_data(input_file, output_file, upstream, downstream, hg_version, delimiters,dash,genomic_range)        
+        
+        # if input is a file, open file
         if os.path.isfile(input_file) is True:
-            output=open(output_file,"w")
-            for changes in open(input_file,"r+"):
+            input_file = open(input_file,"r+")
+            sequence_data = get_seq_data(input_file, output_file, upstream, downstream, hg_version, delimiters,dash,genomic_range)
+            
+            # if the --output_file option is used, write the sequence_data to a file
+            if output_file is not None:
+                output = open(output_file,"w")
+                for seqs in sequence_data:
+                    output.write(seqs)
+                output.close()
+                return output
                 
+            return sequence_data
+            
+        
+
+
+def get_seq_data(input_file, output_file, upstream, downstream, hg_version, delimiters,dash,genomic_range):
+        '''
+        loop
+        ''' 
+        sequence_data = []
+        
+        for changes in input_file:
+            try:
                 changes = changes.split(delimiters)
                 seq_name = changes[0]
-                var_pos = changes[1]
+                var_pos = re.sub(r'[^0-9:,-]','',changes[1])
                 
                 # check each individual line of the FILE for errors
                 process = Processing(var_pos,output_file,upstream,downstream,hg_version,delimiters,dash)
                 error_check = process.handle_argument_exception()
                 
-                # if error is returned
-                if error_check is not None:
-                    print error_check
-                    continue
+                # check if var_pos is a genomic region, else construct one from var_pos
+                if re.search(r"[,-]",var_pos):
+                    var_pos = var_pos.replace("-",",")
+                    seq_range = var_pos
+                else:   
+                    seq_range = process.create_region(var_pos)
                 
-                # if create_region is unsuccessful then move to next element
-                seq_range = process.create_region(var_pos)
-                if seq_range is None:
-                    continue
-                
-                # if get_region_info is unsuccessful then move to next element
+                # use UCSC isPCR tool to get the genomic ranges sequence
                 answer = process.get_region_info(seq_range)
-                if answer is None:
-                    continue
                 
                 # concatenate the name and outputs from Class
                 sequence = " ".join((">",seq_name,var_pos,seq_range,"\n",answer,"\n"))
-                print sequence
-                output.write(sequence)
+                print(sequence)
+                sequence_data.append(sequence)
                 
-            output.close()
-        
-        
-        # if input_file is a genomic range
-        if os.path.isfile(input_file) is False and re.search(r"[,-]",input_file):
+                
+            except WrongHGversion:
+                print("Human genome version "+hg_version+" not recognised")
+                sys.exit(0)
+            except TypographyError:
+                print("Only one colon and no more than one comma/dash is allowed for "
+                        +var_pos+" in "+seq_name+"\n")    
+            except ErrorUCSC:
+                print(var_pos+" in "+seq_name+" is not recognised by UCSCs isPCR tool"+"\n")
             
-            # remove unwanted characters from the range
-            seq_range = re.sub(r'[^0-9:,-]','',input_file) 
-            if "-" in seq_range:
-                seq_range = seq_range.replace("-",",")
-            sequence = process.get_region_info(seq_range)
-            click.echo(sequence)
-            return sequence
-        
-        
-        # if input_file is a genomic position
-        if os.path.isfile(input_file) is False:
+        return sequence_data
             
-            # remove unwanted characters from var position
-            var_pos = re.sub(r'[^0-9:]','',input_file)
-            seq_range = process.create_region(var_pos)
-            sequence = process.get_region_info(seq_range)
-            click.echo(sequence)
-            return sequence
-
-
-
+        
 class Processing():
 
     def __init__(self,input_file,output_file,
@@ -116,18 +124,18 @@ class Processing():
             '''        
             
             if self.hg_version not in ["hg16","hg17","hg18","hg19","hg38"]:
-                raise click.ClickException("Human genome version "+self.hg_version+" not recognised")
+                raise WrongHGversion("Human genome version "+self.hg_version+" not recognised")
                 sys.exit(0)
                 
-            if os.path.isfile(self.input_file) is False:
-                if self.input_file.count(",") > 1:
-                    return("too many commas in "+self.input_file)
-                    
-                    
-                if self.input_file.count(":") < 1 or self.input_file.count(":") >1:
-                    return("A single colon is required to seperate "+ 
-                    "the chromosome and position numbers in the variant position: "+
-                    self.input_file)
+            
+            if self.input_file.count(",") > 1 or self.input_file.count("-") >1:
+                raise TypographyError("too many commas in "+self.input_file)
+                
+                
+            if self.input_file.count(":") < 1 or self.input_file.count(":") >1:
+                raise TypographyError("A single colon is required to seperate "+ 
+                "the chromosome and position numbers in the variant position: "+
+                self.input_file)
                                              
                 
     def create_region(self,var_pos):
@@ -155,24 +163,21 @@ class Processing():
         search = test.read()
         refined_search = re.findall(r"[tacg{5}].*",search)
         confirm_error = re.findall(r"nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn",search)
+        if confirm_error:
+            raise ErrorUCSC
         
-            
         # filters for elements which only contain nucleotides and concatenate
         seqs = [s for s in refined_search if not s.strip("tacg")] 
         seq = "".join(seqs)
         
         
         # flank the base associated with the variant position with dashes
-        try:
-            if self.dash:
-                downstream = seq[:self.upstream]
-                var = seq[self.upstream]
-                upstream = seq[self.upstream+1:len(seq)]
-                answer = "".join((downstream,"-",var,"-",upstream))
-                return answer
-        
-        except IndexError:
-            return "Variant not recognised by UCSC"
+        if self.dash:
+            downstream = seq[:self.upstream]
+            var = seq[self.upstream]
+            upstream = seq[self.upstream+1:len(seq)]
+            answer = "".join((downstream,"-",var,"-",upstream))
+            return answer
         
         # return sequence without dashes
         if not self.dash:
