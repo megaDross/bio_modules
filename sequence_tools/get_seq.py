@@ -19,8 +19,9 @@ class ErrorUCSC(Exception):
 @click.option('--hg_version',default="hg19", help="human genome version. default: hg19")
 @click.option('--delimiters',default="\t", help="file delimiter. default: tab")
 @click.option('--dash/--no_dash',default='n', help="dashes flanking the variant position base. default: --no_dash") # the slash in the option makes it a boolean
+@click.option('--header/--no_header',default='n',help="header gives metadata i.e. sequence name etc.")
 
-def get_seq(input_file, output_file=None, upstream=20, downstream=20, hg_version="hg19", delimiters="\t",dash="n"):
+def get_seq(input_file, output_file=None, upstream=20, downstream=20, hg_version="hg19", delimiters="\t",dash="n",header="n"):
         ''' 
         Produce a sequence using the UCSC DAS server from an inputted genomic 
 	postion and defined number of bases upstream and downstream from said 
@@ -40,12 +41,12 @@ def get_seq(input_file, output_file=None, upstream=20, downstream=20, hg_version
         # if input is not a file, create a list
         if os.path.isfile(input_file) is False:
             input_file = ["query"+delimiters+input_file]
-            return get_seq_data(input_file, output_file, upstream, downstream, hg_version, delimiters,dash)        
+            return get_seq_data(input_file, output_file, upstream, downstream, hg_version, delimiters,dash,header)        
         
         # if input is a file, open file
         if os.path.isfile(input_file) is True:
             input_file = open(input_file,"r+")
-            sequence_data = get_seq_data(input_file, output_file, upstream, downstream, hg_version, delimiters,dash)
+            sequence_data = get_seq_data(input_file, output_file, upstream, downstream, hg_version, delimiters,dash,header)
             
             # if the --output_file option is used, write the sequence_data to a file
             if output_file is not None:
@@ -60,7 +61,7 @@ def get_seq(input_file, output_file=None, upstream=20, downstream=20, hg_version
         
 
 
-def get_seq_data(input_file, output_file, upstream, downstream, hg_version, delimiters,dash):
+def get_seq_data(input_file, output_file, upstream, downstream, hg_version, delimiters,dash,header):
         '''
         Read get_seq description, should be here (for the sake of click --help page it isn't). 
         ''' 
@@ -88,8 +89,11 @@ def get_seq_data(input_file, output_file, upstream, downstream, hg_version, deli
                 # use UCSC to get the genomic ranges sequence
                 answer = process.get_region_info(seq_range)
                 
-                # concatenate the name and outputs from Class
-                sequence = " ".join((">",seq_name,var_pos,seq_range,"\n",answer,"\n"))
+                # concatenate the name and outputs from Class, determine whether to add a header
+                if header:
+                    sequence = " ".join((">",seq_name,var_pos,seq_range,"\n",answer,"\n"))
+                if not header:
+                    sequence = "".join((answer,"\n"))
                 print(sequence)
                 sequence_data.append(sequence)
                 
