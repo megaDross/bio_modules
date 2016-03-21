@@ -1,6 +1,9 @@
 from __future__ import division
 import requests,re, os, bs4, click
 
+
+# HG VERSION ALWAYS HG19 DESPITE WHAT YOU USE AS THE ARGUMENT FOR --HG_VERSION
+
 class AmbiguousBaseError(Exception):
     pass
     
@@ -78,7 +81,7 @@ def process_primer_info(input_file,output_file,hg_version,delimiters):
             print "The following primers generate more than one amplicon:"+primer_name
         
     
-def get_unknown_primer_info(primer_name="query",f_primer=None,r_primer=None,hg_version="hg19"):
+def get_unknown_primer_info(primer_name="query",f_primer=None,r_primer=None,hg_version=None):
 	''' Generate an amplicon sequence from inputted primer sequences, which
 	    is further manipulated t derive inofrmation from the sequence.
 	'''	
@@ -86,7 +89,7 @@ def get_unknown_primer_info(primer_name="query",f_primer=None,r_primer=None,hg_v
         # ensure input is only bases
         if re.search(r'[^ATCG]',f_primer)or re.search(r'[^ATCG]',r_primer):
             raise AmbiguousBaseError("Primers must contain ATGC bases only")
-            
+        
             
         # generate amplicon sequence
         req = requests.get("http://genome.ucsc.edu/cgi-bin/hgPcr?hg_version="+hg_version+\
