@@ -34,8 +34,8 @@ def get_seq(input_file, output_file=None, upstream=20, downstream=20, hg_version
 	FILE: deliminated file with the variant name and the variant position
          \b\n
         Example:\b\n
-           get_seq chr1:169314424 --dash --hg_version hg38\n
-           get_seq chr1:169314424,169314600\n
+           get_seq chr1:169314424 --dash --upstream 200 --downstream 200\n
+           get_seq chr1:169314424,169314600 --hg_version hg38\n
            get_seq input.txt --output_file output.txt --header --delimiters ,\n
         '''
         # if input is not a file, create a list
