@@ -74,7 +74,7 @@ def process_primer_info(input_file,output_file,hg_version,delimiters):
     for primer in input_file:
         try:
             # splits up data into primer name, forward primer and reverse primer
-            primer = primer.split(delimiters)
+            primer = primer.rstrip("\n\r").split(delimiters)
             primer_name = primer[0]
             f_primer = primer[1].upper()
             r_primer = primer[2].upper()
@@ -133,7 +133,7 @@ def get_unknown_primer_info(hg_version, primer_name="query",f_primer=None,r_prim
         
         # return scraped information
         output = (primer_name,f_primer,r_primer,str(amplicon_size),
-                  region,str(gc_percent),"%",str(product_number))
+                  region,str(gc_percent)+"%",str(product_number))
         return "\t".join(output)
 
 
