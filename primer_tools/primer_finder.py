@@ -125,7 +125,7 @@ def match(var_pos,primer_info,var_name=None):
         variant_distance_f = i.split(" ")[2]
         variant_distance_r = i.split(" ")[3]    
         if var_pos == primer_pos:
-            match = "\t".join((var_name,primer_name, variant_distance_f,variant_distance_r))
+            match = "\t".join((var_name,primer_name, variant_distance_f,variant_distance_r,"\n"))
             answer.append(match)  
     
     # returns no match error if no primer pair is found, else return answer as string
