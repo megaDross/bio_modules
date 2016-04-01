@@ -1,6 +1,6 @@
 import openpyxl, os
 from openpyxl.drawing.image import Image
-from get_variant_information import *
+from ideas.get_variant_information import *
 
 #1- add better comments
 #2- filenames that are the same and if true then add a "gene2" some where
@@ -21,25 +21,31 @@ def produce_variant_report(variant_alias_list):
     variants = open_variant_validation_spreadsheets()[0]
     mutations = open_variant_validation_spreadsheets()[1]
     
+    # process the input differently if it is a file or not
     if variant_alias_list.endswith(".txt"):
         var_alias_list = [ var.rstrip() for var in open(variant_alias_list)]
     else:
         var_alias_list = [variant_alias_list]
     
-    for var_alias in var_alias_list: 
+    # for each variant alias...
+    for var_alias in var_alias_list:
+        
+        # get the row number in the spreadsheet where the variant alias resides.
+        # use row number to extract the variant information and store in the 
+        # dictionary in get_variant_information
         variant_row = get_row(var_alias,variants)
         variant_info = get_variant_info(variant_row,variants,variant_header)
 
+        # get mutation information for the given variant alias, in a similiar fashion
+        # as above. Only works if the alias has a mutation ID.
         if variant_header.get("Mutation_ID") != "-":  
             mut_row = get_row(variant_header.get("Mutation_ID"),mutations,2)
             mut_info = get_variant_info(mut_row,mutations,mutation_header)
         
+        # with the collected information, fill out the template report. 
         fill_report(template,templates,var_alias)
         
-        transcript_id = variant_header.get("HGVSc")
-        hgvs = transcript_id.split(":")[1]
-        
-
+        # fill out the comment section in a manner dependent upon the variant category
         if (variant_header.get("Category") == "ClinVarPathogenic") or ("HGMD"):
             hgmd_clinvar_comment(templates)
             templates["B8"] = "Exon"
@@ -50,6 +56,9 @@ def produce_variant_report(variant_alias_list):
             lof_comment(templates)
             templates["B8"] = "Exon"
             
+        # specific comment is required for spice variants
+        transcript_id = variant_header.get("HGVSc")
+        hgvs = transcript_id.split(":")[1]
         if "-" in hgvs or "+" in hgvs:
             templates["E16"] = "Splicing variant. This will require further investigation"
             templates["B8"] = "Intron"
@@ -63,6 +72,8 @@ def fill_report(template,templates,var_alias):
     ''' Append the information placed into the variant_header dict into the 
         template report
     '''
+    # uses the information stored in the get_variant_information dicts to write 
+    # to the template report.
     templates["N12"]= var_alias
     templates["E4"] =variant_header.get("Sample_Name")
     templates["E7"] = variant_header.get("Gene")
@@ -76,6 +87,8 @@ def fill_report(template,templates,var_alias):
     str(variant_header.get("Allele_Frequency_ExAC(%)"))+"       "+str(variant_header.get("Allele_Frequency_dbSNP(%)"))
     templates["E15"] =variant_header.get("Variant_Found")
     
+    # tries to find an image with a similar name to the variant alias and stores it in 
+    # the report.
     for sequences in os.listdir("C:\\cygwin64\\home\\dross11\\Playground\\sequences"):
         if var_alias in sequences:
             sequences = "C:\\cygwin64\\home\\dross11\\Playground\\sequences\\"+sequences

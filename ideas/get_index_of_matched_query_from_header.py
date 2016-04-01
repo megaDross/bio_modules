@@ -1,6 +1,10 @@
 sam_file = "mixup_sample_investigation.txt"
 vcf = "var.both.TAAD_UK_Nov2015.filters.vcf"    # doesn't contain anything like 23 etc
 
+# this is designed to work with VCF headers containing sample names
+# if a sample name in a given list matches the one in the VCF header then,
+# the index of the split header is returned. 
+
 sam_names = ["24BO-C0911","24SY0793",
             "22GK1188","24HS1554",
             "21-GW-0002","23ND1907",

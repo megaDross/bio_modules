@@ -1,37 +1,38 @@
 import openpyxl
 
 # variant found spits out the last one
+variant_header = {}
+mutation_header = {}
 
-variant_header = {
-"Sample_Name": '', "Gene": '', "UID/Index":'',
-"Exon_No.": '', "Intron_No.": '', "HGVSc": '',
-"HGVSp": '', "Variant_Position": '',
-"Allele_Balance": '', "Allele_Depth(REF)": '',
-"Allele_Depth(ALT)": '', "Allele_Frequency_ESP(%)": '',
-"Allele_Frequency_ExAC(%)": '', "Allele_Frequency_dbSNP(%)": '',
-"Variant_Found": '', "Mutation_ID": '',"Reason for Variant class change": '',
-"Category":'', "Variant_Alias":'', "GC%_Amplicon":'', "Plate":''
-}
-
-mutation_header = {
-"Report Variant class field": '', "First Published": '',
-"Reason for Variant class change": '', "Date of variant class change": '',
-"Variant Class": ''
-}
-
-
-
-def open_variant_validation_spreadsheets():
+def open_variant_validation_spreadsheets(excel_sheet="All_Yale_&_UK_Variants.xlsx",
+                                         tab1='All_Variants', tab2="Mutations ID",
+                                         header_row=2):
     '''Open the Yale & UK TAAD variant validation workbook and
        the relevant variant and mutation sheets
     '''    
+    # open spreadsheets and tabs within
+    wb = openpyxl.load_workbook(excel_sheet,data_only=True)
+    variants = wb.get_sheet_by_name(tab1) # or wb["All_variants"]
+    mutations = wb[tab2]
     
-    wb = openpyxl.load_workbook("All_Yale_&_UK_Variants.xlsx",data_only=True)
-    variants = wb.get_sheet_by_name('All_Variants') # or wb["All_variants"]
-    mutations = wb["Mutations ID"]
+    # use the headers of the given tabs to create a dictionary
+    create_header_dicts(mutations,mutation_header)
+    create_header_dicts(variants,variant_header)
+    
     return variants, mutations
           
-                
+          
+def create_header_dicts(tab,dict_name,header_row=2):
+    '''Store each entry in a header in a given spreadsheet as
+       a key with no value. 
+    '''
+    for column_number in range(1,100):
+        header = tab.cell(row=2,column=column_number).value
+        if header is None:
+            break
+        dict_name[header] = ''
+    
+  
                           
 def get_row(query,sheet,column_num=1):
     ''' Search the database/sheet and match with the query/variant_alias
@@ -55,3 +56,5 @@ def get_variant_info(row,sheet,dic):
             if dic.get(column) is None:
                 dic[column] = "-"
     return dic
+    
+

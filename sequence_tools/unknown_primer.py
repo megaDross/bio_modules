@@ -1,6 +1,6 @@
 from __future__ import division
 import requests,re, os, bs4, click
-from useful import gc_content
+from useful_tools import useful
 
 
 class AmbiguousBaseError(Exception):
@@ -125,7 +125,7 @@ def get_unknown_primer_info(hg_version, primer_name="query",f_primer=None,r_prim
         split_header =  amplicon_header[1:].split(" ")
         region = split_header[0].replace("+","-").replace("chr","")
         amplicon_size = split_header[1]
-        gc_percent = gc_content(amplicon)
+        gc_percent = useful.gc_content(amplicon)
         product_number = len(pre_elements)
         if product_number > 1:
             raise MultipleAmplicons        
