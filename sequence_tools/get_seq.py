@@ -38,6 +38,7 @@ def get_seq(input_file, output_file=None, upstream=20, downstream=20, hg_version
            get_seq chr1:169314424,169314600 --hg_version hg38\n
            get_seq input.txt --output_file output.txt --header --delimiters ,\n
         '''
+        
         # if input is not a file, create a list
         if os.path.isfile(input_file) is False:
             input_file = ["query"+delimiters+input_file]
@@ -57,8 +58,6 @@ def get_seq(input_file, output_file=None, upstream=20, downstream=20, hg_version
                 return output
                 
             return sequence_data
-            
-        
 
 
 def get_seq_data(input_file, output_file, upstream, downstream, hg_version, delimiters,dash,header):

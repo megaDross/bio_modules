@@ -21,7 +21,7 @@ class IncorrectVariant(Exception):
 @click.option('--input_file',nargs=1, help="file used as input")
 @click.option('--output_file',default=None,help="only available if the --input_file option is used")
 @click.option('--hg_version',default="hg19",help="human genome version. default: hg19")
-@click.option('--delimiters',default="\t",help="--inut_file option only. default: tab")
+@click.option('--delimiters',default="\t",help="--input_file option only. default: tab")
 
 def unknown_primer(primers=None, input_file=None,output_file=None,
                    hg_version="hg19",delimiters=","):

@@ -2,6 +2,8 @@ import openpyxl, os
 from openpyxl.drawing.image import Image
 from ideas.get_variant_information import *
 
+
+# THIS WOULD WORK MUCH BETTER AS AN OOP
 #1- add better comments
 #2- filenames that are the same and if true then add a "gene2" some where
 
@@ -62,8 +64,9 @@ def produce_variant_report(variant_alias_list):
         if "-" in hgvs or "+" in hgvs:
             templates["E16"] = "Splicing variant. This will require further investigation"
             templates["B8"] = "Intron"
+            templates["E8"] = variant_header.get("Intron_No.")
         
-        template.save(variant_header.get("Sample_Name")+"_"+variant_header.get("Variant_Alias")+"_"+"VariantConfirmationReport"+".xlsx")
+        template.save(str(variant_header.get("Sample_Name"))+"_"+str(variant_header.get("Variant_Alias"))+"_"+"VariantConfirmationReport"+".xlsx")
         
 
 
@@ -72,6 +75,12 @@ def fill_report(template,templates,var_alias):
     ''' Append the information placed into the variant_header dict into the 
         template report
     '''
+    
+    HGVSp = variant_header.get("HGVSp")
+    if HGVSp == 0:
+        HGVSp = " "
+        
+    print var_alias
     # uses the information stored in the get_variant_information dicts to write 
     # to the template report.
     templates["N12"]= var_alias
@@ -79,7 +88,7 @@ def fill_report(template,templates,var_alias):
     templates["E7"] = variant_header.get("Gene")
     templates["E8"] = variant_header.get("Exon_No.")
     templates["E9"] = variant_header.get("HGVSc")
-    templates["E10"] =variant_header.get("HGVSp")
+    templates["E10"] = HGVSp
     templates["E11"] =variant_header.get("Variant_Position")
     templates["E12"] =variant_header.get("Allele_Balance")
     templates["E13"] =str(variant_header.get ("Allele_Depth(REF)"))+","+str(variant_header.get("Allele_Depth(ALT)"))
@@ -89,13 +98,35 @@ def fill_report(template,templates,var_alias):
     
     # tries to find an image with a similar name to the variant alias and stores it in 
     # the report.
-    for sequences in os.listdir("C:\\cygwin64\\home\\dross11\\Playground\\sequences"):
-        if var_alias in sequences:
-            sequences = "C:\\cygwin64\\home\\dross11\\Playground\\sequences\\"+sequences
-            img = Image(sequences)
-            templates.add_image(img,"B36")
+    #for sequences in os.listdir("C:\\cygwin64\\home\\dross11\\Playground\\sequences\\Reports"):
+    #    if var_alias in sequences:
+    #        sequences = "C:\\cygwin64\\home\\dross11\\Playground\\sequences\\Reports\\"+sequences
+    #        img = Image(sequences)
+    #        templates.add_image(img,"B36")
+    image_path = "C:\\cygwin64\\home\\dross11\\Playground\\Reports\\UK_Sanger_images"
     
-    template.save(variant_header.get("Sample_Name")+"_"+variant_header.get("Variant_Alias")+"_"+"VariantConfirmationReport"+".xlsx")
+
+    
+    # ADDS EVERY FUCKING IMAGE!!! EVEN THOUGH THE BELOW CONDITION IS MET
+    # trying to add to dict then get from dict to fucking xcel
+    #for image in os.listdir(image_path):
+    #    
+    #    # place sanger image into template
+    #    if var_alias+"_F.png" == image or var_alias+"_R.png" == image:
+    #        sanger_img = Image(image_path+"\\"+image)
+    #        
+    #        templates.add_image(sanger_img,"B36")
+    #        
+    #        
+    #    # place IGV image into template
+    #    if var_alias+"_IGV.png" == image:
+    #        IGV_img = Image(image_path+"\\"+var_alias+"_IGV.png")
+    #        
+    #        templates.add_image(IGV_img,"B24")
+            
+  
+    
+    template.save(str(variant_header.get("Sample_Name"))+"_"+str(variant_header.get("Variant_Alias"))+"_"+"VariantConfirmationReport"+".xlsx")
 
 
 
@@ -103,7 +134,7 @@ def hgmd_clinvar_comment(templates):
     ''' Add a comment associated with the HGMD or ClinVar accession number
         found in the database to the template report
     '''    
-    comment = mutation_header.get("Report Variant class field")+"\n"+"\n"+\
+    comment = mutation_header.get("Report Variant class field")+"\n"+\
                 mutation_header.get("First Published")
     
     if mutation_header.get("Variant Class") == "DM?":
@@ -130,10 +161,12 @@ def lof_comment(templates):
     '''
 
     
+    
     exon = variant_header.get("Exon_No.")
     intron = variant_header.get("Intron_No.")
-        
-    if exon != "-" or exon is not None:
+
+    #
+    if exon != "-":
         exon_num = int(exon.split("/")[0])
         exon_total = exon.split("/")[1]
         
@@ -144,12 +177,14 @@ def lof_comment(templates):
         else:
             templates["E16"] = "LOF mutation present, but the outcome cannot be determined without exon numbering information"
     
-    elif intron != "-" or intron is not None:
+    if intron != "-":
         templates["B8"] = "Intron"
         templates["E16"] = "This mutation affects the intron"
-        
-    else:
-        templates["E16"] = "ERROR"
+        templates["E8"] = intron
+    
+    # uncommenting else statement results in all LOF comments being filled with it
+    #else:
+    #   templates["E16"] = "ERROR"
         
         
     
