@@ -4,6 +4,9 @@ from ideas.get_variant_information import *
 
 
 # THIS WOULD WORK MUCH BETTER AS AN OOP
+
+# IF HGMD CATEGORY WHICH HAS A +/- IN HGVS NO. THEN THE HGMD (CORRECT) COMMENT
+# IS OVERWRITTEN WITH SPLICING COMMENT (INCORRECT). FIX THIS CONDITION.
 #1- add better comments
 #2- filenames that are the same and if true then add a "gene2" some where
 
@@ -57,8 +60,19 @@ def produce_variant_report(variant_alias_list):
         if variant_header.get("Category") == "LOF":
             lof_comment(templates)
             templates["B8"] = "Exon"
-            
-        # specific comment is required for spice variants
+        if variant_header.get("Category") == "Rules":
+            templates["E16"] = "Rules category, do something"
+        if variant_header.get("Category") == "Other":
+            template["E16"] == "Other Category"
+        if variant_header.get("Category") == "DamagingMissense":
+            template["E16"] == "Damaging Missense"
+        if variant_header.get("Category") == "BenignMissense":
+            template["E16"] == "Benign Missense"
+
+        
+        # IF HGMD CATEGORYWHICH HAS A +/- IN HGVS NO. THEN THE HGMD (CORRECT) COMMENT
+        # IS OVERWRITTEN WITH SPLICING COMMENT (INCORRECT). FIX THIS CONDITION.
+        # specific comment is required for splice variants
         transcript_id = variant_header.get("HGVSc")
         hgvs = transcript_id.split(":")[1]
         if "-" in hgvs or "+" in hgvs:
