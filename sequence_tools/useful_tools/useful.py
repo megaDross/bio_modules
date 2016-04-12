@@ -29,7 +29,8 @@ def cwd_file_path(x):
     if sys.platform == "cygwin" or sys.platform == "linux2":
         file_path = file_path + "/"
         return file_path
-        
+ 
+
 def gc_content(sequence):
     gc_percent = round(((sequence.count("G")+sequence.count("C")+sequence.count("c")+\
                     sequence.count("g"))/ len(sequence)) * 100,2)
