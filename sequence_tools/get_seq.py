@@ -12,7 +12,7 @@ class ErrorUCSC(Exception):
     
     
 @click.command('get_seq')
-@click.argument('input_file',nargs=1)
+@click.argument('input_file',nargs=1, required=False)
 @click.option('--output_file',default=None, help='give an output file, requires input to be a file')
 @click.option('--upstream', default=20, help="number of bases to get upstream, default: 20") # default to an int makes option accept int only
 @click.option('--downstream',default=20, help="number of bases to get downstream, default: 20")
@@ -38,7 +38,10 @@ def get_seq(input_file, output_file=None, upstream=20, downstream=20, hg_version
            get_seq chr1:169314424,169314600 --hg_version hg38\n
            get_seq input.txt --output_file output.txt --header --delimiters ,\n
         '''
-        
+        # allows one to pipe info as input at the cmd, requires required=False in @click.argument()
+        if not input_file:
+            input_file = raw_input()
+
         # if input is not a file, create a list
         if os.path.isfile(input_file) is False:
             input_file = ["query"+delimiters+input_file]
