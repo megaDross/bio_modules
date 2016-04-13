@@ -38,7 +38,7 @@ def unknown_primer(primers=None, input_file=None,output_file=None,
            unknown_primer --input_file in.txt --output_file out.txt --hg_version hg38\n
            unknown_primer --primers TAACAGATTGATGATGCATG CCCATGAGTGGCTCCTAAA 
     '''
-    
+
     # if input is two arguments   
     if primers:
         input_file = ["query"+delimiters+primers[0]+delimiters+primers[1]]

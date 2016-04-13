@@ -6,7 +6,7 @@ from useful_tools import useful
 file_path = useful.cwd_file_path(__file__) 
 
 @click.command() 
-@click.argument('input_file',nargs=1)
+@click.argument('input_file',nargs=1, required=False)
 @click.option('--output_file',default=None,help="output; defaulted as matching_primers_output.txt")
 @click.option('--primer_database',default=file_path+"TAAD_Primer_Validation_Database.txt",help="defaulted to TAAD primer DB")  
 @click.option('--delimiters', default="\t",help="defaulted to tab")
@@ -35,6 +35,10 @@ def matching_primer(input_file,
         sys.exit(0)
         
     try:
+        # allows one to pipe info as input at the comandline
+        if not input_file:
+            input_file = raw_input()
+
         # if input is not an existing file and contains numbers and a colon 
         if os.path.isfile(input_file) is False and re.search(r"[0-9]:",input_file):             
             var_pos = re.sub(r'[^0-9:]','',input_file)      # remove any characters that isn't a number or colon
