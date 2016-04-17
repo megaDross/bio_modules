@@ -26,6 +26,8 @@ class ErrorUCSC(Exception):
 @click.option('--translate/--np',default='n',help="translate RNA seq into protein seq")
 @click.option('--rc/--no_rc',default='n',help="reverse complement the DNA")
 
+# what use is there in just transcribing and translating for the sake of it? perhaps use an intiation codon finder which can be used o run through a DNA sequence pior to transcripion and transcribing from said site. Also something which checks the dna seq is a multiple of 3 would also be useful. Perhaps something where I could push the rna/protein seq to find which gene exon etc. is or maybe nBLAST, pBLAST etc which I am sure BioPython will have something for parsing to.
+
 # Think about how to handle --output_file
 
 # --rc option active doesn't allow --translate to do it's thing
