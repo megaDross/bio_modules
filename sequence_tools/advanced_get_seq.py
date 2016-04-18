@@ -1,7 +1,7 @@
 from __future__ import division, print_function
 import os, sys,re, urllib2, click
 from useful_tools.useful import conditional_decorator
-from transcription_translation import *
+from BioIdeas.transcription_translation import *
 
 class WrongHGversion(Exception):
     pass
