@@ -1,7 +1,6 @@
-from __future__ import division, print_function
+from __future__ import division, print_function, absolute_import
 import os, sys,re, urllib2, click
 from useful_tools.useful import conditional_decorator
-from transcription_translation import *
 
 class WrongHGversion(Exception):
     pass
@@ -22,8 +21,6 @@ class ErrorUCSC(Exception):
 @click.option('--delimiters',default="\t", help="file delimiter. default: tab")
 @click.option('--dash/--no_dash',default='n', help="dashes flanking the variant position base. default: --no_dash") # the slash in the option makes it a boolean
 @click.option('--header/--no_header',default='n',help="header gives metadata i.e. sequence name etc.")
-#@click.option('--transcribe/--dont_transcribe',default='n',help="transcribe into RNA sequence")
-#@click.option('--translate/--dont_translate',default='n',help="translate RNA seq into protein seq")
 
 def get_seq(input_file, output_file=None, upstream=20, downstream=20, hg_version="hg19", delimiters="\t",dash="n",header="n"):
         ''' 
