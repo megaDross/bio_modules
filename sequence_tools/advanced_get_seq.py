@@ -56,14 +56,9 @@ def get_seq(input_file, output_file=None, upstream=20, downstream=20, hg_version
         get_seq chr1:169314424,169314600 --hg_version hg38\n
         get_seq input.txt --output_file output.txt --header --delimiters\n
         ''' 
-        # allows one to pipe in an argument at the commnadline, requires required=False
-        # in @click.argument()
-        if not input_file:
-            input_file = raw_input()
-        
-        # parse all arguments into the processing Class 
+       # parse all arguments into the processing Class 
         process = Processing(input_file,output_file,upstream,downstream,hg_version
-                             ,delimiters,dash,transcribe,translate)
+                             ,delimiters,dash,transcribe,translate,rc,header)
         
         # determine whether input_file is a string or file and alter accordingly
         input_file = process.process_input()
@@ -80,53 +75,25 @@ def get_seq(input_file, output_file=None, upstream=20, downstream=20, hg_version
                 seq_name = changes[0]
                 var_pos = re.sub(r'[^0-9:,-]','',changes[1])
                 
-                # check each individual line of the FILE for custom errors
+                # check each individual line of the file for CUSTOM ERRORS
                 error_check = process.handle_argument_exception(var_pos)
                 
-                # check if var_pos is a genomic region, else construct one from var_pos
+                # check if var_pos is a GENOMIC REGION, else construct one from var_pos
                 if re.search(r"[,-]",var_pos):
                     var_pos = var_pos.replace("-",",")
                     seq_range = var_pos
                 else:   
                     seq_range = process.create_region(var_pos)
                 
-                # use UCSC to get the genomic ranges sequence
+                # use UCSC to get the genomic ranges DNA sequence
                 answer = process.get_region_info(seq_range)
                 
+                # detrmine whether to transcribe or translate to RNA or PROTEIN
+                sequence = process.get_rna_seq(answer)
+                sequence = process.get_protein_seq(sequence)
                 
-                # perorm transcription, reverse complement and/or translation depending
-                # on which options have been selected
-                if transcribe:
-                    # transcription
-                    if rc:
-                        rna = transcribe_dna(answer.replace("-",""),"rc")
-                        sequence = rna
-                    else:
-                        rna = transcribe_dna(answer.replace("-",""))
-                        sequence = rna
-
-                        if translate:
-                            # translatation
-                            protein = translate_rna(rna)
-                            sequence = protein
-                        else:
-                            sequence = rna
-                else:
-                    # DNA
-                    sequence = answer 
-
-                # concatenate the name and outputs from Class, determine whether to 
-                # add a header
-                if header:
-                    sequence = " ".join((">",seq_name,var_pos,seq_range,
-                                         "\n",str(sequence),"\n"))
-                else:
-                    sequence = "".join((str(sequence),"\n"))
-                
-                # output sequences to the screen and append to a list
-                print(sequence)
-                sequence_data.append(sequence)
-
+                # determine whether to give a HEADER
+                header_sequence = process.header_option(seq_name,var_pos,seq_range,sequence)
 
             except WrongHGversion:
                 print("Human genome version "+hg_version+" not recognised")
@@ -153,7 +120,7 @@ def translate_rna(rna):
 class Processing():
 
     def __init__(self,input_file,output_file,upstream, downstream, hg_version, 
-                 delimiters, dash, transcribe, translate):
+                 delimiters, dash, transcribe, translate,rc,header):
         
         self.input_file = input_file
         self.output_file = output_file
@@ -164,10 +131,18 @@ class Processing():
         self.dash = dash
         self.transcribe = transcribe
         self.translate = translate
+        self.rc = rc
+        self.header = header
 
     def process_input(self):      
         ''' Determine and process input
         '''
+
+        # allows one to pipe in an argument at the commandline, requires required=False
+        # in @click.argument()
+        if not self.input_file:
+            input_file = input()
+
         # if input is not a file, create a list
         if os.path.isfile(self.input_file) is False:
             input_file = ["query"+self.delimiters+self.input_file]
@@ -250,11 +225,63 @@ class Processing():
             upstream = seq[self.upstream+1:len(seq)]
             answer = "".join((downstream,"-",var,"-",upstream))
             return answer
-        
+    
         # return sequence without dashes
         if not self.dash:
             return seq
-             
+
+
+    def get_rna_seq(self,sequence):
+        ''' determine whether to transcribe rna,
+            based upon options selected
+        '''
+        # perorm transcription, reverse complement and/or translation depending
+        # on which options have been selected
+        if self.transcribe:
+         
+            if self.rc:
+                rna = transcribe_dna(sequence.replace("-",""),"rc")
+                return rna
+
+            else:
+                rna = transcribe_dna(sequence.replace("-",""))
+                return rna
+        else:
+            # DNA
+            return sequence
+
+
+        
+    def get_protein_seq(self,rna):
+        ''' determine whether to translate protein,
+            based upon options selected
+        '''
+        if self.translate:
+            protein = translate_rna(rna)
+            return protein
+        else:
+            return rna
+    
+    
+    
+    def header_option(self,seq_name,var_pos,seq_range,sequence):
+        ''' determine whether to place a header
+            above the returned sequence, based 
+            upon options selected by user
+        '''
+        # concatenate the name and outputs from Class, determine whether to 
+        # add a header
+        if self.header:
+            sequence = " ".join((">",seq_name,var_pos,seq_range,
+                                 "\n",str(sequence),"\n"))
+        else:
+            sequence = "".join((str(sequence),"\n"))
+
+        # output sequences to the screen and append to a list
+        print(sequence)
+        return(sequence)
+
+         
                 
 if __name__ == '__main__':
     get_seq()         
