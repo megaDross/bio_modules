@@ -1,5 +1,5 @@
-from __future__ import division, print_function
-import os, sys,re, urllib2, click
+from __future__ import division, print_function, absolute_import
+import os, sys,re, click, requests, bs4
 
 class WrongHGversion(Exception):
     pass
@@ -165,17 +165,17 @@ class Processing():
             to retrieve the sequence found in the given genomic range.
         '''
         # scrape for the sequence associated with the seq_range AKA genomic region 
-        test = urllib2.urlopen("http://genome.ucsc.edu/cgi-bin/das/"+self.hg_version+"/dna?segment="+seq_range)
-        search = test.read()
-        refined_search = re.findall(r"[tacg{5}].*",search)
-        confirm_error = re.findall(r"nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn",search)
-        if confirm_error:
-            raise ErrorUCSC
+        req = requests.get("http://genome.ucsc.edu/cgi-bin/das/"+self.hg_version+
+                           "/dna?segment="+seq_range)
+        req.raise_for_status()
+        url = bs4.BeautifulSoup(req.text, features="xml").prettify()
+        search = re.findall(r"[tacg{5}].*",url) 
         
         # filters for elements which only contain nucleotides and concatenate
-        seqs = [s for s in refined_search if not s.strip("tacg")] 
+        seqs = [s for s in search if not s.strip("tacg")] 
         seq = "".join(seqs)
-        
+        if not seq:
+            raise ErrorUCSC
         
         # flank the base associated with the variant position with dashes
         if self.dash:
