@@ -86,55 +86,52 @@ def process_primer_info(input_file,output_file,hg_version,delimiters):
                     
             amplicon_info = get_unknown_primer_info(hg_version,primer_name,f_primer,r_primer)
     
-            print amplicon_info
+            print(amplicon_info)
             primer_info.append(amplicon_info)
         
         except IndexError:
-            print str(primer)+" is improperly deliminated"
+            print(str(primer)+" is improperly deliminated")
         except AmbiguousBaseError:
-            print "Skipping, non-ATGC base found in: "+primer_name
+            print("Skipping, non-ATGC base found in: "+primer_name)
         except NoAmplicon:
-            print "No amplicon generated from isPCR for primer: "+primer_name
+            print("No amplicon generated from isPCR for primer: "+primer_name)
         except MultipleAmplicons:
-            print "The following primers generate more than one amplicon:"+primer_name
+            print("The following primers generate more than one amplicon:"+primer_name)
         
     return primer_info
     
 def get_unknown_primer_info(hg_version, primer_name="query",f_primer=None,r_primer=None):
-	''' Generate an amplicon sequence from inputted primer sequences, which
-	    is further manipulated t derive inofrmation from the sequence.
-	'''	     
+    ''' Generate an amplicon sequence from inputted primer sequences, which
+        is further manipulated t derive inofrmation from the sequence.
+    '''         
         # generate amplicon sequence using isPCR tool
-        req = requests.get("https://genome.ucsc.edu/cgi-bin/hgPcr?hgsid=483751629_"+\
-                           "vuLjoO4UVF9h4vF4TEp9U8OQiFd7&org=Human&db="+hg_version+\
-                           "&wp_target=genome&wp_f="+f_primer+"&wp_r="+r_primer+"&Submit=submit"+\
-                           "&wp_size=4000&wp_perfect=15&wp_good=15&boolshad.wp_flipReverse=0")
-        req.raise_for_status()                                # get the request error code if failed
-        entire_url = bs4.BeautifulSoup(req.text,"html.parser")
-        pre_elements = entire_url.select('pre')               # get all <pre> elements on webpage
+    req = requests.get("https://genome.ucsc.edu/cgi-bin/hgPcr?hgsid=483751629_vuLjoO4UVF9h4vF4TEp9U8OQiFd7&org=Human&db="+hg_version+"&wp_target=genome&wp_f="+f_primer+"&wp_r="+r_primer+"&Submit=submit&wp_size=4000&wp_perfect=15&wp_good=15&boolshad.wp_flipReverse=0")
+    req.raise_for_status()                                # get the request error code if failed
+    entire_url = bs4.BeautifulSoup(req.text,"html.parser")
+    pre_elements = entire_url.select('pre')               # get all <pre> elements on webpage
         
-        # if nothing between pre-elements, raise error
-        if not pre_elements:
-            raise NoAmplicon("No amplicon generated")
-        isPCR = pre_elements[0].getText()                     # get text for first <pre> element
-        amplicon = "\n".join(isPCR.split("\n")[1:])           # split newlines, take 2nd to last and join back together
-        
-        
-        # use amplicon sequence and header to get additional information
-        amplicon_header = "\n".join(isPCR.split("\n")[:1])
-        split_header =  amplicon_header[1:].split(" ")
-        region = split_header[0].replace("+","-").replace("chr","")
-        amplicon_size = split_header[1]
-        gc_percent = useful.gc_content(amplicon)
-        product_number = len(pre_elements)
-        if product_number > 1:
-            raise MultipleAmplicons        
-        
-        
-        # return scraped information
-        output = (primer_name,f_primer,r_primer,str(amplicon_size),
-                  region,str(gc_percent)+"%",str(product_number))
-        return "\t".join(output)
+    # if nothing between pre-elements, raise error
+    if not pre_elements:
+        raise NoAmplicon("No amplicon generated")
+    isPCR = pre_elements[0].getText()                     # get text for first <pre> element
+    amplicon = "\n".join(isPCR.split("\n")[1:])           # split newlines, take 2nd to last and join back together
+
+
+    # use amplicon sequence and header to get additional information
+    amplicon_header = "\n".join(isPCR.split("\n")[:1])
+    split_header =  amplicon_header[1:].split(" ")
+    region = split_header[0].replace("+","-").replace("chr","")
+    amplicon_size = split_header[1]
+    gc_percent = useful.gc_content(amplicon)
+    product_number = len(pre_elements)
+    if product_number > 1:
+        raise MultipleAmplicons        
+
+
+    # return scraped information
+    output = (primer_name,f_primer,r_primer,str(amplicon_size),
+              region,str(gc_percent)+"%",str(product_number))
+    return "\t".join(output)
 
 
 if __name__ == '__main__':
