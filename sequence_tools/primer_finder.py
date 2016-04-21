@@ -31,7 +31,7 @@ def matching_primer(input_file,
         # get all genomic locations within primer pairs, from all primers in the database
         all_primer_pos = get_all_primer_pos(primer_database)
     except IOError as e:
-        print primer_database+": "+e.strerror
+        print(primer_database+": "+e.strerror)
         sys.exit(0)
         
     try:
@@ -57,7 +57,7 @@ def matching_primer(input_file,
                 var_name = var.split("\t")[0]
                 var_pos = re.sub(r'[^0-9:]','',var.split("\t")[1])
                 matched_primers = match(var_pos,all_primer_pos,var_name)
-                print matched_primers
+                print(matched_primers)
                 all_matched_primers.append(matched_primers)
                 
             
@@ -80,7 +80,7 @@ def get_all_primer_pos(primer_database):
     '''
     try:
         primer_file = open(primer_database,"r")
-        header = primer_file.next()    # skip database header
+        header = next(primer_file)    # skip database header
         
         # list of lists, where every single list is every genomic position within a primer pair
         # followed by bp distance of genomic position from the forward and reverse primer position
