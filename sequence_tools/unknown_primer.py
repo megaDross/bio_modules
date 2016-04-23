@@ -16,7 +16,7 @@ class IncorrectVariant(Exception):
     pass
 
     
-@click.command()
+@click.command('unknown_primer')
 @click.option('--primers',nargs=2,help="accepts 2 arguments only; forward primer reverse primer")
 @click.option('--input_file',nargs=1, help="file used as input")
 @click.option('--output_file',default=None,help="only available if the --input_file option is used")

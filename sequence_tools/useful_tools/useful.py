@@ -43,7 +43,7 @@ def cwd_file_path(x):
         file_path = file_path + "\\"
         return file_path
     
-    if sys.platform == "cygwin" or sys.platform == "linux2":
+    if sys.platform == "cygwin" or sys.platform == "linux2" or sys.platform == "linux":
         file_path = file_path + "/"
         return file_path
 

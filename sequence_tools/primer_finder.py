@@ -5,10 +5,10 @@ from useful_tools import useful
 # which are hg19 primers only.
 file_path = useful.cwd_file_path(__file__) 
 
-@click.command() 
+@click.command('primer_finder') 
 @click.argument('input_file',nargs=1, required=False)
 @click.option('--output_file',default=None,help="output; defaulted as matching_primers_output.txt")
-@click.option('--primer_database',default=file_path+"TAAD_Primer_Validation_Database.txt",help="defaulted to TAAD primer DB")  
+@click.option('--primer_database',default=file_path+"useful_tools/TAAD_Primer_Validation_Database.txt",help="defaulted to TAAD primer DB")  
 @click.option('--delimiters', default="\t",help="defaulted to tab")
 
 def matching_primer(input_file,
