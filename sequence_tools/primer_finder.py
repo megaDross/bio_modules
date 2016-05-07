@@ -31,14 +31,12 @@ def matching_primer(input_file,
     try:
         # get all genomic locations within primer pairs, from all primers in the database
         all_primer_pos = get_all_primer_pos(primer_database)
-    except IOError as e:
-        print(primer_database+": "+e.strerror)
-        sys.exit(0)
         
-    try:
-
+        # determine input type and process accordingly
         process_io = ProcessIO(input_file,output_file)
         input_file = process_io.process_input()
+        
+        # iterate through input and parse into match to find a suitable primer pair
         for info in input_file:
             var_name = info.split("\t")[0]
             var_pos = info.split("\t")[1].rstrip("\n")
@@ -48,7 +46,10 @@ def matching_primer(input_file,
     except IndexError as e:
         return e.args[0]+"\n\n"+input_file+\
         " is incorrectly deliminated or an incorrect delimiter was specified."+"\n"    
-            
+
+
+
+
 def get_all_primer_pos(primer_database):
     ''' Generate a list of every genomic position witin each primer pair given 
         in the primer database.
@@ -87,7 +88,9 @@ def get_all_primer_pos(primer_database):
     except IndexError:
         raise 
         
-        
+       
+
+
 def match(var_pos,primer_info,var_name=None):
     ''' Match a given variant position against every genomic position covered
         in all the primer pairs in the primer database.
@@ -119,7 +122,7 @@ def match(var_pos,primer_info,var_name=None):
         
         
 
-# required for click to be useable, dont know why
+# excute only from outside file
 if __name__ == '__main__':
     matching_primer()
     
