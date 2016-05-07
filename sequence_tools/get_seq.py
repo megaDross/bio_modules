@@ -2,6 +2,7 @@ from __future__ import division, print_function
 import os, sys,re, click, requests, bs4
 from useful_tools.useful import conditional_decorator
 from useful_tools.transcription_translation import transcription, translation
+from useful_tools.process_file import ProcessIO
 
 class WrongHGversion(Exception):
     pass
@@ -46,12 +47,15 @@ def get_seq(input_file, output_file=None, upstream=20, downstream=20, hg_version
         get_seq chr1:169314424,169314600 --hg_version hg38\n
         get_seq input.txt --output_file output.txt --header\n
         ''' 
-       # parse all arguments into the processing Class 
+        # parse all arguments into the Processing Class 
         process = Processing(input_file,output_file,upstream,downstream,hg_version
                              ,dash,transcribe,translate,rc,header)
         
+        # parse IO into ProcessIO Class to determine and process input type accordingly
+        process_io = ProcessIO(input_file,output_file)
+
         # determine whether input_file is a string or file and alter accordingly
-        input_file = process.process_input()
+        input_file = process_io.process_input()
         
         # adds all scrapped data to a list, which is written to an output file if the 
         # option is selected
@@ -95,7 +99,7 @@ def get_seq(input_file, output_file=None, upstream=20, downstream=20, hg_version
         
         # if OUTPUT_FILE option is selected then write all seq data to a file
         if output_file:
-            write_to_output(output_file,sequence_data)
+            process_io.write_to_output(sequence_data)
         
         # DO I WANT TO RETURN THIS?
         return sequence_data
@@ -111,15 +115,6 @@ def transcribe_dna(dna):
 def translate_rna(rna):
     return rna
 
-
-def write_to_output(output,seq_list):
-    ''' creates an output file containing all scrapped data
-    '''
-    output = open(output,"w")
-    for seq in seq_list:
-        output.write(seq)
-    output.close()
-    return output
 
 
 
@@ -139,36 +134,7 @@ class Processing():
         self.rc = rc
         self.header = header
 
-    def process_input(self):      
-        ''' Determine and process input
-        '''
-
-        # allows one to pipe in an argument at the commandline, requires required=False
-        # in @click.argument()
-        if not self.input_file:
-            input_file = input()
-
-        # if input is not a file, create a list
-        if os.path.isfile(self.input_file) is False:
-            input_file = ["query"+"\t"+self.input_file]
-            return input_file 
-        
-        # if input is a file, open file
-        if os.path.isfile(self.input_file) is True:
-            input_file = open(self.input_file,"r+")
-            return input_file 
-            
-            # if the --output_file option is used, write the sequence_data to a file
-            if output_file is not None:
-                output = open(output_file,"w")
-                for seqs in sequence_data:
-                    output.write(seqs)
-                output.close()
-                return output
-                
-            return sequence_data
-
-        
+              
     def handle_argument_exception(self,var_pos):
         ''' Stores custom exceptions
         '''        
