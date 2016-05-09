@@ -112,6 +112,8 @@ def transcribe_dna(dna):
 
 @translation
 def translate_rna(rna):
+    ''' Translate rna into protein
+    '''
     return rna
 
 

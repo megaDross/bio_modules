@@ -4,7 +4,7 @@ class ProcessIO(object):
     ''' Process input and output, specifically designed to work with Click
     '''
 
-    def __init__(self,input_file,output_file):
+    def __init__(self,input_file,output_file=None):
         
         self.input_file = input_file
         self.output_file = output_file
@@ -19,8 +19,19 @@ class ProcessIO(object):
             input_file = input()
         
         # if input is a tuple and contains more than one element, create a list 
-        elif len(tuple(self.input_file[0])) > 1:
-            input_file = ["query"+"\t"+self.input_file[0]+"\t"+self.input_file[1]]
+        # THIS NEEDS TO BE SIMPLFIED (USED BY UNKNWON_PRIMER & EXTRACTINFO)
+        elif len(tuple(self.input_file)) > 1:  # was len(tuple(self.input_file[0])) > 1
+            #input_file = ["query"+"\t"+self.input_file[0]+"\t"+self.input_file[1]]
+            input_file = "query"
+            for i in range(len(tuple(self.input_file))):
+                input_file += '\t'
+                input_file += self.input_file[i]
+            print([input_file])
+            return [input_file]
+
+        # if input is a tuple and contains only one element
+        elif len(tuple(self.input_file)) == 1:
+            input_file = ["query"+"\t"+self.input_file[0]]
             return input_file
 
         # if input is not a file, create a list
