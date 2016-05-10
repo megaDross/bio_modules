@@ -26,7 +26,6 @@ class ProcessIO(object):
             for i in range(len(tuple(self.input_file))):
                 input_file += '\t'
                 input_file += self.input_file[i]
-            print([input_file])
             return [input_file]
 
         # if input is a tuple and contains only one element
