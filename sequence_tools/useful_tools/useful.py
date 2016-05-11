@@ -56,3 +56,13 @@ def gc_content(sequence):
                     sequence.count("g"))/ len(sequence)) * 100,2)
     return gc_percent
 
+def chunks(l, n):
+    ''' Yield successive n-sized list from list(l)
+
+        To produce a nested list: 
+            print(list(chunks(l,n)))
+    '''
+    for i in range(0, len(l), n):
+        yield l[i:i+n]
+
+

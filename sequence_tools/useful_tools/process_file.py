@@ -23,9 +23,7 @@ class ProcessIO(object):
             input_file = input()
               
         # if input is a tuple and contains more than one element, create a list 
-        # THIS NEEDS TO BE SIMPLFIED (USED BY UNKNWON_PRIMER & EXTRACTINFO)
-        elif type(self.input_file) is tuple:  # was len(tuple(self.input_file[0])) > 1
-            # input_file = ["query"+"\t"+self.input_file[0]+"\t"+self.input_file[1]]
+        elif type(self.input_file) is tuple:  
             input_file = ("query",)     # (string,) creates a tuple, comma is required 
             for i in range(len(self.input_file)):
                 input_file += (self.input_file[i],)
@@ -42,15 +40,8 @@ class ProcessIO(object):
         # if input is a tuple and contains only one element
         elif type(self.input_file) is str:
             input_file = ("query",self.input_file)
-            
             return [input_file]
-       
 
-                # if input is not a file, create a list
-        elif os.path.isfile(self.input_file) is False:
-            input_file = ["query"+"\t"+self.input_file]
-            return input_file 
-        
 
         else:
             print("Invalid Input!")

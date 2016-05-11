@@ -38,8 +38,8 @@ def matching_primer(input_file,
         
         # iterate through input and parse into match to find a suitable primer pair
         for info in input_file:
-            var_name = info.split("\t")[0]
-            var_pos = info.split("\t")[1].rstrip("\n")
+            var_name = info[0]
+            var_pos = info[1].rstrip("\n")
             matched_primers = match(var_pos,all_primer_pos,var_name)
             print(matched_primers)
    

@@ -64,8 +64,8 @@ def get_seq(input_file, output_file=None, upstream=20, downstream=20, hg_version
             try:
                 # split data up into name and position, remove ambigious characters 
                 # from position
-                seq_name = changes.split("\t")[0]
-                var_pos = re.sub(r'[^0-9:,-]','',changes.split("\t")[1])
+                seq_name = changes[0]
+                var_pos = re.sub(r'[^0-9:,-]','',changes[1])
                 
                 # check each individual line of the file for CUSTOM ERRORS
                 error_check = process.handle_argument_exception(var_pos)

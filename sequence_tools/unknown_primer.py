@@ -66,7 +66,6 @@ def process_primer_info(input_file,output_file,hg_version):
     for primer in input_file:
         try:
             # splits up data into primer name, forward primer and reverse primer
-            primer = primer.rstrip("\n\r").split("\t")
             primer_name = primer[0]
             f_primer = primer[1].upper()
             r_primer = primer[2].upper()
