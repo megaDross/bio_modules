@@ -17,13 +17,9 @@ class ProcessIO(object):
         print(type(self.input_file))
 
         print(self.input_file)
-        # allows one to pipe in an argument at the commandline, requires required=False
-        # in @click.argument()
-        if not self.input_file:
-            input_file = input()
               
         # if input is a tuple and contains more than one element, create a list 
-        elif type(self.input_file) is tuple:  
+        if type(self.input_file) is tuple:  
             input_file = ("query",)     # (string,) creates a tuple, comma is required 
             for i in range(len(self.input_file)):
                 input_file += (self.input_file[i],)

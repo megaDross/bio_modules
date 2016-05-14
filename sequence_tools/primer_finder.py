@@ -29,6 +29,12 @@ def matching_primer(input_file,
         
     '''
     try:
+        
+        # allows one to pipe in an argument at the cmd, requires required=False in 
+        # @click.argument()
+        if not input_file:
+            input_file = input()
+        
         # get all genomic locations within primer pairs, from all primers in the database
         all_primer_pos = get_all_primer_pos(primer_database)
         

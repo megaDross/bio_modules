@@ -37,6 +37,11 @@ def unknown_primer(primers=None, input_file=None,output_file=None,
            unknown_primer --input_file in.txt --output_file out.txt --hg_version hg38\n
            unknown_primer --primers TAACAGATTGATGATGCATG CCCATGAGTGGCTCCTAAA 
     '''
+    # allows one to pipe in an argument at the cmd, requires required=False in 
+    # @click.argument()
+    if not input_file:
+        input_file = input()
+        
     # determine what the input is and process accordingly
     if primers:
         process_io = ProcessIO(primers,output_file)
