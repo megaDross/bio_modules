@@ -46,6 +46,11 @@ def get_seq(input_file, output_file=None, upstream=20, downstream=20, hg_version
         get_seq chr1:169314424,169314600 --hg_version hg38\n
         get_seq input.txt --output_file output.txt --header\n
         ''' 
+        # allows one to pipe in an argument at the cmd, requires required=False in 
+        # @click.argument()
+        if not input_file:
+            input_file = input()
+        
         # parse all arguments into the Processing Class 
         process = Processing(input_file,output_file,upstream,downstream,hg_version
                              ,dash,transcribe,translate,rc,header)
