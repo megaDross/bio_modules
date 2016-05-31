@@ -12,10 +12,8 @@ file_path = useful.cwd_file_path(__file__)
 @click.option('--primer_database',default=file_path+"useful_tools/TAAD_Primer_Validation_Database.txt",help="defaulted to TAAD primer DB")  
 @click.option('--delimiters', default="\t",help="defaulted to tab")
 
-def matching_primer(input_file,
-                    output_file = None,
-                    primer_database = file_path+"TAAD_Primer_Validation_Database.txt",
-                    delimiters = "\t"):
+def main(input_file, output_file = None,
+         primer_database = file_path+"TAAD_Primer_Validation_Database.txt", delimiters = "\t"):
                     
     ''' Takes variant postion(s) as input and matches it with an appropriate primer
         pair in a given primer database. 

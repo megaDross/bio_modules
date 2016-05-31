@@ -33,7 +33,9 @@ class ProcessIO(object):
        
        # if input is a file, open file
         elif os.path.isfile(self.input_file) is True:
-            input_file = open(self.input_file,"r+")
+            input_file = open(self.input_file,"r+").readlines()
+            input_file =[(i.rstrip("\n").split("\t")[0], i.rstrip("\n").split("\t")[1]) 
+                         for i in input_file]
             return input_file
        
 
