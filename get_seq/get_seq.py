@@ -31,6 +31,7 @@ def get_seq(input_file, output_file=None, upstream=20, downstream=20, hg_version
             , dash="n", header="n", transcribe="n", translate="n",
             rc='n'):
         '''
+
     Produce a sequence using the UCSC DAS server from an inputted genomic 
 	postion and defined number of bases upstream and downstream from said 
 	position. A genomic range can be used in place of a genomic position
@@ -55,71 +56,54 @@ def get_seq(input_file, output_file=None, upstream=20, downstream=20, hg_version
         process = Processing(input_file,output_file,upstream,downstream,hg_version
                              ,dash,transcribe,translate,rc,header)
         
-        # parse IO into ProcessIO Class to determine and process input type accordingly
-        process_io = ProcessIO(input_file,output_file)
+        # if the arg given is a file, parse it in line by line
+        if os.path.isfile(input_file) is True:
 
-        # determine whether input_file is a string or file and alter accordingly
-        input_file = process_io.process_input()
+            for line in [line.rstrip("\n").split("\t") for line in open(input_file)]:
+                seq_name = line[0]
+                var_pos = line[1]
+                sequence = temp(seq_name, var_pos, process)
+
+        else:
+            temp("query", input_file, process)
+
         
+
+def temp(seq_name, var_pos, process):
         # adds all scrapped data to a list, which is written to an output file if the 
         # option is selected
-        sequence_data = []
+        try:
+            # check each individual line of the file for CUSTOM ERRORS
+            error_check = process.handle_argument_exception(var_pos)
+            
+            # check if var_pos is a GENOMIC REGION, else construct one from var_pos
+            seq_range = process.create_region(var_pos)
+            
+            # use UCSC to get the genomic ranges DNA sequence
+            sequence = process.get_region_info(seq_range)
+            
+            
+            # detrmine whether to transcribe or translate to RNA or PROTEIN
+            sequence = process.get_rna_seq(sequence)
+            sequence = process.get_protein_seq(sequence)
+            
+            # determine whether to give a HEADER
+            header_sequence = process.header_option(seq_name,var_pos,
+                                                    seq_range,sequence)
+            return header_sequence
+
+        except WrongHGversion:
+            print("Human genome version "+hg_version+" not recognised")
+            sys.exit(0)
+        except TypographyError:
+            print("Only one colon and no more than one comma/dash is allowed for "
+                  +var_pos+" in "+seq_name+"\n")    
+        except ErrorUCSC:
+            print(var_pos+" in "+seq_name+" is not recognised by UCSC"+"\n")
+      
         
-        for changes in input_file:
-            try:
-                # split data up into name and position, remove ambigious characters 
-                # from position
-                seq_name = changes[0]
-                var_pos = re.sub(r'[^0-9:,-]','',changes[1])
-                
-                # check each individual line of the file for CUSTOM ERRORS
-                error_check = process.handle_argument_exception(var_pos)
-                
-                # check if var_pos is a GENOMIC REGION, else construct one from var_pos
-                seq_range = process.create_region(var_pos)
-                
-                # use UCSC to get the genomic ranges DNA sequence
-                answer = process.get_region_info(seq_range)
-                
-                # detrmine whether to transcribe or translate to RNA or PROTEIN
-                sequence = process.get_rna_seq(answer)
-                sequence = process.get_protein_seq(sequence)
-                
-                # determine whether to give a HEADER
-                header_sequence = process.header_option(seq_name,var_pos,
-                                                        seq_range,sequence)
-                # append the output of each iteration into an empty list
-                if output_file:
-                    sequence_data.append(header_sequence)
-
-            except WrongHGversion:
-                print("Human genome version "+hg_version+" not recognised")
-                sys.exit(0)
-            except TypographyError:
-                print("Only one colon and no more than one comma/dash is allowed for "
-                      +var_pos+" in "+seq_name+"\n")    
-            except ErrorUCSC:
-                print(var_pos+" in "+seq_name+" is not recognised by UCSC"+"\n")
-        
-        # if OUTPUT_FILE option is selected then write all seq data to a file
-        if output_file:
-            process_io.write_to_output(sequence_data)
-        
-        # DO I WANT TO RETURN THIS?
-        return sequence_data
 
 
-@transcription
-def transcribe_dna(dna):
-    ''' Transcribe dna into rna 
-    '''
-    return dna
-
-@translation
-def translate_rna(rna):
-    ''' Translate rna into protein
-    '''
-    return rna
 
 
 
@@ -221,11 +205,11 @@ class Processing():
         if self.transcribe:
          
             if self.rc:
-                rna = transcribe_dna(sequence.replace("-",""),"rc")
+                rna = transcription(sequence.replace("-",""),"rc")
                 return rna
 
             else:
-                rna = transcribe_dna(sequence.replace("-",""))
+                rna = transcription(sequence.replace("-",""))
                 return rna
         else:
             # DNA
@@ -238,7 +222,7 @@ class Processing():
             based upon options selected
         '''
         if self.translate:
-            protein = translate_rna(rna)
+            protein = translation(rna)
             return protein
         else:
             return rna

@@ -9,7 +9,7 @@ file_path = useful.cwd_file_path(__file__)
 @click.command('primer_finder') 
 @click.argument('input_file',nargs=1, required=False)
 @click.option('--output_file',default=None,help="output; defaulted as matching_primers_output.txt")
-@click.option('--primer_database',default=file_path+"useful_tools/TAAD_Primer_Validation_Database.txt",help="defaulted to TAAD primer DB")  
+@click.option('--primer_database',default=file_path+"TAAD_Primer_Validation_Database.txt",help="defaulted to TAAD primer DB")  
 @click.option('--delimiters', default="\t",help="defaulted to tab")
 
 def main(input_file, output_file = None,
@@ -27,7 +27,6 @@ def main(input_file, output_file = None,
         
     '''
     try:
-        
         # allows one to pipe in an argument at the cmd, requires required=False in 
         # @click.argument()
         if not input_file:
@@ -37,16 +36,15 @@ def main(input_file, output_file = None,
         all_primer_pos = get_all_primer_pos(primer_database)
         
         # determine input type and process accordingly
-        process_io = ProcessIO(input_file,output_file)
-        input_file = process_io.process_input()
-        
-        # iterate through input and parse into match to find a suitable primer pair
-        for info in input_file:
-            var_name = info[0]
-            var_pos = info[1].rstrip("\n")
-            matched_primers = match(var_pos,all_primer_pos,var_name)
-            print(matched_primers)
-   
+        if os.path.isfile(input_file) is True:
+            for line in [line.rstrip("\n").split("\t") for line in open(input_file)]:
+                var_name = line[0]
+                var_pos = line[1]
+                matched_primers = match(var_pos,all_primer_pos,var_name)
+
+        else:
+            matched_primers(input_file,all_primer_pos,"query")
+
     except IndexError as e:
         return e.args[0]+"\n\n"+input_file+\
         " is incorrectly deliminated or an incorrect delimiter was specified."+"\n"    
@@ -66,11 +64,13 @@ def get_all_primer_pos(primer_database):
         # followed by bp distance of genomic position from the forward and reverse primer position
         all_primer_pos = []            
         
+        # NOTHING IS BEING APPENDED TO TE ABOVE LIST, DESPIT DATA BEING GENERATED
+
         # generates all_primer_pos
         for i in primer_file:
-            
+                
             # split into chromosome, start position and stop position in which primer occupies
-            i = i.split("\t")
+            i = i.rstrip("\n").split("\t")
             primer_name = i[0]
             primer_range = re.split(r'[:-]',i[4])   # split into three components
             chrom = re.sub(r'[^0-9]','',primer_range[0])  # remove any non-integers
@@ -80,18 +80,18 @@ def get_all_primer_pos(primer_database):
             # use start and stop to iterate through every position in primer pair and
             # output primer_name, primer positions, distance of primer position from the
             # forward and reverse primer respectively and append to an empty list.
-            all_pos_in_primer = [ " ".join((primer_name,chrom+":"+str(i),
+            all_pos_in_primer = [" ".join((primer_name,chrom+":"+str(i),
                                             str(i-start),str(stop-i))) 
                                 for i in range(start,stop)]
             all_primer_pos.append(all_pos_in_primer)
         
         # unpacks list of lists into a single list
-        all_primers_pos_unpacked = [x for i in all_primer_pos for x in i] 
+        all_primers_pos_unpacked = [x for i in all_primer_pos for x in i]
         return all_primers_pos_unpacked
         
     except IndexError:
         raise 
-        
+
        
 
 
@@ -128,5 +128,5 @@ def match(var_pos,primer_info,var_name=None):
 
 # excute only from outside file
 if __name__ == '__main__':
-    matching_primer()
+    main()
     
