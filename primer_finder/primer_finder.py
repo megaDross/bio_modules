@@ -1,17 +1,17 @@
 import re, os.path, sys, click
 from useful_tools import useful
-from useful_tools.process_file import ProcessIO
+from useful_tools.output import write_to_output
 
 # gives the dir/PATH of this program, will be used to find the defaulted primer_database
 # which are hg19 primers only.
 file_path = useful.cwd_file_path(__file__) 
+
 
 @click.command('primer_finder') 
 @click.argument('input_file',nargs=1, required=False)
 @click.option('--output_file',default=None,help="output; defaulted as matching_primers_output.txt")
 @click.option('--primer_database',default=file_path+"TAAD_Primer_Validation_Database.txt",help="defaulted to TAAD primer DB")  
 @click.option('--delimiters', default="\t",help="defaulted to tab")
-
 def main(input_file, output_file = None,
          primer_database = file_path+"TAAD_Primer_Validation_Database.txt", delimiters = "\t"):
                     
@@ -35,19 +35,31 @@ def main(input_file, output_file = None,
         # get all genomic locations within primer pairs, from all primers in the database
         all_primer_pos = get_all_primer_pos(primer_database)
         
+
         # determine input type and process accordingly
         if os.path.isfile(input_file) is True:
+            all_matched_primers = []
             for line in [line.rstrip("\n").split("\t") for line in open(input_file)]:
                 var_name = line[0]
                 var_pos = line[1]
                 matched_primers = match(var_pos,all_primer_pos,var_name)
+                all_matched_primers.append(matched_primers)
+                print(matched_primers)
+
 
         else:
-            matched_primers(input_file,all_primer_pos,"query")
+            matched_primers = match(input_file,all_primer_pos,"query")
+            print(matched_primers)
+
+        
+        if output_file:
+            header = "\t".join(("Variant","Primer","Dist_from_F","Dist_from_R","\n"))
+            write_to_output(all_matched_primers, output_file, header)
 
     except IndexError as e:
         return e.args[0]+"\n\n"+input_file+\
         " is incorrectly deliminated or an incorrect delimiter was specified."+"\n"    
+
 
 
 
@@ -62,9 +74,7 @@ def get_all_primer_pos(primer_database):
         
         # list of lists, where every single list is every genomic position within a primer pair
         # followed by bp distance of genomic position from the forward and reverse primer position
-        all_primer_pos = []            
-        
-        # NOTHING IS BEING APPENDED TO TE ABOVE LIST, DESPIT DATA BEING GENERATED
+        all_primer_pos = []             
 
         # generates all_primer_pos
         for i in primer_file:
@@ -114,7 +124,7 @@ def match(var_pos,primer_info,var_name=None):
         variant_distance_r = i.split(" ")[3]    
         if var_pos == primer_pos:
             match = "\t".join((var_name,primer_name, variant_distance_f,
-                               variant_distance_r,"\n"))
+                               variant_distance_r))
             answer.append(match)  
     
     # returns no match error if no primer pair is found, else return answer as string
@@ -123,7 +133,7 @@ def match(var_pos,primer_info,var_name=None):
     else:
         return "".join(answer)
                  
-        
+    
         
 
 # excute only from outside file

@@ -1,7 +1,7 @@
 from __future__ import division, print_function
 import os, sys,re, click, requests, bs4
 from useful_tools.transcription_translation import transcription, translation
-from useful_tools.process_file import ProcessIO
+from useful_tools.output import write_to_output
 
 class WrongHGversion(Exception):
     pass

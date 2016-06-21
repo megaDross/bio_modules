@@ -38,10 +38,10 @@ def translation(*args):
         protein = rna.translate()
         return protein
     
-    # else, take off the last character of the string and return to inner()
+    # else, take off the last character of the string and return to translation()
     else:
         rna = rna[:-1]
-        return rna
+        return translation(rna)
 
 
 

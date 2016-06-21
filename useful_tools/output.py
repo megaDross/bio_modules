@@ -1,12 +1,12 @@
 import os, sys
 
    
-def write_to_output(self,seq_list,header=None):
+def write_to_output(seq_list, output_name, header=None):
     ''' creates an output file containing all scrapped data
     '''
     # create a list comprehension of all input and open output file
     seq_list = [x for x in seq_list]
-    output = open(self.output_file,"w")
+    output = open(output_name,"w")
 
     # if header parsed then write to output file
     if header:
