@@ -24,12 +24,13 @@ class ErrorUCSC(Exception):
 @click.option('--transcribe/--nr',default='n',help="transcribe into RNA sequence")
 @click.option('--translate/--np',default='n',help="translate RNA seq into protein seq")
 @click.option('--rc/--no_rc',default='n',help="reverse complement the DNA")
+@click.option('--seq_file', default=None, help="match sequence with .seq file contents")
 
 # what use is there in just transcribing and translating for the sake of it? perhaps use an intiation codon finder which can be used o run through a DNA sequence pior to transcripion and transcribing from said site. Also something which checks the dna seq is a multiple of 3 would also be useful. Perhaps something where I could push the rna/protein seq to find which gene exon etc. is or maybe nBLAST, pBLAST etc which I am sure BioPython will have something for parsing to.
 
 def get_seq(input_file, output_file=None, upstream=20, downstream=20, hg_version="hg19"
             , dash="n", header="n", transcribe="n", translate="n",
-            rc='n'):
+            rc='n', seq_file=None):
         '''
 
     Produce a sequence using the UCSC DAS server from an inputted genomic 
@@ -54,7 +55,7 @@ def get_seq(input_file, output_file=None, upstream=20, downstream=20, hg_version
         
         # parse all arguments into the Processing Class 
         process = Processing(input_file,output_file,upstream,downstream,hg_version
-                             ,dash,transcribe,translate,rc,header)
+                             ,dash,transcribe,translate,rc,header, seq_file)
         
         # if the arg given is a file, parse it in line by line
         if os.path.isfile(input_file) is True:
@@ -66,6 +67,9 @@ def get_seq(input_file, output_file=None, upstream=20, downstream=20, hg_version
 
         else:
             temp("query", input_file, process)
+
+
+
 
         
 
@@ -82,15 +86,26 @@ def temp(seq_name, var_pos, process):
             # use UCSC to get the genomic ranges DNA sequence
             sequence = process.get_region_info(seq_range)
             
+            # assess whether the var pos base in the sanger trace (seq_file) is different to the reference base 
+            sanger_sequence = process.match_with_seq_file(sequence)
+            ref_base = sanger_sequence[1]
+            sanger_base = sanger_sequence[2]
+
+            # compare the reqerence var_pos base and the sanger var_pos base
+            compare = process.compare_nucleotides(ref_base,sanger_base)
+            
             
             # detrmine whether to transcribe or translate to RNA or PROTEIN
             sequence = process.get_rna_seq(sequence)
             sequence = process.get_protein_seq(sequence)
-            
+
             # determine whether to give a HEADER
-            header_sequence = process.header_option(seq_name,var_pos,
-                                                    seq_range,sequence)
-            return header_sequence
+            header = process.header_option(seq_name,var_pos,
+                                           seq_range,sequence)
+            
+            print("\n".join((header,"Reference Sequence:\t"+sequence,"Sanger Sequence:\t"+sanger_sequence[0],compare)))
+            
+            #return seq_name,var_pos,seq_range,sequence,sanger_sequence
 
         except WrongHGversion:
             print("Human genome version "+hg_version+" not recognised")
@@ -111,7 +126,7 @@ def temp(seq_name, var_pos, process):
 class Processing():
 
     def __init__(self,input_file,output_file,upstream, downstream, hg_version, 
-                 dash, transcribe, translate,rc,header):
+                 dash, transcribe, translate,rc,header,seq_file):
         
         self.input_file = input_file
         self.output_file = output_file
@@ -123,6 +138,13 @@ class Processing():
         self.translate = translate
         self.rc = rc
         self.header = header
+        self.seq_file = seq_file
+
+    UIPAC = {"A":"A", "C":"C", "G":"G", "T":"T",
+             "R":"A/G", "Y":"C/T", "S":"G/C",
+             "W":"A/T", "K":"G/T", "M":"A/C",
+             "B":"C/G/T", "D":"A/G/T", "H":"A/C/T",
+             "V":"A/C/G", "N":"N"}
 
               
     def handle_argument_exception(self,var_pos):
@@ -226,8 +248,64 @@ class Processing():
             return protein
         else:
             return rna
-    
-    
+   
+
+
+    def match_with_seq_file(self,sequence):
+        ''' search for the sequence output from 
+            get_region_info() in a given 
+            .seq file and output it
+
+            returns a tuple containing the sanger
+            sequence and the var_pos nucelotide
+
+            # NEEDS MUCH MORE TESTING
+        '''
+        if self.seq_file:
+            # get the sequence preceding the var_pos (preseq) and the var_pos sequence (ref_seq) 
+            # from the returned get_region_info() value 
+            preseq = sequence[:self.upstream].upper()
+            ref_seq = sequence[self.upstream+1].upper()
+            seq_file = open(self.seq_file, "r").read()
+            seq_file = seq_file.replace("\n","")
+            
+            # find the preseq in the seq_file string and output the indexes where the match occurred within the 
+            # seq_file as a tuple
+            find = [(m.start(0), m.end(0)) for m in re.finditer(preseq, seq_file)][0]
+            start = find[0]
+            end = find[1]
+            
+            # get the full sequence of interest from the seq_file
+            matched_seq = seq_file[start:end]
+            var_pos_seq = Processing.UIPAC.get(seq_file[end])  # convert the UIPAC to bases
+            downstream_seq = seq_file[end+1:end+self.downstream+1]
+            if self.dash:
+                full_seq = "-".join((matched_seq,var_pos_seq,downstream_seq))
+            else:
+                full_seq = "".join((matched_seq,var_pos_seq,downstream_seq))
+
+
+            return(full_seq,ref_seq,var_pos_seq.upper())
+            
+
+
+    def compare_nucleotides(self,base_1, base_2):
+            '''compare two nucleotides
+            '''
+            
+            # assess whether a variant is present in the sanger sequence in the given proposed variant position
+            if base_1 != base_2:
+                #print(".seq file:\t"+full_seq)
+                return("the nucleotides given are DIFFERENT")
+
+            elif base_1== base_2:
+                #print(".seq file:\t"+full_seq)
+                return("the nucleotides given are the SAME")
+            
+            else:
+                return "not found"
+
+
     
     def header_option(self,seq_name,var_pos,seq_range,sequence):
         ''' determine whether to place a header
@@ -237,14 +315,12 @@ class Processing():
         # concatenate the name and outputs from Class, determine whether to 
         # add a header
         if self.header:
-            sequence = " ".join((">",seq_name,var_pos,seq_range,
-                                 "\n",str(sequence),"\n"))
+            header = " ".join((">",seq_name,var_pos,seq_range))
         else:
-            sequence = "".join((str(sequence),"\n"))
+            header = ""
 
         # output sequences to the screen and append to a list
-        print(sequence)
-        return(sequence)
+        return(header)
 
          
                 
