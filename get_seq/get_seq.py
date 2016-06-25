@@ -13,13 +13,13 @@ class ErrorUCSC(Exception):
     pass
 
    
-@click.command('get_seq')
+@click.command('main')
 @click.argument('input_file',nargs=1, required=False)
 @click.option('--output_file',default=None, help='give an output file, requires input to be a file')
 @click.option('--upstream', default=20, help="number of bases to get upstream, default: 20") # default to an int makes option accept int only
 @click.option('--downstream',default=20, help="number of bases to get downstream, default: 20")
 @click.option('--hg_version',default="hg19", help="human genome version. default: hg19")
-@click.option('--dash/--no_dash',default='n', help="dashes flanking the variant position base. default: --no_dash") # the slash in the option makes it a boolean
+#@click.option('--dash/--no_dash',default='n', help="dashes flanking the variant position base. default: --no_dash") # the slash in the option makes it a boolean
 @click.option('--header/--no_header',default='n',help="header gives metadata i.e. sequence name etc.")
 @click.option('--transcribe/--nr',default='n',help="transcribe into RNA sequence")
 @click.option('--translate/--np',default='n',help="translate RNA seq into protein seq")
@@ -28,8 +28,8 @@ class ErrorUCSC(Exception):
 
 # what use is there in just transcribing and translating for the sake of it? perhaps use an intiation codon finder which can be used o run through a DNA sequence pior to transcripion and transcribing from said site. Also something which checks the dna seq is a multiple of 3 would also be useful. Perhaps something where I could push the rna/protein seq to find which gene exon etc. is or maybe nBLAST, pBLAST etc which I am sure BioPython will have something for parsing to.
 
-def get_seq(input_file, output_file=None, upstream=20, downstream=20, hg_version="hg19"
-            , dash="n", header="n", transcribe="n", translate="n",
+def main(input_file, output_file=None, upstream=20, downstream=20, hg_version="hg19",
+          header="n", transcribe="n", translate="n",
             rc='n', seq_file=None):
         '''
 
@@ -44,18 +44,19 @@ def get_seq(input_file, output_file=None, upstream=20, downstream=20, hg_version
     the variant name and the variant position
          \b\n
     Example:\b\n
-        get_seq chr1:169314424 --dash --upstream 200 --downstream 200\n
-        get_seq chr1:169314424,169314600 --hg_version hg38\n
-        get_seq input.txt --output_file output.txt --header\n
+        main chr1:169314424 --dash --upstream 200 --downstream 200\n
+        main chr1:169314424,169314600 --hg_version hg38\n
+        main input.txt --output_file output.txt --header\n
         ''' 
         # allows one to pipe in an argument at the cmd, requires required=False in 
         # @click.argument()
         if not input_file:
             input_file = input()
         
-        # parse all arguments into the Processing Class 
-        process = Processing(input_file,output_file,upstream,downstream,hg_version
-                             ,dash,transcribe,translate,rc,header, seq_file)
+        # parse all arguments into the ScrapeSeq Class 
+        reference = ScrapeSeq(input_file,output_file,upstream,downstream,hg_version,header)
+        trans = ProteinRNA(transcribe, translate, rc)
+        sanger = CompareSeqs(seq_file,upstream,downstream)
         
         # if the arg given is a file, parse it in line by line
         if os.path.isfile(input_file) is True:
@@ -63,48 +64,53 @@ def get_seq(input_file, output_file=None, upstream=20, downstream=20, hg_version
             for line in [line.rstrip("\n").split("\t") for line in open(input_file)]:
                 seq_name = line[0]
                 var_pos = line[1]
-                sequence = temp(seq_name, var_pos, process)
+                sequence = get_seq(seq_name, var_pos, reference, trans, sanger)
 
         else:
-            temp("query", input_file, process)
+            get_seq("query", input_file, reference, trans, sanger)
 
 
 
 
         
 
-def temp(seq_name, var_pos, process):
+def get_seq(seq_name, var_pos, reference, trans, sanger):
         # adds all scrapped data to a list, which is written to an output file if the 
         # option is selected
         try:
             # check each individual line of the file for CUSTOM ERRORS
-            error_check = process.handle_argument_exception(var_pos)
+            error_check = reference.handle_argument_exception(var_pos)
             
             # check if var_pos is a GENOMIC REGION, else construct one from var_pos
-            seq_range = process.create_region(var_pos)
+            seq_range = reference.create_region(var_pos)
             
             # use UCSC to get the genomic ranges DNA sequence
-            sequence = process.get_region_info(seq_range)
+            sequence = reference.get_region_info(seq_range)
             
             # assess whether the var pos base in the sanger trace (seq_file) is different to the reference base 
-            sanger_sequence = process.match_with_seq_file(sequence)
-            ref_base = sanger_sequence[1]
-            sanger_base = sanger_sequence[2]
+            sanger_sequence = sanger.match_with_seq_file(sequence)
+            if sanger_sequence:    
+                ref_base = sanger_sequence[1] 
+                sanger_base = sanger_sequence[2] 
 
-            # compare the reqerence var_pos base and the sanger var_pos base
-            compare = process.compare_nucleotides(ref_base,sanger_base)
+                # compare the reqerence var_pos base and the sanger var_pos base
+                compare = CompareSeqs.compare_nucleotides(ref_base,sanger_base) 
             
             
             # detrmine whether to transcribe or translate to RNA or PROTEIN
-            sequence = process.get_rna_seq(sequence)
-            sequence = process.get_protein_seq(sequence)
+            sequence = str(trans.get_rna_seq(sequence))
+            sequence = str(trans.get_protein_seq(sequence))
 
             # determine whether to give a HEADER
-            header = process.header_option(seq_name,var_pos,
+            header = reference.header_option(seq_name,var_pos,
                                            seq_range,sequence)
+
+            if sanger_sequence:
+                print("\n".join((header,"Reference Sequence:\t"+sequence,"Sanger Sequence:\t"+sanger_sequence[0],compare)))
             
-            print("\n".join((header,"Reference Sequence:\t"+sequence,"Sanger Sequence:\t"+sanger_sequence[0],compare)))
-            
+            else:
+                print("\n".join((header,"Reference Sequence:\t"+sequence)))
+
             #return seq_name,var_pos,seq_range,sequence,sanger_sequence
 
         except WrongHGversion:
@@ -123,30 +129,19 @@ def temp(seq_name, var_pos, process):
 
 
 
-class Processing():
+class ScrapeSeq():
 
     def __init__(self,input_file,output_file,upstream, downstream, hg_version, 
-                 dash, transcribe, translate,rc,header,seq_file):
+                 header):
         
         self.input_file = input_file
         self.output_file = output_file
         self.upstream = upstream
         self.downstream = downstream
         self.hg_version = hg_version
-        self.dash = dash
-        self.transcribe = transcribe
-        self.translate = translate
-        self.rc = rc
         self.header = header
-        self.seq_file = seq_file
 
-    UIPAC = {"A":"A", "C":"C", "G":"G", "T":"T",
-             "R":"A/G", "Y":"C/T", "S":"G/C",
-             "W":"A/T", "K":"G/T", "M":"A/C",
-             "B":"C/G/T", "D":"A/G/T", "H":"A/C/T",
-             "V":"A/C/G", "N":"N"}
-
-              
+                 
     def handle_argument_exception(self,var_pos):
         ''' Stores custom exceptions
         '''        
@@ -204,18 +199,38 @@ class Processing():
         if not seq:
             raise ErrorUCSC
         
+        # split up scrapped sequence and make var upper
+        downstream = seq[:self.upstream]
+        var = seq[self.upstream]
+        upstream = seq[self.upstream+1:len(seq)]
+        answer = "".join((downstream.lower(),var.upper(),upstream.lower()))
         
-        # flank the base associated with the variant position with dashes
-        if self.dash:
-            downstream = seq[:self.upstream]
-            var = seq[self.upstream]
-            upstream = seq[self.upstream+1:len(seq)]
-            answer = "".join((downstream,"-",var,"-",upstream))
-            return answer
+        return answer
     
-        # return sequence without dashes
-        if not self.dash:
-            return seq
+    
+    def header_option(self,seq_name,var_pos,seq_range,sequence):
+        ''' determine whether to place a header
+            above the returned sequence, based 
+            upon options selected by user
+        '''
+        # concatenate the name and outputs from Class, determine whether to 
+        # add a header
+        if self.header:
+            header = " ".join((">",seq_name,var_pos,seq_range))
+        else:
+            header = ""
+
+        # output sequences to the screen and append to a list
+        return(header)
+
+
+
+
+class ProteinRNA(object):
+    def __init__(self, transcribe, translate, rc):
+        self.transcribe = transcribe
+        self.translate = translate
+        self.rc = rc
 
 
     def get_rna_seq(self,sequence):
@@ -237,8 +252,6 @@ class Processing():
             # DNA
             return sequence
 
-
-        
     def get_protein_seq(self,rna):
         ''' determine whether to translate protein,
             based upon options selected
@@ -249,6 +262,19 @@ class Processing():
         else:
             return rna
    
+
+
+class CompareSeqs(object):
+    def __init__(self, seq_file, upstream, downstream):
+        self.seq_file = seq_file
+        self.upstream = upstream
+        self.downstream = downstream
+    
+    UIPAC = {"A":"A", "C":"C", "G":"G", "T":"T",
+             "R":"A/G", "Y":"C/T", "S":"G/C",
+             "W":"A/T", "K":"G/T", "M":"A/C",
+             "B":"C/G/T", "D":"A/G/T", "H":"A/C/T",
+             "V":"A/C/G", "N":"N"}
 
 
     def match_with_seq_file(self,sequence):
@@ -265,7 +291,7 @@ class Processing():
             # get the sequence preceding the var_pos (preseq) and the var_pos sequence (ref_seq) 
             # from the returned get_region_info() value 
             preseq = sequence[:self.upstream].upper()
-            ref_seq = sequence[self.upstream+1].upper()
+            ref_seq = sequence[self.upstream].upper()
             seq_file = open(self.seq_file, "r").read()
             seq_file = seq_file.replace("\n","")
             
@@ -277,19 +303,19 @@ class Processing():
             
             # get the full sequence of interest from the seq_file
             matched_seq = seq_file[start:end]
-            var_pos_seq = Processing.UIPAC.get(seq_file[end])  # convert the UIPAC to bases
+            var_pos_seq = CompareSeqs.UIPAC.get(seq_file[end])  # convert the UIPAC to bases
             downstream_seq = seq_file[end+1:end+self.downstream+1]
-            if self.dash:
-                full_seq = "-".join((matched_seq,var_pos_seq,downstream_seq))
-            else:
-                full_seq = "".join((matched_seq,var_pos_seq,downstream_seq))
+            full_seq = "".join((matched_seq.lower(),var_pos_seq.upper(),
+                                 downstream_seq.lower()))
 
+            print(ref_seq)
+            print(var_pos_seq)
 
             return(full_seq,ref_seq,var_pos_seq.upper())
             
 
-
-    def compare_nucleotides(self,base_1, base_2):
+    @staticmethod
+    def compare_nucleotides(base_1, base_2):
             '''compare two nucleotides
             '''
             
@@ -307,25 +333,10 @@ class Processing():
 
 
     
-    def header_option(self,seq_name,var_pos,seq_range,sequence):
-        ''' determine whether to place a header
-            above the returned sequence, based 
-            upon options selected by user
-        '''
-        # concatenate the name and outputs from Class, determine whether to 
-        # add a header
-        if self.header:
-            header = " ".join((">",seq_name,var_pos,seq_range))
-        else:
-            header = ""
-
-        # output sequences to the screen and append to a list
-        return(header)
-
-         
+             
                 
 if __name__ == '__main__':
-    get_seq()         
+    main()         
 
-# get_seq("in.txt","b", 2, 20,"hg19","\t","y")
+# main("in.txt","b", 2, 20,"hg19","\t","y")
 
