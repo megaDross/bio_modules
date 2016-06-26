@@ -46,9 +46,9 @@ def main(input_file, output_file=None, upstream=20, downstream=20, hg_version="h
     the variant name and the variant position
          \b\n
     Example:\b\n
-        main chr1:169314424 --dash --upstream 200 --downstream 200\n
-        main chr1:169314424,169314600 --hg_version hg38\n
-        main input.txt --output_file output.txt --header\n
+        get_seq chr1:169314424 --dash --upstream 200 --downstream 200\n
+        get_seq chr1:169314424,169314600 --hg_version hg38\n
+        get_seq input.txt --output_file output.txt --header\n
         ''' 
         # allows one to pipe in an argument at the cmd
         if not input_file:
@@ -129,7 +129,8 @@ def get_seq(seq_name, var_pos, reference, trans, sanger):
             
             else:
                 print("\n".join((header,"Reference Sequence:\t"+sequence)))
-                return("\t".join((seq_name, var_pos, seq_range, sequence, "\n")))
+                return("\t".join((seq_name, var_pos, seq_range, "-", "-", 
+                                  str(2),"\n")))
 
 
         except WrongHGversion:

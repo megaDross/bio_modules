@@ -1,5 +1,5 @@
 Name	Position	Seq Range	Ref	Seq	Result	
 24AS15	15:48776065	15:48776035,48776100	C	C	0
 CX1_AD	15:48762884	15:48762854,48762919	C	G/C	1
-24AS15	15:48762884	15:48762854,48762919	tccagttcgtagcctatctcacactcacagCggaacaggccagggaggttgtggcaagttccaaag	
+24AS15	15:48762884	15:48762854,48762919	-	-	2	
 

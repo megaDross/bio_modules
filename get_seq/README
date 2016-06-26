@@ -1,4 +1,8 @@
-y
+
+python3 get_seq.py ~/in.txt  --header --output_file yyy --upstream 30 --downstream 35 --seq_file README --output_file yyy
+
+
+
 Usage: get_seq.py [OPTIONS] [INPUT_FILE]
 
   Produce a sequence using the UCSC DAS server from an inputted genomic
@@ -60,7 +64,7 @@ get_seq <file> --seq_file
 - similar to the above except an argument doesnt need to be given for --seq_file (if given it will be ignored). Instead, the Name from the first clumn of the inputted file will be used to search for a matching .seq file in the get_seq/seq_files directory. This will then be used to compare the reference sequence to the .seq file sequence.
 
 get_seq <file> --seq_file --output_file
-     - as above except the output file gives the Name, Variant Position, Genomic Range of the given sequence, the Reference nucleotide at the given variant position, the .seq file nucleotide at the given variant position and the Result (0 if they are the same, 1 if they are different).
+     - as above except the output file gives the Name, Variant Position, Genomic Range of the given sequence, the Reference nucleotide at the given variant position, the .seq file nucleotide at the given variant position and the Result (0 if they are the same, 1 if they are different,has been found 2 if no matching .seq file was found).
     - output_file only works if an input_file is given
 
 
