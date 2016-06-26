@@ -2,6 +2,9 @@ from __future__ import division, print_function
 import os, sys,re, click, requests, bs4
 from useful_tools.transcription_translation import transcription, translation
 from useful_tools.output import write_to_output
+from useful_tools import useful
+
+file_path = useful.cwd_file_path(__file__)
 
 class WrongHGversion(Exception):
     pass
@@ -19,7 +22,6 @@ class ErrorUCSC(Exception):
 @click.option('--upstream', default=20, help="number of bases to get upstream, default: 20") # default to an int makes option accept int only
 @click.option('--downstream',default=20, help="number of bases to get downstream, default: 20")
 @click.option('--hg_version',default="hg19", help="human genome version. default: hg19")
-#@click.option('--dash/--no_dash',default='n', help="dashes flanking the variant position base. default: --no_dash") # the slash in the option makes it a boolean
 @click.option('--header/--no_header',default='n',help="header gives metadata i.e. sequence name etc.")
 @click.option('--transcribe/--nr',default='n',help="transcribe into RNA sequence")
 @click.option('--translate/--np',default='n',help="translate RNA seq into protein seq")
@@ -32,12 +34,12 @@ def main(input_file, output_file=None, upstream=20, downstream=20, hg_version="h
           header="n", transcribe="n", translate="n",
             rc='n', seq_file=None):
         '''
-
     Produce a sequence using the UCSC DAS server from an inputted genomic 
 	postion and defined number of bases upstream and downstream from said 
 	position. A genomic range can be used in place of a genomic position
 	and renders the upstream/downstream options irrelevant. An input file
-	can have a mixture of genomic positions and genomic ranges.
+	can have a mixture of genomic positions and genomic ranges. genomic
+    ranges is not compatible with the --seq_file option.
          \b\n
     A file or string can be used as input. STRING: either a variant position 
     or a genomic range deliminated by a comma. FILE: deliminated file with 
@@ -48,26 +50,38 @@ def main(input_file, output_file=None, upstream=20, downstream=20, hg_version="h
         main chr1:169314424,169314600 --hg_version hg38\n
         main input.txt --output_file output.txt --header\n
         ''' 
-        # allows one to pipe in an argument at the cmd, requires required=False in 
-        # @click.argument()
+        # allows one to pipe in an argument at the cmd
         if not input_file:
             input_file = input()
         
-        # parse all arguments into the ScrapeSeq Class 
-        reference = ScrapeSeq(input_file,output_file,upstream,downstream,hg_version,header)
+        # parse arguments into the ScrapeSeq and ProteinRNA Class 
+        reference = ScrapeSeq(input_file, output_file, upstream,
+                              downstream, hg_version, header)
         trans = ProteinRNA(transcribe, translate, rc)
-        sanger = CompareSeqs(seq_file,upstream,downstream)
         
         # if the arg given is a file, parse it in line by line
         if os.path.isfile(input_file) is True:
-
+            all_scrapped_info = []
+            if seq_file:
+                print("\nWARNING:--seq_file argument ignored. automatically" 
+                      +" searching seq_files directory instead for a matching file\n")
             for line in [line.rstrip("\n").split("\t") for line in open(input_file)]:
                 seq_name = line[0]
                 var_pos = line[1]
-                sequence = get_seq(seq_name, var_pos, reference, trans, sanger)
+                seq_file = CompareSeqs.get_matching_seq_file(seq_name, 
+                                                             file_path+"seq_files/")
+                sanger = CompareSeqs(upstream, downstream, seq_file)
+                sequence_info = get_seq(seq_name, var_pos, reference, trans, sanger)
+                all_scrapped_info.append(sequence_info)
 
         else:
+            sanger = CompareSeqs(upstream,downstream, seq_file)
             get_seq("query", input_file, reference, trans, sanger)
+
+        if output_file:
+            header = "\t".join(("Name", "Position", "Seq Range", "Ref", 
+                                "Seq", "Result","\n"))
+            write_to_output(all_scrapped_info, output_file, header)
 
 
 
@@ -87,7 +101,8 @@ def get_seq(seq_name, var_pos, reference, trans, sanger):
             # use UCSC to get the genomic ranges DNA sequence
             sequence = reference.get_region_info(seq_range)
             
-            # assess whether the var pos base in the sanger trace (seq_file) is different to the reference base 
+            # assess whether the var pos base in the sanger trace (seq_file) is
+            # different to the reference base 
             sanger_sequence = sanger.match_with_seq_file(sequence)
             if sanger_sequence:    
                 ref_base = sanger_sequence[1] 
@@ -106,12 +121,16 @@ def get_seq(seq_name, var_pos, reference, trans, sanger):
                                            seq_range,sequence)
 
             if sanger_sequence:
-                print("\n".join((header,"Reference Sequence:\t"+sequence,"Sanger Sequence:\t"+sanger_sequence[0],compare)))
+                print("\n".join((header,"Reference Sequence:\t"+sequence,
+                                 "Sanger Sequence:\t"+sanger_sequence[0],
+                                 compare[0])))
+                return("\t".join((seq_name, var_pos, seq_range, ref_base, 
+                                  sanger_base, str(compare[1]))))
             
             else:
                 print("\n".join((header,"Reference Sequence:\t"+sequence)))
+                return("\t".join((seq_name, var_pos, seq_range, sequence, "\n")))
 
-            #return seq_name,var_pos,seq_range,sequence,sanger_sequence
 
         except WrongHGversion:
             print("Human genome version "+hg_version+" not recognised")
@@ -265,7 +284,7 @@ class ProteinRNA(object):
 
 
 class CompareSeqs(object):
-    def __init__(self, seq_file, upstream, downstream):
+    def __init__(self, upstream, downstream, seq_file):
         self.seq_file = seq_file
         self.upstream = upstream
         self.downstream = downstream
@@ -276,6 +295,15 @@ class CompareSeqs(object):
              "B":"C/G/T", "D":"A/G/T", "H":"A/C/T",
              "V":"A/C/G", "N":"N"}
 
+    @staticmethod
+    def get_matching_seq_file(query, directory):
+        ''' find a file name that best matches given query
+        '''
+        for f in os.listdir(directory):
+            if query in f:
+                file_match = directory+f
+        
+        return file_match
 
     def match_with_seq_file(self,sequence):
         ''' search for the sequence output from 
@@ -297,22 +325,25 @@ class CompareSeqs(object):
             
             # find the preseq in the seq_file string and output the indexes where the match occurred within the 
             # seq_file as a tuple
-            find = [(m.start(0), m.end(0)) for m in re.finditer(preseq, seq_file)][0]
-            start = find[0]
-            end = find[1]
-            
-            # get the full sequence of interest from the seq_file
-            matched_seq = seq_file[start:end]
-            var_pos_seq = CompareSeqs.UIPAC.get(seq_file[end])  # convert the UIPAC to bases
-            downstream_seq = seq_file[end+1:end+self.downstream+1]
-            full_seq = "".join((matched_seq.lower(),var_pos_seq.upper(),
-                                 downstream_seq.lower()))
+            if re.search(preseq, seq_file):
+                find = [(m.start(0), m.end(0)) for m in re.finditer(preseq, seq_file)][0]
+                start = find[0]
+                end = find[1]
+                
+                # get the full sequence of interest from the seq_file
+                matched_seq = seq_file[start:end]
+                var_pos_seq = CompareSeqs.UIPAC.get(seq_file[end])  # convert the UIPAC to bases
+                downstream_seq = seq_file[end+1:end+self.downstream+1]
+                full_seq = "".join((matched_seq.lower(),var_pos_seq.upper(),
+                                     downstream_seq.lower()))
 
-            print(ref_seq)
-            print(var_pos_seq)
-
-            return(full_seq,ref_seq,var_pos_seq.upper())
+                return(full_seq,ref_seq,var_pos_seq.upper())
             
+            else:
+                pass
+        else:
+            pass
+
 
     @staticmethod
     def compare_nucleotides(base_1, base_2):
@@ -322,11 +353,11 @@ class CompareSeqs(object):
             # assess whether a variant is present in the sanger sequence in the given proposed variant position
             if base_1 != base_2:
                 #print(".seq file:\t"+full_seq)
-                return("the nucleotides given are DIFFERENT")
+                return("the nucleotides given are DIFFERENT",1)
 
             elif base_1== base_2:
                 #print(".seq file:\t"+full_seq)
-                return("the nucleotides given are the SAME")
+                return("the nucleotides given are the SAME",0)
             
             else:
                 return "not found"
