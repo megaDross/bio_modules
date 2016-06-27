@@ -70,6 +70,8 @@ def main(input_file, output_file=None, upstream=20, downstream=20, hg_version="h
             for line in [line.rstrip("\n").split("\t") for line in open(input_file)]:
                 seq_name = line[0]
                 var_pos = line[1]
+                ScrapeEnsembl(var_pos, hg_version).get_genomic_position_range()
+
                 seq_file = CompareSeqs.get_matching_seq_file(seq_name, 
                                                              file_path+"seq_files/")
                 sanger = CompareSeqs(upstream, downstream, seq_file)
@@ -144,10 +146,25 @@ def get_seq(seq_name, var_pos, reference, trans, sanger):
         except ErrorUCSC:
             print(var_pos+" in "+seq_name+" is not recognised by UCSC"+"\n")
       
+
+
+class ScrapeEnsembl():
+
+    def __init__(self, query, hg_version):
+        self.query = query
+        self.hg_version = hg_version
+
+    hg = {"hg19": 77
+
+    def get_genomic_position_range(self):
+        ''' take input and transform into genomic position or range
+        '''
+        # check if the input is a genomic position or genomic range
+        if re.search(r"[-,:]", self.query) and self.query.replace(":","").isdigit():
+            return(self.query)
         
-
-
-
+        elif self.query.startswith("ENSG"):
+            
 
 
 
@@ -302,11 +319,15 @@ class CompareSeqs(object):
     def get_matching_seq_file(query, directory):
         ''' find a file name that best matches given query
         '''
+        # appending is required in case there is more than one match, returns first match
+        store_matches = []
         for f in os.listdir(directory):
             if query in f:
                 file_match = directory+f
+                store_matches.append(file_match)
+
         
-        return file_match
+        return store_matches[0]
 
     def match_with_seq_file(self,sequence):
         ''' search for the sequence output from 
