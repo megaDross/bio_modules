@@ -4,7 +4,6 @@ from useful_tools.transcription_translation import transcription, translation
 from useful_tools.output import write_to_output
 from useful_tools import useful
 
-file_path = useful.cwd_file_path(__file__)
 
 class WrongHGversion(Exception):
     pass
@@ -59,12 +58,15 @@ def main(input_file, output_file=None, upstream=20, downstream=20, hg_version="h
                               downstream, hg_version, header)
         trans = ProteinRNA(transcribe, translate, rc)
         
+        # get the path to this file
+        file_path = useful.cwd_file_path(__file__)
+        
         # if the arg given is a file, parse it in line by line
         if os.path.isfile(input_file) is True:
             all_scrapped_info = []
             if seq_file:
-                print("\nWARNING:--seq_file argument ignored. automatically" 
-                      +" searching seq_files directory instead for a matching file\n")
+                print("\nWARNING:--seq_file argument ignored. Automatically" 
+                      +" searching seq_files directory for a matching file\n")
             for line in [line.rstrip("\n").split("\t") for line in open(input_file)]:
                 seq_name = line[0]
                 var_pos = line[1]
@@ -123,12 +125,12 @@ def get_seq(seq_name, var_pos, reference, trans, sanger):
             if sanger_sequence:
                 print("\n".join((header,"Reference Sequence:\t"+sequence,
                                  "Sanger Sequence:\t"+sanger_sequence[0],
-                                 compare[0])))
+                                 compare[0],"\n")))
                 return("\t".join((seq_name, var_pos, seq_range, ref_base, 
                                   sanger_base, str(compare[1]))))
             
             else:
-                print("\n".join((header,"Reference Sequence:\t"+sequence)))
+                print("\n".join((header,"Reference Sequence:\t"+sequence, "\n")))
                 return("\t".join((seq_name, var_pos, seq_range, "-", "-", 
                                   str(2),"\n")))
 
