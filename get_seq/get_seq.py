@@ -133,7 +133,7 @@ def get_seq(seq_name, var_pos, reference, trans, sanger):
             else:
                 print("\n".join((header,"Reference Sequence:\t"+sequence, "\n")))
                 return("\t".join((seq_name, var_pos, seq_range, "-", "-", 
-                                  str(2),"\n")))
+                                  str(2))))
 
 
         except WrongHGversion:
