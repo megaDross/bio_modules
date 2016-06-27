@@ -1,5 +1,6 @@
 from __future__ import division, print_function
 import os, sys,re, click, requests, bs4
+from pyensembl import EnsemblRelease
 from useful_tools.transcription_translation import transcription, translation
 from useful_tools.output import write_to_output
 from useful_tools import useful
@@ -70,8 +71,6 @@ def main(input_file, output_file=None, upstream=20, downstream=20, hg_version="h
             for line in [line.rstrip("\n").split("\t") for line in open(input_file)]:
                 seq_name = line[0]
                 var_pos = line[1]
-                ScrapeEnsembl(var_pos, hg_version).get_genomic_position_range()
-
                 seq_file = CompareSeqs.get_matching_seq_file(seq_name, 
                                                              file_path+"seq_files/")
                 sanger = CompareSeqs(upstream, downstream, seq_file)
@@ -149,21 +148,27 @@ def get_seq(seq_name, var_pos, reference, trans, sanger):
 
 
 class ScrapeEnsembl():
-
+    ''' NOT WORKING
+    '''
     def __init__(self, query, hg_version):
         self.query = query
         self.hg_version = hg_version
 
-    hg = {"hg19": 77
-
+    genome = {"hg19": 75, "hg38": 83}
+    
     def get_genomic_position_range(self):
         ''' take input and transform into genomic position or range
         '''
+        hg_version = ScrapeEnsembl.genome.get(self.hg_version)
+        hg = EnsemblRelease(hg_version)
+        
         # check if the input is a genomic position or genomic range
-        if re.search(r"[-,:]", self.query) and self.query.replace(":","").isdigit():
+        if re.search(r"[-:]", self.query) and self.query.replace(":","").isdigit():
             return(self.query)
         
         elif self.query.startswith("ENSG"):
+            gene_info = hg.genes_by_id(self.query)
+            print(gene_info)
             
 
 
@@ -325,9 +330,10 @@ class CompareSeqs(object):
             if query in f:
                 file_match = directory+f
                 store_matches.append(file_match)
-
-        
-        return store_matches[0]
+                
+         
+        sorted_matches = sorted(store_matches)
+        return sorted_matches[0]
 
     def match_with_seq_file(self,sequence):
         ''' search for the sequence output from 
@@ -360,7 +366,6 @@ class CompareSeqs(object):
                 downstream_seq = seq_file[end+1:end+self.downstream+1]
                 full_seq = "".join((matched_seq.lower(),var_pos_seq.upper(),
                                      downstream_seq.lower()))
-
                 return(full_seq,ref_seq,var_pos_seq.upper())
             
             else:
