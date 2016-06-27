@@ -71,10 +71,12 @@ def main(input_file, output_file=None, upstream=20, downstream=20, hg_version="h
             for line in [line.rstrip("\n").split("\t") for line in open(input_file)]:
                 seq_name = line[0]
                 var_pos = line[1]
+                ensembl = ScrapeEnsembl(var_pos, hg_version)
                 seq_file = CompareSeqs.get_matching_seq_file(seq_name, 
                                                              file_path+"seq_files/")
                 sanger = CompareSeqs(upstream, downstream, seq_file)
-                sequence_info = get_seq(seq_name, var_pos, reference, trans, sanger)
+                sequence_info = get_seq(seq_name, var_pos, reference, trans, 
+                                        sanger, ensembl)
                 all_scrapped_info.append(sequence_info)
 
         else:
@@ -82,8 +84,9 @@ def main(input_file, output_file=None, upstream=20, downstream=20, hg_version="h
             get_seq("query", input_file, reference, trans, sanger)
 
         if output_file:
-            header = "\t".join(("Name", "Position", "Seq Range", "Ref", 
-                                "Seq", "Result","\n"))
+            header = "\t".join(("Name", "Position", "Seq Range", "Gene Name", 
+                                "Gene ID", "Type", "Gene Range",
+                                "Ref", "Seq", "Result","\n"))
             write_to_output(all_scrapped_info, output_file, header)
 
 
@@ -91,7 +94,7 @@ def main(input_file, output_file=None, upstream=20, downstream=20, hg_version="h
 
         
 
-def get_seq(seq_name, var_pos, reference, trans, sanger):
+def get_seq(seq_name, var_pos, reference, trans, sanger, ensembl):
         # adds all scrapped data to a list, which is written to an output file if the 
         # option is selected
         try:
@@ -122,18 +125,25 @@ def get_seq(seq_name, var_pos, reference, trans, sanger):
             # determine whether to give a HEADER
             header = reference.header_option(seq_name,var_pos,
                                            seq_range,sequence)
+            
+            # get gene information for the variant position
+            gene_info = ensembl.get_gene_info()
+            gene_name, gene_id, gene_type, gene_range = gene_info
+
+
 
             if sanger_sequence:
                 print("\n".join((header,"Reference Sequence:\t"+sequence,
                                  "Sanger Sequence:\t"+sanger_sequence[0],
                                  compare[0],"\n")))
-                return("\t".join((seq_name, var_pos, seq_range, ref_base, 
+                return("\t".join((seq_name, var_pos, seq_range, gene_name,
+                                  gene_id, gene_type, gene_range, ref_base, 
                                   sanger_base, str(compare[1]))))
             
             else:
                 print("\n".join((header,"Reference Sequence:\t"+sequence, "\n")))
                 return("\t".join((seq_name, var_pos, seq_range, "-", "-", 
-                                  str(2))))
+                                  str(0))))
 
 
         except WrongHGversion:
@@ -156,7 +166,7 @@ class ScrapeEnsembl():
 
     genome = {"hg19": 75, "hg38": 83}
     
-    def get_genomic_position_range(self):
+    def get_gene_info(self):
         ''' take input and transform into genomic position or range
         '''
         hg_version = ScrapeEnsembl.genome.get(self.hg_version)
@@ -164,11 +174,21 @@ class ScrapeEnsembl():
         
         # check if the input is a genomic position or genomic range
         if re.search(r"[-:]", self.query) and self.query.replace(":","").isdigit():
-            return(self.query)
+            chrom = int(self.query.split(":")[0])
+            pos = int(self.query.split(":")[1])
+            gene_name = hg.gene_names_at_locus(contig=chrom, position=pos)
+            gene_info = hg.genes_by_name(gene_name[0])
+            # not sure how to manipulate Gene() object correctly so splitting will do
+            # and reorganise as a tuple
+            gene_info_split = re.split(r"[=,]",str(gene_info[0]))
+            gene_id = gene_info_split[1]
+            gene_type = gene_info_split[5]
+            gene_range = gene_info_split[7]
+
+            gene_info = (gene_name[0], gene_id, gene_type, gene_range)
+            return(gene_info)
         
-        elif self.query.startswith("ENSG"):
-            gene_info = hg.genes_by_id(self.query)
-            print(gene_info)
+        
             
 
 
@@ -381,12 +401,10 @@ class CompareSeqs(object):
             
             # assess whether a variant is present in the sanger sequence in the given proposed variant position
             if base_1 != base_2:
-                #print(".seq file:\t"+full_seq)
-                return("the nucleotides given are DIFFERENT",1)
+                return("the nucleotides given are DIFFERENT",2)
 
             elif base_1== base_2:
-                #print(".seq file:\t"+full_seq)
-                return("the nucleotides given are the SAME",0)
+                return("the nucleotides given are the SAME",1)
             
             else:
                 return "not found"
