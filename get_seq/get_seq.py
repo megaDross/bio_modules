@@ -110,13 +110,12 @@ def get_seq(seq_name, var_pos, reference, trans, sanger, ensembl):
             # assess whether the var pos base in the sanger trace (seq_file) is
             # different to the reference base 
             sanger_sequence = sanger.match_with_seq_file(sequence)
-            if sanger_sequence:    
+            if isinstance(sanger_sequence, tuple):# if sanger_sequence is tuple else
                 ref_base = sanger_sequence[1] 
                 sanger_base = sanger_sequence[2] 
 
                 # compare the reqerence var_pos base and the sanger var_pos base
                 compare = CompareSeqs.compare_nucleotides(ref_base,sanger_base) 
-            
             
             # detrmine whether to transcribe or translate to RNA or PROTEIN
             sequence = str(trans.get_rna_seq(sequence))
@@ -132,7 +131,7 @@ def get_seq(seq_name, var_pos, reference, trans, sanger, ensembl):
 
             
 
-            if sanger_sequence:
+            if isinstance(sanger_sequence, tuple):
                 print("\n".join((header,"Reference Sequence:\t"+sequence,
                                  "Sanger Sequence:\t"+sanger_sequence[0],
                                  compare[0],"\n")))
@@ -188,6 +187,7 @@ class ScrapeEnsembl():
             gene_info = (gene_name[0], gene_id, gene_type, gene_range)
             # transcripts, I think he first tramscript retrurned is  the canonical
             print(hg.transcript_ids_of_gene_name(gene_name[0]))
+
             return(gene_info)
     
     #def get_transcript_info(self,
