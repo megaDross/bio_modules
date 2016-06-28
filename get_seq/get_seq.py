@@ -130,7 +130,7 @@ def get_seq(seq_name, var_pos, reference, trans, sanger, ensembl):
             gene_info = ensembl.get_gene_info()
             gene_name, gene_id, gene_type, gene_range = gene_info
 
-
+            
 
             if sanger_sequence:
                 print("\n".join((header,"Reference Sequence:\t"+sequence,
@@ -142,8 +142,8 @@ def get_seq(seq_name, var_pos, reference, trans, sanger, ensembl):
             
             else:
                 print("\n".join((header,"Reference Sequence:\t"+sequence, "\n")))
-                return("\t".join((seq_name, var_pos, seq_range, "-", "-", 
-                                  str(0))))
+                return("\t".join((seq_name, var_pos, seq_range, gene_name, gene_id,  
+                                  gene_type, gene_range, "-", "-",str(0))))
 
 
         except WrongHGversion:
@@ -186,7 +186,13 @@ class ScrapeEnsembl():
             gene_range = gene_info_split[7]
 
             gene_info = (gene_name[0], gene_id, gene_type, gene_range)
+            # transcripts, I think he first tramscript retrurned is  the canonical
+            print(hg.transcript_ids_of_gene_name(gene_name[0]))
             return(gene_info)
+    
+    #def get_transcript_info(self,
+
+    
         
         
             
