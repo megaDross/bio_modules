@@ -161,36 +161,56 @@ class ScrapeEnsembl():
     '''
     def __init__(self, query, hg_version):
         self.query = query
-        self.hg_version = hg_version
+        self.hg_version = ScrapeEnsembl.genome.get(hg_version) # convert to ensembl release
+        self.hg = EnsemblRelease(self.hg_version) # convert to ensembl release object
+
 
     genome = {"hg19": 75, "hg38": 83}
     
     def get_gene_info(self):
         ''' take input and transform into genomic position or range
         '''
-        hg_version = ScrapeEnsembl.genome.get(self.hg_version)
-        hg = EnsemblRelease(hg_version)
         
         # check if the input is a genomic position or genomic range
         if re.search(r"[-:]", self.query) and self.query.replace(":","").isdigit():
             chrom = int(self.query.split(":")[0])
             pos = int(self.query.split(":")[1])
-            gene_name = hg.gene_names_at_locus(contig=chrom, position=pos)
-            gene_info = hg.genes_by_name(gene_name[0])
+            gene_name = self.hg.gene_names_at_locus(contig=chrom, position=pos)
+            gene_info = self.hg.genes_by_name(gene_name[0])
             # not sure how to manipulate Gene() object correctly so splitting will do
             # and reorganise as a tuple
             gene_info_split = re.split(r"[=,]",str(gene_info[0]))
             gene_id = gene_info_split[1]
             gene_type = gene_info_split[5]
-            gene_range = gene_info_split[7]
+            gene_range = gene_info_split[7][:-1]
 
             gene_info = (gene_name[0], gene_id, gene_type, gene_range)
-            # transcripts, I think he first tramscript retrurned is  the canonical
-            print(hg.transcript_ids_of_gene_name(gene_name[0]))
-
+            
             return(gene_info)
     
-    #def get_transcript_info(self,
+    
+    def get_canonical_transcript(gene_name):
+        ''' Determine and return the canonical transcript of the given gene
+        '''
+        # transcripts, I think he first tramscript retrurned is  the canonical
+        all_transcripts = self.hg.transcript_ids_of_gene_name(gene_name)
+        all_transcript_details = [self.hg.transcript_by_id(x) for x in all_transcripts]
+        protein_coding_transcripts = []
+        for x in all_transcript_details:
+            split_transcript_info = re.split(r"[=,]",str(x))
+            transcript = split_transcript_info[1]
+            transcript_type = split_transcript_info[9]
+            location = split_transcript_info[-1][:-1]
+            start = re.split(r"[:-]", location)[1]
+            stop = re.split(r"[:-]", location)[2]
+            size = int(stop) - int(start)
+            if transcript_type == "protein_coding":
+                protein_coding_transcripts.append((size,transcript,transcript_type))
+
+        # sort by size and return the largest protein coding transcript
+        canonical_transcript = sorted(protein_coding_transcripts)[-1][1]
+        return canonical_transcript
+
 
     
         
