@@ -426,6 +426,8 @@ class ScrapeSeq():
     def get_region_info(self, seq_range):
         ''' From a genomic range and human genome version, use UCSC DAS server
             to retrieve the sequence found in the given genomic range.
+
+            http://www.biodas.org/documents/spec-1.53.html
         '''
         # scrape for the sequence associated with the seq_range AKA genomic region 
         req = requests.get("http://genome.ucsc.edu/cgi-bin/das/"+self.hg_version+
