@@ -85,8 +85,9 @@ def main(input_file, output_file=None, upstream=20, downstream=20, hg_version="h
 
         if output_file:
             header = "\t".join(("Name", "Position", "Seq Range", "Gene Name", 
-                                "Gene ID", "Type", "Gene Range",
-                                "Ref", "Seq", "Result","\n"))
+                                "Gene ID", "Type", "Gene Range", "Transcript",
+                                "Exon ID", "Intron", "Exon", "Ref", "Seq", "Result",
+                                "\n"))
             write_to_output(all_scrapped_info, output_file, header)
 
 
@@ -129,7 +130,8 @@ def get_seq(seq_name, var_pos, reference, trans, sanger, ensembl):
             gene_info = ensembl.get_gene_info()
             gene_name, gene_id, gene_type, gene_range = gene_info
             transcript = ensembl.get_canonical_transcript(gene_name)
-            print(get_exon_numbers(seq_name, transcript, var_pos, ensembl))
+            exon_info = get_exon_numbers(seq_name, transcript, var_pos, ensembl)
+            exon_id, intron, exon = exon_info
 
             
 
@@ -138,7 +140,8 @@ def get_seq(seq_name, var_pos, reference, trans, sanger, ensembl):
                                  "Sanger Sequence:\t"+sanger_sequence[0],
                                  compare[0],"\n")))
                 return("\t".join((seq_name, var_pos, seq_range, gene_name,
-                                  gene_id, gene_type, gene_range, ref_base, 
+                                  gene_id, gene_type, gene_range, transcript, 
+                                  exon_id, intron, exon, ref_base,
                                   sanger_base, str(compare[1]))))
             
             else:
@@ -162,26 +165,23 @@ def get_exon_numbers(name, transcript, pos, ensembl):
     exon_dics = ensembl.request_ensembl(transcript)
     exon_region = ensembl.all_exon_regions(exon_dics,transcript)
     exon_id = ensembl.get_exon_id(exon_region,pos) # filter for exon id in which variant is within
-    print(pos)
     if not exon_id:
         sorted_exon_regions = sorted(exon_region)
         intron_region = ensembl.all_intron_regions(sorted_exon_regions)
         intron_num = ensembl.intron_number(intron_region,pos)
         
         if intron_num is None:
-            return "\t".join((name,pos,transcript,"NO INTRON/EXON MATCHED"))
+            return (pos,transcript,"NO INTRON/EXON MATCHED")
         else:
             last_exon = ensembl.total_exons(exon_dics,transcript)
             last_intron = int(last_exon)-1
-            return "\t".join((name,pos,transcript,
-                              str(intron_num)+"/"+str(last_intron),"-"))
+            return (exon_id[0],str(intron_num)+"/"+str(last_intron),"-")
     else:
         exon_num = ensembl.exon_number(exon_dics,exon_id,transcript)    # use th exon_id to get exon number
         last_exon = ensembl.total_exons(exon_dics,transcript)           # get total exons of transcript
         
         
-        return "\t".join((name,pos,transcript,"-",
-                          str(exon_num)+"/"+str(last_exon)))
+        return (exon_id[0], "-" ,str(exon_num)+"/"+str(last_exon))
 
    
 
@@ -329,7 +329,6 @@ class ScrapeEnsembl():
         '''  
         exon_id = []      
         for exons in sorted(exon_region):
-            print(exons)
             for x in range(exons[2],exons[3]):
                 if x == int(pos.split(":")[1]):
                     exon_id.append(exons[1])
