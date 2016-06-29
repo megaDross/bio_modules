@@ -159,9 +159,10 @@ def get_seq(seq_name, var_pos, reference, trans, sanger, ensembl):
 
 def get_exon_numbers(name, transcript, pos, ensembl):
 
-    exon_dics = ensembl.request_ensembl(transcript) 
+    exon_dics = ensembl.request_ensembl(transcript)
     exon_region = ensembl.all_exon_regions(exon_dics,transcript)
     exon_id = ensembl.get_exon_id(exon_region,pos) # filter for exon id in which variant is within
+    print(pos)
     if not exon_id:
         sorted_exon_regions = sorted(exon_region)
         intron_region = ensembl.all_intron_regions(sorted_exon_regions)
@@ -170,16 +171,16 @@ def get_exon_numbers(name, transcript, pos, ensembl):
         if intron_num is None:
             return "\t".join((name,pos,transcript,"NO INTRON/EXON MATCHED"))
         else:
-            last_exon = total_exons(exon_dics,transcript)
+            last_exon = ensembl.total_exons(exon_dics,transcript)
             last_intron = int(last_exon)-1
-            return "\t".join((query,pos,transcript,
+            return "\t".join((name,pos,transcript,
                               str(intron_num)+"/"+str(last_intron),"-"))
     else:
-        exon_num = exon_number(exon_dics,exon_id,transcript)    # use th exon_id to get exon number
-        last_exon = total_exons(exon_dics,transcript)           # get total exons of transcript
+        exon_num = ensembl.exon_number(exon_dics,exon_id,transcript)    # use th exon_id to get exon number
+        last_exon = ensembl.total_exons(exon_dics,transcript)           # get total exons of transcript
         
         
-        return "\t".join((variant_alias,pos,transcript,"-",
+        return "\t".join((name,pos,transcript,"-",
                           str(exon_num)+"/"+str(last_exon)))
 
    
@@ -254,7 +255,7 @@ class ScrapeEnsembl():
             else:
                 print("incompatible human genome version")
             
-            url = "".join(("http://rest.ensembl.org/overlap/id/",transcript,
+            url = "".join(("http://",grch,"rest.ensembl.org/overlap/id/",transcript,
                            "?feature=exon;content-type=application/json;expand=1"))
             req = requests.get(url)
             req.raise_for_status()
@@ -303,10 +304,11 @@ class ScrapeEnsembl():
     def intron_number(self,intron_region,pos):
         ''' Returns the intron number in which the variant is within
         '''
+        
         for intron in intron_region:
             if int(intron[3]) > 0:
              # no idea why the start and end pos are swapped, hence the need for if/else
-                for x in range(int(intron[2]),int(intron[1])):                  
+                for x in range(int(intron[2]),int(intron[1])):          
                     if x == int(pos.split(":")[1]):
                         intron_num= intron[0]
                         return intron_num
@@ -326,7 +328,8 @@ class ScrapeEnsembl():
             associated with that position.
         '''  
         exon_id = []      
-        for exons in exon_region:
+        for exons in sorted(exon_region):
+            print(exons)
             for x in range(exons[2],exons[3]):
                 if x == int(pos.split(":")[1]):
                     exon_id.append(exons[1])
