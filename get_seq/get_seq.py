@@ -15,6 +15,7 @@ class TypographyError(Exception):
 class ErrorUCSC(Exception):
     pass
 
+file_path = useful.cwd_file_path(__file__)
    
 @click.command('main')
 @click.argument('input_file',nargs=1, required=False)
@@ -27,12 +28,13 @@ class ErrorUCSC(Exception):
 @click.option('--translate/--np',default='n',help="translate RNA seq into protein seq")
 @click.option('--rc/--no_rc',default='n',help="reverse complement the DNA")
 @click.option('--seq_file', default=None, help="match sequence with .seq file contents")
+@click.option('--seq_dir', default=file_path+"seq_files/")
 
 # what use is there in just transcribing and translating for the sake of it? perhaps use an intiation codon finder which can be used o run through a DNA sequence pior to transcripion and transcribing from said site. Also something which checks the dna seq is a multiple of 3 would also be useful. Perhaps something where I could push the rna/protein seq to find which gene exon etc. is or maybe nBLAST, pBLAST etc which I am sure BioPython will have something for parsing to.
 
 def main(input_file, output_file=None, upstream=20, downstream=20, hg_version="hg19",
           header="n", transcribe="n", translate="n",
-            rc='n', seq_file=None):
+            rc='n', seq_file=None, seq_dir=file_path+"seq_files/"):
         '''
     Produce a sequence using the UCSC DAS server from an inputted genomic 
 	postion and defined number of bases upstream and downstream from said 
@@ -60,7 +62,6 @@ def main(input_file, output_file=None, upstream=20, downstream=20, hg_version="h
         trans = ProteinRNA(transcribe, translate, rc)
         
         # get the path to this file
-        file_path = useful.cwd_file_path(__file__)
         
         # if the arg given is a file, parse it in line by line
         if os.path.isfile(input_file) is True:
@@ -72,16 +73,16 @@ def main(input_file, output_file=None, upstream=20, downstream=20, hg_version="h
                 seq_name = line[0]
                 var_pos = line[1]
                 ensembl = ScrapeEnsembl(var_pos, hg_version)
-                seq_file = CompareSeqs.get_matching_seq_file(seq_name, 
-                                                             file_path+"seq_files/")
+                seq_file = CompareSeqs.get_matching_seq_file(seq_name, seq_dir)
                 sanger = CompareSeqs(upstream, downstream, seq_file)
                 sequence_info = get_seq(seq_name, var_pos, reference, trans, 
                                         sanger, ensembl)
                 all_scrapped_info.append(sequence_info)
 
         else:
+            ensembl = ScrapeEnsembl(input_file, hg_version)
             sanger = CompareSeqs(upstream,downstream, seq_file)
-            get_seq("query", input_file, reference, trans, sanger)
+            get_seq("query", input_file, reference, trans, sanger, ensembl)
 
         if output_file:
             header = "\t".join(("Name", "Position", "Seq Range", "Gene Name", 
@@ -128,14 +129,15 @@ def get_seq(seq_name, var_pos, reference, trans, sanger, ensembl):
             
             # get gene information for the variant position
             gene_info = ensembl.get_gene_info()
-            gene_name, gene_id, gene_type, gene_range = gene_info
-            transcript = ensembl.get_canonical_transcript(gene_name)
-            exon_info = get_exon_numbers(seq_name, transcript, var_pos, ensembl)
-            exon_id, intron, exon = exon_info
+            if gene_info:
+                gene_name, gene_id, gene_type, gene_range = gene_info
+                transcript = ensembl.get_canonical_transcript(gene_name)
+                exon_info = get_exon_numbers(seq_name, transcript, var_pos, ensembl)
+                exon_id, intron, exon = exon_info
 
             
 
-            if isinstance(sanger_sequence, tuple):
+            if isinstance(sanger_sequence, tuple) and gene_info:
                 print("\n".join((header,"Reference Sequence:\t"+sequence,
                                  "Sanger Sequence:\t"+sanger_sequence[0],
                                  compare[0],"\n")))
@@ -143,7 +145,14 @@ def get_seq(seq_name, var_pos, reference, trans, sanger, ensembl):
                                   gene_id, gene_type, gene_range, transcript, 
                                   exon_id, intron, exon, ref_base,
                                   sanger_base, str(compare[1]))))
-            
+
+            elif not gene_info and isinstance(sanger_sequence, tuple):
+                print("\n".join((header, "Reference Sequence:\t"+sequence,
+                                 "Sanger Sequence:\t"+sanger_sequence[0],
+                                 compare[0], "\n")))
+            elif not gene_info:
+                print("\n".join((header, "Reference Sequence:\t"+sequence,"\n")))
+
             else:
                 print("\n".join((header,"Reference Sequence:\t"+sequence, "\n")))
                 return("\t".join((seq_name, var_pos, seq_range, gene_name, gene_id,  
@@ -175,7 +184,7 @@ def get_exon_numbers(name, transcript, pos, ensembl):
         else:
             last_exon = ensembl.total_exons(exon_dics,transcript)
             last_intron = int(last_exon)-1
-            return (exon_id[0],str(intron_num)+"/"+str(last_intron),"-")
+            return ("Intron",str(intron_num)+"/"+str(last_intron),"-")
     else:
         exon_num = ensembl.exon_number(exon_dics,exon_id,transcript)    # use th exon_id to get exon number
         last_exon = ensembl.total_exons(exon_dics,transcript)           # get total exons of transcript
@@ -204,21 +213,22 @@ class ScrapeEnsembl():
         '''
         
         # check if the input is a genomic position or genomic range
-        if re.search(r"[-:]", self.query) and self.query.replace(":","").isdigit():
-            chrom = int(self.query.split(":")[0])
+        if re.search(r"[-:]", self.query) and self.query.replace(":","").isdigit() or self.query.startswith("X"):
+            chrom = self.query.split(":")[0]
             pos = int(self.query.split(":")[1])
             gene_name = self.hg.gene_names_at_locus(contig=chrom, position=pos)
-            gene_info = self.hg.genes_by_name(gene_name[0])
-            # not sure how to manipulate Gene() object correctly so splitting will do
-            # and reorganise as a tuple
-            gene_info_split = re.split(r"[=,]",str(gene_info[0]))
-            gene_id = gene_info_split[1]
-            gene_type = gene_info_split[5]
-            gene_range = gene_info_split[7][:-1]
+            if gene_name:
+                gene_info = self.hg.genes_by_name(gene_name[0])
+                # not sure how to manipulate Gene() object correctly so splitting will do
+                # and reorganise as a tuple
+                gene_info_split = re.split(r"[=,]",str(gene_info[0]))
+                gene_id = gene_info_split[1]
+                gene_type = gene_info_split[5]
+                gene_range = gene_info_split[7][:-1]
 
-            gene_info = (gene_name[0], gene_id, gene_type, gene_range)
+                gene_info = (gene_name[0], gene_id, gene_type, gene_range)
             
-            return(gene_info)
+                return(gene_info)
     
     
     def get_canonical_transcript(self, gene_name):
@@ -532,9 +542,9 @@ class CompareSeqs(object):
                 file_match = directory+f
                 store_matches.append(file_match)
                 
-         
-        sorted_matches = sorted(store_matches)
-        return sorted_matches[0]
+        if store_matches:
+            sorted_matches = sorted(store_matches)
+            return sorted_matches[0]
 
     def match_with_seq_file(self,sequence):
         ''' search for the sequence output from 
