@@ -49,7 +49,7 @@ def main(input_file, output_file=None, upstream=20, downstream=20, hg_version="h
             input_file = input()
         
         # parse arguments into the ScrapeSeq and ProteinRNA Class 
-        reference = ScrapeSeq(input_file, output_file, upstream,
+        reference = ScrapeSeq(input_file,  upstream,
                               downstream, hg_version, header)
         trans = ProteinRNA(transcribe, translate, rc)
         
