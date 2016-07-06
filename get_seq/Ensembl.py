@@ -160,7 +160,7 @@ class ExonInfo():
                                             int(start_pos_next_exon)))
                     intron_region.add(intron_info)
         
-        return intron_region
+        return sorted(intron_region)
 
 
     def intron_number(self,intron_region):
