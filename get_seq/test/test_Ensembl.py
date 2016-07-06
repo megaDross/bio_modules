@@ -1,6 +1,6 @@
 # python3 -m pytest test_Ensembl.py
 from get_seq.Ensembl import *
-
+# this doesnt work, try with unnittesting
 
 def check_gene_info():
     assert ScrapeEnsembl("15:48762884", "hg19").get_gene_info() == (
