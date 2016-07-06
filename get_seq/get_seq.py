@@ -74,7 +74,7 @@ def main(input_file, output_file=None, upstream=20, downstream=20, hg_version="h
         else:
             ensembl = ScrapeEnsembl(input_file, hg_version)
             sanger = CompareSeqs(upstream,downstream, seq_file)
-            get_seq("query", input_file, reference, trans, sanger, hg_version)
+            get_seq("query", input_file, reference, trans, sanger, hg_version, ensembl)
 
         if output_file:
             header = "\t".join(("Name", "Position", "Seq Range", "Gene Name", 

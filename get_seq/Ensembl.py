@@ -112,10 +112,11 @@ class ExonInfo():
             if self.hg_version == "hg19":
                 grch = "grch37."
             elif self.hg_version == "hg38":
-                grch = "."
+                grch = ""
             else:
                 print("incompatible human genome version")
             
+
             url = "".join(("http://",grch,"rest.ensembl.org/overlap/id/",self.transcript,
                            "?feature=exon;content-type=application/json;expand=1"))
             req = requests.get(url)

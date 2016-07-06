@@ -36,7 +36,8 @@ class CompareSeqs(object):
             returns a tuple containing the sanger
             sequence and the var_pos nucelotide
 
-            # NEEDS MUCH MORE TESTING
+            # NEEDS MUCH MORE TESTING AND THE BELOW IDEA
+              That a despite however many t
         '''
         if self.seq_file:
             # get the sequence preceding the var_pos (preseq) and the var_pos sequence (ref_seq) 
@@ -74,7 +75,7 @@ class CompareSeqs(object):
                 # get the full sequence of interest from the seq_file
                 matched_seq = seq_file[start:end]
                 var_pos_seq = CompareSeqs.UIPAC.get(seq_file[start])  # convert the UIPAC to bases
-                # blow may not work great if it produces a negative number for indexing
+                # below may not work great if it produces a negative number for indexing
                 upstream_seq = seq_file[start-self.downstream:start-1]
                 full_seq = "".join((upstream_seq.lower(),var_pos_seq.upper(),matched_seq.lower()))
                 return(full_seq,ref_seq,var_pos_seq.upper())
