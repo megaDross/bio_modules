@@ -2,28 +2,51 @@ import unittest
 from get_seq.UCSC import *
 
 
-class TestNormal(unittest.TestCase):
-    ''' Test all methods in UCSC.py under the default
+class TestUSCS(unittest.TestCase):
+    ''' Test all methods in UCSC.py under the Default
         arguments
-        ### HAVE MULTIPLE WITH OTHER VALUES FOR ARGUMENTS, SO NOT ONLY DEFAULT VALUES ARE TESTED
-
     '''
-    Test = ScrapeSeq("Test", 20, 20, "hg19", "Y")
+    Default = ScrapeSeq("Test.Default", 20, 20, "hg19", "Y")
+    UpDownstream = ScrapeSeq("Test.UpDownstream", 35, 70, "hg19", "Y")
+    HG = ScrapeSeq("Test.HG", 20, 20, "hg38", "Y")
+    NoHeader = ScrapeSeq("Test.NoHeader", 20, 20, "hg19")
     var_pos = "15:48762884"
 
     def test_region(self):
-        self.assertEqual(TestNormal.Test.create_region(TestNormal.var_pos),
+        ''' Ensure the parsed arguments are outputting the expected genomic range
+        '''
+        self.assertEqual(TestUSCS.Default.create_region(TestUSCS.var_pos),
                          "15:48762864,48762904")
+        self.assertEqual(TestUSCS.UpDownstream.create_region(TestUSCS.var_pos),
+                         "15:48762849,48762954")
+        self.assertEqual(TestUSCS.Default.create_region("15:48762849,48762954"),
+                         "15:48762849,48762954")
+
 
     def test_region_info(self):
-        self.assertEqual(TestNormal.Test.get_region_info("15:48762864,48762904"),
+        ''' Check that the expected sequence is being scrapped from UCSC DAS server
+        '''
+        self.assertEqual(TestUSCS.Default.get_region_info("15:48762864,48762904"),
                                 'agcctatctcacactcacagCggaacaggccagggaggttg')
+        self.assertEqual(TestUSCS.UpDownstream.get_region_info("15:48762849,48762954"),
+                        'ttctgtccagttcgtagcctatctcacactcacagCggaacaggccagggaggttgtgg'
+                         'caagttccaaagacacagatgttcggaagggagcactcatcaatatc')
+        self.assertEqual(TestUSCS.HG.get_region_info("15:48762864,48762904"),
+                        'gaacttaactatatgacaaaAatcacatgaaagatttaagt')
+
 
     def test_header(self):
-        self.assertEqual(TestNormal.Test.header_option(
-            "Test", TestNormal.var_pos, "15:48762864,48762904",
+        ''' Ensure the header option works as expected
+        '''
+        self.assertEqual(TestUSCS.Default.header_option(
+            "Test", TestUSCS.var_pos, "15:48762864,48762904",
             'agcctatctcacactcacagCggaacaggccagggaggttg'),
             '> Test 15:48762884 15:48762864,48762904')
+        self.assertEqual(TestUSCS.NoHeader.header_option(
+            "Test", TestUSCS.var_pos, "15:48762864,48762904",
+            'agcctatctcacactcacagCggaacaggccagggaggttg'),
+            '')
+        
 
 
 class TestErrorHandeling(unittest.TestCase):
@@ -31,7 +54,7 @@ class TestErrorHandeling(unittest.TestCase):
     '''
     def test_all_exceptions(self):
         ''' Ensure custom exceptions are raised upon parsing 
-            invlaid arguments
+            invalid arguments
         '''
         with self.assertRaises(WrongHGversion):
             ScrapeSeq("Test", 20, 20, "hg1", "Y").handle_argument_exception(

@@ -15,7 +15,7 @@ class ErrorUCSC(Exception):
 
 class ScrapeSeq():
 
-    def __init__(self,input_file,upstream, downstream, hg_version, header):
+    def __init__(self,input_file,upstream, downstream, hg_version, header=None):
         
         self.input_file = input_file
         self.upstream = upstream

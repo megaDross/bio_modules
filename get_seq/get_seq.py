@@ -77,9 +77,9 @@ def main(input_file, output_file=None, upstream=20, downstream=20, hg_version="h
             get_seq("query", input_file, reference, trans, sanger, hg_version, ensembl)
 
         if output_file:
-            header = "\t".join(("Name", "Position", "Seq Range", "Gene Name", 
-                                "Gene ID", "Type", "Gene Range", "Transcript",
-                                "Exon ID", "Intron", "Exon", "Ref", "Seq", "Result",
+            header = "\t".join(("Name", "Position", "Seq_Range", "Gene_Name", 
+                                "Gene_ID", "Type", "Gene_Range", "Transcript",
+                                "Exon_ID", "Intron", "Exon", "Ref", "Seq", "Result",
                                 "\n"))
             write_to_output(all_scrapped_info, output_file, header)
 
