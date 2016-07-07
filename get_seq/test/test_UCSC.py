@@ -3,6 +3,11 @@ from get_seq.UCSC import *
 
 
 class TestNormal(unittest.TestCase):
+    ''' Test all methods in UCSC.py under the default
+        arguments
+        ### HAVE MULTIPLE WITH OTHER VALUES FOR ARGUMENTS, SO NOT ONLY DEFAULT VALUES ARE TESTED
+
+    '''
     Test = ScrapeSeq("Test", 20, 20, "hg19", "Y")
     var_pos = "15:48762884"
 
@@ -25,6 +30,9 @@ class TestErrorHandeling(unittest.TestCase):
     ''' Ensure custom exceptions work as anticipated
     '''
     def test_all_exceptions(self):
+        ''' Ensure custom exceptions are raised upon parsing 
+            invlaid arguments
+        '''
         with self.assertRaises(WrongHGversion):
             ScrapeSeq("Test", 20, 20, "hg1", "Y").handle_argument_exception(
             "15:48762864")

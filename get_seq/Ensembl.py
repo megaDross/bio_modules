@@ -23,6 +23,10 @@ class ScrapeEnsembl():
             chrom = int(self.query.split(":")[0])
             pos = int(self.query.split(":")[1])
             gene_name = self.hg.gene_names_at_locus(contig=chrom, position=pos)
+            if not gene_name:
+                msg = " ".join(("No gene found at",self.query,"for genome version",str(self.hg_version)))
+                return msg 
+            
             gene_info = self.hg.genes_by_name(gene_name[0])
             # gene_info[0].loaction doesn't work, hence the mess below
             gene_location = str(gene_info[0]).split(",")[-1][:-1].split("=")[1]
@@ -80,7 +84,7 @@ def get_exon_number(transcript, hg_version, pos):
         else:
             last_exon = ensembl.total_exons(exon_dics)
             last_intron = int(last_exon)-1
-            return (exon_id[0],str(intron_num)+"/"+str(last_intron),"-")
+            return ("-",str(intron_num)+"/"+str(last_intron),"-")
     else:
         exon_num = ensembl.exon_number(exon_dics,exon_id)    # use th exon_id to get exon number
         last_exon = ensembl.total_exons(exon_dics)           # get total exons of transcript
