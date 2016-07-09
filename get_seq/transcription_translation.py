@@ -4,7 +4,12 @@ from Bio.Alphabet import IUPAC
 import re
 
 class ProteinRNA(object):
-    def __init__(self, transcribe, translate, rc):
+    ''' Handle options parsed from get_seq.py and decide
+        whether to transcribe, reverse complement and/or
+        translate based upon which arguments have been 
+        parsed.
+    '''
+    def __init__(self, transcribe, translate, rc=None):
         self.transcribe = transcribe
         self.translate = translate
         self.rc = rc
@@ -12,14 +17,14 @@ class ProteinRNA(object):
 
     def get_rna_seq(self,sequence):
         ''' determine whether to transcribe rna,
-            based upon options selected
+            based upon options parsed
         '''
         # perorm transcription, reverse complement and/or translation depending
         # on which options have been selected
         if self.transcribe:
          
             if self.rc:
-                rna = transcription(dna.replace("-",""),"rc")
+                rna = transcription(sequence.replace("-",""),"rc")
                 return rna
 
             else:
@@ -31,7 +36,7 @@ class ProteinRNA(object):
 
     def get_protein_seq(self,rna):
         ''' determine whether to translate protein,
-            based upon options selected
+            based upon options parsed
         '''
         if self.translate:
             protein = translation(rna)
@@ -41,7 +46,8 @@ class ProteinRNA(object):
  
 
 def transcription(dna, rc=None):
-    ''' Transcribes a given DNA sequence into an mRNA sequence from the first intiation codon.
+    ''' Transcribes a given DNA sequence into an RNA sequence 
+        from the first intiation codon.
     '''
     # ensure the DNA has no ambigous bases
     dna_seq = Seq(dna, IUPAC.unambiguous_dna)
@@ -64,7 +70,7 @@ def transcription(dna, rc=None):
 
 
 def translation(*args):
-    ''' A decorator that translates a given RNA sequence into a protein sequence.
+    ''' Translate a given RNA sequence into a protein sequence.
     '''
     # the first element in the args tuple is assumed to be an RNA sequence
     rna = args[0]
