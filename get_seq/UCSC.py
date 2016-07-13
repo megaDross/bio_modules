@@ -17,11 +17,13 @@ class ScrapeSeq():
     ''' A collection of methods that are required for scrapping the reference
         sequence from UCSC
     '''
-    def __init__(self,input_file,upstream, downstream, hg_version, header=None):
+    def __init__(self,input_file,upstream, downstream, hg_version, ensembl=None
+                 , header=None):
         self.input_file = input_file
         self.upstream = upstream
         self.downstream = downstream
         self.hg_version = hg_version
+        self.ensembl = ensembl
         self.header = header
 
                  
@@ -93,13 +95,15 @@ class ScrapeSeq():
         return answer
     
     
-    def header_option(self,seq_name,var_pos,seq_range,sequence):
+    def header_option(self,seq_name,var_pos,seq_range,sequence, gene_name=None):
         ''' determine whether to place a header above the returned sequence, based 
             upon options selected by user
         '''
         # concatenate the name and outputs from Class, determine whether to 
         # add a header
-        if self.header:
+        if self.header and gene_name:
+            header = " ".join((">",seq_name,var_pos,seq_range,gene_name))
+        elif self.header:
             header = " ".join((">",seq_name,var_pos,seq_range))
         else:
             header = ""

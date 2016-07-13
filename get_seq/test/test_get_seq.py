@@ -143,7 +143,8 @@ class GetSeqFileOut(unittest.TestCase):
                                                  'test/test_in.txt', "--seq_dir",
                                                  file_path[:-5]+'test/test_files/',
                                                  '--header', '--output_file',
-                                                  file_path[:-5]+'test/yyy.txt'])
+                                                  file_path[:-5]+'test/yyy.txt',
+                                                 '--ensembl'])
         ref_seq = ref_seq_bytes.decode(encoding='UTF-8')
 
         self.assertEqual(open(file_path[:-5]+'test/yyy.txt').read(), 

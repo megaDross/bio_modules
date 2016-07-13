@@ -1,3 +1,4 @@
+
 > CX1_AD 15:48762884 15:48762864,48762904
 Reference Sequence:	agcctatctcacactcacagCggaacaggccagggaggttg
 Sanger Sequence:	agcctatctcacactcacagG/Cggaacaggccagggaggttg
@@ -12,6 +13,7 @@ the nucleotides given are the SAME
 
 > 24AS15 15:48762884 15:48762864,48762904
 Reference Sequence:	agcctatctcacactcacagCggaacaggccagggaggttg
+Sanger Sequence:	No Match Found
 
 
 > 24AS15 15:48776065 15:48776045,48776085
