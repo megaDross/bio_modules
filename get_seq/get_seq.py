@@ -53,8 +53,6 @@ def main(input_file, output_file=None, upstream=20, downstream=20, hg_version="h
                               downstream, hg_version, header)
         trans = ProteinRNA(transcribe, translate, rc)
         
-        # get the path to this file
-        
         # if the arg given is a file, parse it in line by line
         if os.path.isfile(input_file) is True:
             all_scrapped_info = []
@@ -73,7 +71,9 @@ def main(input_file, output_file=None, upstream=20, downstream=20, hg_version="h
 
         else:
             ensembl = ScrapeEnsembl(input_file, hg_version)
-            sanger = CompareSeqs(upstream,downstream, seq_file)
+            if seq_file:
+                sanger = CompareSeqs(upstream,downstream, seq_file)
+
             get_seq("query", input_file, reference, trans, sanger, hg_version, ensembl)
 
         if output_file:
@@ -89,8 +89,6 @@ def main(input_file, output_file=None, upstream=20, downstream=20, hg_version="h
         
 
 def get_seq(seq_name, var_pos, reference, trans, sanger, hg_version, ensembl):
-        # adds all scrapped data to a list, which is written to an output file if the 
-        # option is selected
        # try:
             # check each individual line of the file for CUSTOM ERRORS
             error_check = reference.handle_argument_exception(var_pos)
