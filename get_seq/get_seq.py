@@ -90,13 +90,7 @@ def main(input_file, output_file=None, upstream=20, downstream=20, hg_version="h
 
         
 
-<<<<<<< HEAD
-def get_seq(seq_name, var_pos, reference, trans, sanger, hg_version, ensembl):
-=======
 def get_seq(seq_name, var_pos, reference, trans, hg_version, ensembl, sanger=None):
-        # adds all scrapped data to a list, which is written to an output file if the 
-        # option is selected
->>>>>>> 22e49d94e261fb5089237681f2926e2f15852646
        # try:
             # check each individual line of the file for CUSTOM ERRORS
             error_check = reference.handle_argument_exception(var_pos)
@@ -106,21 +100,26 @@ def get_seq(seq_name, var_pos, reference, trans, hg_version, ensembl, sanger=Non
             
             # use UCSC to get the genomic ranges DNA sequence
             sequence = reference.get_region_info(seq_range)
-            
+
+            # helps with the returned conditions downstream (terrible way to handle this)
+            sanger_sequence = ""
+
             # assess whether the var pos base in the sanger trace (seq_file) is
             # different to the reference base 
-            sanger_sequence = sanger.match_with_seq_file(sequence)
-            if isinstance(sanger_sequence, tuple):# if sanger_sequence is tuple else
-                ref_base = sanger_sequence[1] 
-                sanger_base = sanger_sequence[2] 
+            if sanger:
+                sanger_sequence = sanger.match_with_seq_file(sequence)
 
-                # compare the reqerence var_pos base and the sanger var_pos base
-                compare = CompareSeqs.compare_nucleotides(ref_base,sanger_base) 
+                if isinstance(sanger_sequence, tuple):# if sanger_sequence is tuple else
+                    ref_base = sanger_sequence[1] 
+                    sanger_base = sanger_sequence[2] 
+
+                    # compare the reqerence var_pos base and the sanger var_pos base
+                    compare = CompareSeqs.compare_nucleotides(ref_base,sanger_base) 
             
             # detrmine whether to transcribe or translate to RNA or PROTEIN
             sequence = str(trans.get_rna_seq(sequence))
             sequence = str(trans.get_protein_seq(sequence))
-
+            
             # determine whether to give a HEADER
             header = reference.header_option(seq_name,var_pos,
                                            seq_range,sequence)
@@ -150,9 +149,12 @@ def get_seq(seq_name, var_pos, reference, trans, hg_version, ensembl, sanger=Non
                                  compare[0], "\n")))
             elif not gene_info:
                 print("\n".join((header, "Reference Sequence:\t"+sequence,"\n")))
+                return("\n".join((header, "Reference Sequence:\t"+sequence,"\n")))
+
 
             else:
                 print("\n".join((header,"Reference Sequence:\t"+sequence, "\n")))
+                
                 return("\t".join((seq_name, var_pos, seq_range, gene_name, gene_id,  
                                   gene_type, gene_range, "-", "-",str(0))))
 
