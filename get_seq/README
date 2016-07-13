@@ -1,10 +1,12 @@
-- ENSEMBL SCRAPPER PYENSEMBL MAYBE USEFUL FOR OUTPUTTING TO FILE
-- OPTION TO OUTPUT IN FASTA FORMAT OR COMPARING TO A .SEQ FILE
-- ALTER PRINT OUTPUT TO PROPER FASTA FORMAT? HEADER OPTION
+add --ensembl option
+
+if genomic_position then no --seq_file nor --seq_dir
 
 
 
-python3 get_seq.py ~/in.txt  --header --output_file yyy --upstream 30 --downstream 35 --seq_file README --output_file yyy
+
+
+
 
 
 

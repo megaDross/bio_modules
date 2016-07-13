@@ -53,6 +53,8 @@ def main(input_file, output_file=None, upstream=20, downstream=20, hg_version="h
                               downstream, hg_version, header)
         trans = ProteinRNA(transcribe, translate, rc)
         
+        # get the path to this file
+        
         # if the arg given is a file, parse it in line by line
         if os.path.isfile(input_file) is True:
             all_scrapped_info = []
@@ -66,17 +68,13 @@ def main(input_file, output_file=None, upstream=20, downstream=20, hg_version="h
                 seq_file = CompareSeqs.get_matching_seq_file(seq_name, seq_dir)
                 sanger = CompareSeqs(upstream, downstream, seq_file)
                 sequence_info = get_seq(seq_name, var_pos, reference, trans, 
-                                        hg_version, ensembl, sanger)
+                                        sanger, hg_version, ensembl)
                 all_scrapped_info.append(sequence_info)
 
         else:
             ensembl = ScrapeEnsembl(input_file, hg_version)
-            if seq_file:
-                seq_file = CompareSeqs.get_matching_seq_file(input_file, seq_dir)
-                sanger = CompareSeqs(upstream,downstream, seq_file)
-            else:
-                sanger=None
-            get_seq("query", input_file, reference, trans, hg_version, ensembl, sanger)
+            sanger = CompareSeqs(upstream,downstream, seq_file)
+            get_seq("query", input_file, reference, trans, sanger, hg_version, ensembl)
 
         if output_file:
             header = "\t".join(("Name", "Position", "Seq_Range", "Gene_Name", 
@@ -90,13 +88,9 @@ def main(input_file, output_file=None, upstream=20, downstream=20, hg_version="h
 
         
 
-<<<<<<< HEAD
 def get_seq(seq_name, var_pos, reference, trans, sanger, hg_version, ensembl):
-=======
-def get_seq(seq_name, var_pos, reference, trans, hg_version, ensembl, sanger=None):
         # adds all scrapped data to a list, which is written to an output file if the 
         # option is selected
->>>>>>> 22e49d94e261fb5089237681f2926e2f15852646
        # try:
             # check each individual line of the file for CUSTOM ERRORS
             error_check = reference.handle_argument_exception(var_pos)
