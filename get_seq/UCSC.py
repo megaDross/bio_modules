@@ -14,9 +14,10 @@ class ErrorUCSC(Exception):
 
 
 class ScrapeSeq():
-
+    ''' A collection of methods that are required for scrapping the reference
+        sequence from UCSC
+    '''
     def __init__(self,input_file,upstream, downstream, hg_version, header=None):
-        
         self.input_file = input_file
         self.upstream = upstream
         self.downstream = downstream
@@ -45,9 +46,9 @@ class ScrapeSeq():
                                              
                 
     def create_region(self,var_pos):
-        ''' use the variant position given, add and subtract the 
-            numbers given in upstream and downstream respectively
-            from the given variant position to return a genomic range.
+        ''' use the variant position given, add and subtract the numbers given 
+            in upstream and downstream respectively from the given variant position 
+            to return a genomic range.
         '''
         # check if var_pos is a GENOMIC REGION, else construct one from var_pos
         if re.search(r"[,-]",var_pos):
@@ -93,8 +94,7 @@ class ScrapeSeq():
     
     
     def header_option(self,seq_name,var_pos,seq_range,sequence):
-        ''' determine whether to place a header
-            above the returned sequence, based 
+        ''' determine whether to place a header above the returned sequence, based 
             upon options selected by user
         '''
         # concatenate the name and outputs from Class, determine whether to 

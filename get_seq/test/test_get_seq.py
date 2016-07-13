@@ -1,5 +1,4 @@
-import subprocess, warnings
-import unittest
+import subprocess, warnings, os, unittest
 from useful_tools import useful
 
 
@@ -112,85 +111,49 @@ class TestGetSeqPrint(unittest.TestCase):
                          '\nSanger Sequence:\t'
                          'agcctatctcacactcacagG/Cggaacaggccaggg'
                          'aggttg\nthe nucleotides given are '
-                         'DIFFERENT\n\n\n'                       
-                        )
+                         'DIFFERENT\n\n\n')
+
 
     def test_input_file(self):
         ''' Test the printed output from parsing an input file is as expected and that
             the correct seq file is automatically selected for comparing with the 
             reference sequence
-        
-            WARNING: the below assertEqual function is painfully ugly
         '''
+        # ignore Resource Mangemenet error
+        warnings.filterwarnings("ignore")
         ref_seq_bytes = subprocess.check_output(["python3", get_seq, file_path[:-5]+
                                                  'test/test_in.txt', "--seq_dir",
                                                  file_path[:-5]+'test/test_files/',
                                                  '--header'])
         ref_seq = ref_seq_bytes.decode(encoding='UTF-8')
 
-        self.assertEqual(ref_seq,'> CX1_AD 15:48762884 15:48762864,48762904'
-                         '\nReference Sequence:\tagcctatctcacactcacagCggaacaggccagg'
-                         'gaggttg\nSanger Sequence:\tagcctatctcacactcacag'
-                         'G/Cggaacaggccagggaggttg\nthe nucleotides given are DIFFERENT'
-                         
-                         '\n\n\n> 24AS15 15:48776065 15:48776045,48776085\n'
-                         'Reference Sequence:\ttgaatccatcataacacaagCacctgtactctccaggga'
-                         'ta\nSanger Sequence:\ttgaatccatcataacacaagCacctgtactctccaggg'
-                         'ata\nthe nucleotides given are the SAME\n\n\n'
-
-                         '> 24AS15 15:48762884 15:48762864,48762904\n'
-                         'Reference Sequence:\tagcctatctcacactcacagCggaacaggccagggagg'
-                         'ttg\n\n\n'
-
-                         '> 24AS15 15:48776065 15:48776045,48776085\n'
-                         'Reference Sequence:\ttgaatccatcataacacaagCacctgtactctccaggga'
-                         'ta\nSanger Sequence:\ttgaatccatcataacacaagCacctgtactctccaggg'
-                         'ata\nthe nucleotides given are the SAME\n\n\n'
-
-                         '> HX15_RD_GS 16:15812194 16:15812174,15812214\n'
-                         'Reference Sequence:\tgctgtgtggctttgcggaccCggtcgctcatggcctcc'
-                         'atg\nSanger Sequence:\tgctgtgtggctttgcggaccNggtcgctcatggcctc'
-                         'catg\nthe nucleotides given are DIFFERENT\n\n\n'
-
-                         '> LX15_NY 15:48707763 15:48707743,48707783\n'
-                         'Reference Sequence:\ttgcggaagtaaccaggtggaCagccacacaggtaacc'
-                         'gccc\nSanger Sequence:\ttgcggaagtaaccaggtggaNagccacacaggtaacc'
-                         'gccc\nthe nucleotides given are DIFFERENT\n\n\n'
-
-                         '> LX16_SB 15:48712915 15:48712895,48712935\n'
-                         'Reference Sequence:\tttccactggtagtgctggagGtagccctgggggcag'
-                         'ctgca\nSanger Sequence:\tttccactggtagtgctggagG/Ttagcc'
-                         'ctgggggcagctgca\nthe nucleotides given are DIFFERENT\n\n\n'
-
-                         '> FUK27_MM 15:48892343 15:48892323,48892363\n'
-                         'Reference Sequence:\tacagtgtacttacgttgtccAcagtgagtccc'
-                         'tatgtatcc\nSanger Sequence:\tacagtgtacttacgttgtccAcagtg'
-                         'agtccctatgtatcc\nthe nucleotides given are the SAME\n\n\n'
-
-                         '> FUK26_SH 15:48812913 15:48812893,48812933\n'
-                         'Reference Sequence:\tgacccctggagaccagcatcGgccggcatcacagcagc'
-                         'act\nSanger Sequence:\tgacccctggagaccagcatcNgccggcatcacagc'
-                         'agcact\nthe nucleotides given are DIFFERENT\n\n\n'
-
-                         '> LX18_SP 15:48730093 15:48730073,48730113\n'
-                         'Reference Sequence:\tttcctccttcaaacttcgcaTaacagtagctcattcg'
-                         'caaa\nSanger Sequence:\tttcctccttcaaacttcgcaTaammrnnacnnmwt'  
-                         'nccnaa\nthe nucleotides given are the SAME\n\n\n'
-
-                         '> test_R 15:48812913 15:48812893,48812933\n'
-                         'Reference Sequence:\tgacccctggagaccagcatcGgccggcatcacagcag'
-                         'cact\nSanger Sequence:\tgacccctggagaccagttttNgccggcatcacag'
-                         'cagcact\nthe nucleotides given are DIFFERENT\n\n\n'
-
-                        '> test2_R 15:48892343 15:48892323,48892363\n'
-                        'Reference Sequence:\tacagtgtacttacgttgtccAcagtgagtccctatg'
-                        'tatcc\nSanger Sequence:\tacagtgtacttatgttggggAcagtgagtccctat'
-                        'gtatcc\nthe nucleotides given are the SAME\n\n\n')
+        self.assertEqual(ref_seq, open(file_path[:-5]+'test/test_out_print.txt').read())
 
 
 
+class GetSeqFileOut(unittest.TestCase):
+    ''' Test the written output file of the get_seq.py click application
+    '''
+    def test_output_file(self):
+        '''  Test the written ouput from parsing an input file is as expected.
+        '''
+        # ignore Resource Management error
+        warnings.filterwarnings("ignore")
+        ref_seq_bytes = subprocess.check_output(["python3", get_seq, file_path[:-5]+
+                                                 'test/test_in.txt', "--seq_dir",
+                                                 file_path[:-5]+'test/test_files/',
+                                                 '--header', '--output_file',
+                                                  file_path[:-5]+'test/yyy.txt'])
+        ref_seq = ref_seq_bytes.decode(encoding='UTF-8')
 
+        self.assertEqual(open(file_path[:-5]+'test/yyy.txt').read(), 
+                          open(file_path[:-5]+'test/test_file_out.txt').read())
+        
 
+    def tearDown(self):
+        ''' Remove unwanted test files
+        '''
+        os.remove(file_path[:-5]+'test/yyy.txt')
 
 if __name__ == '__main__':
     unittest.main()

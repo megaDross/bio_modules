@@ -52,7 +52,7 @@ class CompareSeqs(object):
                 return(full_seq,ref_seq,var_pos_seq.upper())
 
             elif re.search(postseq, self.seq_file):
-                print("POST")
+                #print("POST")
                 start, end, matched_seq = CompareSeqs.get_start_end_indexes(postseq, 
                                                                             self.seq_file)
                 var_pos_seq = CompareSeqs.UIPAC.get(self.seq_file[start-1])
