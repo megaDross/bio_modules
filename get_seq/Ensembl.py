@@ -7,7 +7,7 @@ class ScrapeEnsembl():
     ''' 
     '''
     def __init__(self, query, hg_version):
-        self.query = query
+        self.query = query.replace("chr","")
         self.hg_version = ScrapeEnsembl.genome.get(hg_version) # convert to ensembl release
         self.hg = EnsemblRelease(self.hg_version) # convert to ensembl release object
 
@@ -17,9 +17,10 @@ class ScrapeEnsembl():
     def get_gene_info(self):
         ''' Get the gene information at a given genomic position
         '''
-        
+         
         # check if the input is a genomic position or genomic range
         if re.search(r"[-:]", self.query) and self.query.replace(":","").isdigit():
+
             chrom = int(self.query.split(":")[0])
             pos = int(self.query.split(":")[1])
             gene_name = self.hg.gene_names_at_locus(contig=chrom, position=pos)
