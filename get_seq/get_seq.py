@@ -121,9 +121,17 @@ def parse_string(*args):
 
     
 
-        
+    
 
 def get_seq(seq_name, var_pos, reference, trans, hg_version, pyensembl, sanger=None):
+    # default variables incase the below conditions are not met
+    gene_name = gene_id = gene_type = gene_range = transcript = exon_id = \
+    exon_id = intron = exon = ref_base = sanger_base = "-"
+    compare_result = "0"
+
+
+
+
     # check if var_pos is a GENOMIC REGION, else construct one from var_pos
     seq_range = reference.create_region(var_pos)
     
@@ -138,6 +146,9 @@ def get_seq(seq_name, var_pos, reference, trans, hg_version, pyensembl, sanger=N
             ref_base = sanger_sequence[1] 
             sanger_base = sanger_sequence[2] 
             compare = CompareSeqs.compare_nucleotides(ref_base,sanger_base) 
+            statement = compare[0]
+            compare_result = compare[1]
+
 
     # determine whether to transcribe or translate to rna or protein EXPERIMENTAL
     sequence = str(trans.get_rna_seq(sequence))
@@ -149,9 +160,11 @@ def get_seq(seq_name, var_pos, reference, trans, hg_version, pyensembl, sanger=N
         if gene_info:
             gene_name, gene_id, gene_type, gene_range = gene_info
             transcript = pyensembl.get_canonical_transcript(gene_name)
+
             if transcript:
                 exon_info = get_exon_number(transcript, hg_version, var_pos)
                 exon_id, intron, exon = exon_info
+            
 
     # determine whether to give a HEADER
     if not pyensembl:
@@ -159,48 +172,33 @@ def get_seq(seq_name, var_pos, reference, trans, hg_version, pyensembl, sanger=N
     else:
         header = reference.header_option(seq_name,var_pos,seq_range,sequence, gene_name)
 
-    # print reference sequence 
-    if not pyensembl and 'sanger_sequence' not in locals():
+
+
+
+    # print reference sequence (no options)
+    if 'sanger_sequence' not in locals():
         print("\n".join((header, "Reference Sequence:\t"+sequence,"\n")))
 
-    # if pyensembl, sanger_sequence found
-    elif pyensembl and 'sanger_sequence' not in locals():
-        print("\n".join((header,"Reference Sequence:\t"+sequence, "\n")))
-        
-        return("\t".join((seq_name, var_pos, seq_range, gene_name, gene_id,  
-                          gene_type, gene_range, "-", "-",str(0))))
-    
-    # return scrapped seq, sanger seq and ensembl info
-    elif sanger_sequence and pyensembl:
+    # print above and sanger sequence
+    elif sanger_sequence :
         print("\n".join((header,"Reference Sequence:\t"+sequence,
                          "Sanger Sequence:\t"+sanger_sequence[0],
-                         compare[0],"\n")))
-        return("\t".join((seq_name, var_pos, seq_range, gene_name,
-                          gene_id, gene_type, gene_range, transcript, 
-                          exon_id, intron, exon, ref_base,
-                          sanger_base, str(compare[1]))))
-
-    # return scrapped reference seq and sanger seq
-    elif not pyensembl and sanger_sequence:
-        print("\n".join((header, "Reference Sequence:\t"+sequence,
-                         "Sanger Sequence:\t"+sanger_sequence[0],
-                         compare[0], "\n")))
+                         statement,"\n")))
     
-    # if no matching seq file but did get ensembl data
-    elif not sanger_sequence and pyensembl:
-        print("\n".join((header,"Reference Sequence:\t"+sequence,
-                         "Sanger Sequence:\tNo Match Found", "\n")))
-        return("\t".join((seq_name, var_pos, seq_range, gene_name, gene_id,  
-                          gene_type, gene_range, "-", "-",str(0))))
-
-    # if no matching seq file but did get ensembl data
-    elif not sanger_sequence and not pyensembl:
+    # if no matching seq file 
+    elif not sanger_sequence:
         print("\n".join((header,"Reference Sequence:\t"+sequence,
                          "Sanger Sequence:\tNo Match Found", "\n")))
 
 
-    
-        
+    # return everything in a 
+    return("\t".join((seq_name, var_pos, seq_range, gene_name,
+                      gene_id, gene_type, gene_range, transcript, 
+                      exon_id, intron, exon, ref_base,
+                      sanger_base, str(compare_result))))
+
+ 
+
                
 if __name__ == '__main__':
     main()         
