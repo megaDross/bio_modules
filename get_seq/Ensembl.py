@@ -56,8 +56,9 @@ class ScrapeEnsembl():
                 protein_coding_transcripts.append((size,transcript,transcript_type)) 
 
         # sort by size and return the largest protein coding transcript
-        canonical_transcript = sorted(protein_coding_transcripts)[-1][1]
-        return canonical_transcript
+        if protein_coding_transcripts:    
+            canonical_transcript = sorted(protein_coding_transcripts)[-1][1]
+            return canonical_transcript
 
 
 

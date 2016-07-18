@@ -149,8 +149,9 @@ def get_seq(seq_name, var_pos, reference, trans, hg_version, pyensembl, sanger=N
         if gene_info:
             gene_name, gene_id, gene_type, gene_range = gene_info
             transcript = pyensembl.get_canonical_transcript(gene_name)
-            exon_info = get_exon_number(transcript, hg_version, var_pos)
-            exon_id, intron, exon = exon_info
+            if transcript:
+                exon_info = get_exon_number(transcript, hg_version, var_pos)
+                exon_id, intron, exon = exon_info
 
     # determine whether to give a HEADER
     if not pyensembl:
