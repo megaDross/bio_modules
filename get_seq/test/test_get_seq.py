@@ -124,7 +124,7 @@ class TestGetSeqPrint(unittest.TestCase):
         ref_seq_bytes = subprocess.check_output(["python3", get_seq, file_path[:-5]+
                                                  'test/test_in.txt', "--seq_dir",
                                                  file_path[:-5]+'test/test_files/',
-                                                 '--header'])
+                                                 '--header', '--ensembl'])
         ref_seq = ref_seq_bytes.decode(encoding='UTF-8')
 
         self.assertEqual(ref_seq, open(file_path[:-5]+'test/test_out_print.txt').read())

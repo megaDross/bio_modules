@@ -1,70 +1,70 @@
 
-> CX1_AD 15:48762884 15:48762864,48762904
+> CX1_AD 15:48762884 15:48762864,48762904 FBN1
 Reference Sequence:	agcctatctcacactcacagCggaacaggccagggaggttg
 Sanger Sequence:	agcctatctcacactcacagG/Cggaacaggccagggaggttg
 the nucleotides given are DIFFERENT
 
 
-> 24AS15 15:48776065 15:48776045,48776085
+> 24AS15 15:48776065 15:48776045,48776085 FBN1
 Reference Sequence:	tgaatccatcataacacaagCacctgtactctccagggata
 Sanger Sequence:	tgaatccatcataacacaagCacctgtactctccagggata
 the nucleotides given are the SAME
 
 
-> 24AS15 15:48762884 15:48762864,48762904
+> 24AS15 15:48762884 15:48762864,48762904 FBN1
 Reference Sequence:	agcctatctcacactcacagCggaacaggccagggaggttg
 Sanger Sequence:	No Match Found
 
 
-> 24AS15 15:48776065 15:48776045,48776085
+> 24AS15 15:48776065 15:48776045,48776085 FBN1
 Reference Sequence:	tgaatccatcataacacaagCacctgtactctccagggata
 Sanger Sequence:	tgaatccatcataacacaagCacctgtactctccagggata
 the nucleotides given are the SAME
 
 
-> HX15_RD_GS 16:15812194 16:15812174,15812214
+> HX15_RD_GS 16:15812194 16:15812174,15812214 MYH11
 Reference Sequence:	gctgtgtggctttgcggaccCggtcgctcatggcctccatg
 Sanger Sequence:	gctgtgtggctttgcggaccNggtcgctcatggcctccatg
 the nucleotides given are DIFFERENT
 
 
-> LX15_NY 15:48707763 15:48707743,48707783
+> LX15_NY 15:48707763 15:48707743,48707783 FBN1
 Reference Sequence:	tgcggaagtaaccaggtggaCagccacacaggtaaccgccc
 Sanger Sequence:	tgcggaagtaaccaggtggaNagccacacaggtaaccgccc
 the nucleotides given are DIFFERENT
 
 
-> LX16_SB 15:48712915 15:48712895,48712935
+> LX16_SB 15:48712915 15:48712895,48712935 FBN1
 Reference Sequence:	ttccactggtagtgctggagGtagccctgggggcagctgca
 Sanger Sequence:	ttccactggtagtgctggagG/Ttagccctgggggcagctgca
 the nucleotides given are DIFFERENT
 
 
-> FUK27_MM 15:48892343 15:48892323,48892363
+> FUK27_MM 15:48892343 15:48892323,48892363 FBN1
 Reference Sequence:	acagtgtacttacgttgtccAcagtgagtccctatgtatcc
 Sanger Sequence:	acagtgtacttacgttgtccAcagtgagtccctatgtatcc
 the nucleotides given are the SAME
 
 
-> FUK26_SH 15:48812913 15:48812893,48812933
+> FUK26_SH 15:48812913 15:48812893,48812933 FBN1
 Reference Sequence:	gacccctggagaccagcatcGgccggcatcacagcagcact
 Sanger Sequence:	gacccctggagaccagcatcNgccggcatcacagcagcact
 the nucleotides given are DIFFERENT
 
 
-> LX18_SP 15:48730093 15:48730073,48730113
+> LX18_SP 15:48730093 15:48730073,48730113 FBN1
 Reference Sequence:	ttcctccttcaaacttcgcaTaacagtagctcattcgcaaa
 Sanger Sequence:	ttcctccttcaaacttcgcaTaammrnnacnnmwtnccnaa
 the nucleotides given are the SAME
 
 
-> test_R 15:48812913 15:48812893,48812933
+> test_R 15:48812913 15:48812893,48812933 FBN1
 Reference Sequence:	gacccctggagaccagcatcGgccggcatcacagcagcact
 Sanger Sequence:	gacccctggagaccagttttNgccggcatcacagcagcact
 the nucleotides given are DIFFERENT
 
 
-> test2_R 15:48892343 15:48892323,48892363
+> test2_R 15:48892343 15:48892323,48892363 FBN1
 Reference Sequence:	acagtgtacttacgttgtccAcagtgagtccctatgtatcc
 Sanger Sequence:	acagtgtacttatgttggggAcagtgagtccctatgtatcc
 the nucleotides given are the SAME
