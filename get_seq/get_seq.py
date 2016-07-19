@@ -13,7 +13,7 @@ file_path = useful.cwd_file_path(__file__)
 @click.command('main')
 @click.argument('input_file',nargs=1, required=False)
 @click.option('--output_file',default=None, help='give an output file, requires input to be a file')
-@click.option('--upstream', default=20, help="number of bases to get upstream, default: 20") # default to an int makes option accept int only
+@click.option('--upstream', default=20, help="number of bases to get upstream, default: 20") 
 @click.option('--downstream',default=20, help="number of bases to get downstream, default: 20")
 @click.option('--hg_version',default="hg19", help="human genome version. default: hg19")
 @click.option('--header/--no_header',default='n',help="header gives metadata i.e. sequence name etc.")
@@ -21,7 +21,7 @@ file_path = useful.cwd_file_path(__file__)
 @click.option('--translate/--np',default='n',help="translate RNA seq into protein seq")
 @click.option('--rc/--no_rc',default='n',help="reverse complement the DNA")
 @click.option('--seq_file', default=None, help="match sequence with .seq file contents")
-@click.option('--seq_dir', default=file_path+"seq_files/")
+@click.option('--seq_dir', default=file_path+"seq_files/", help="path to directory containing .seq files")
 @click.option('--ensembl/--ne', default='n', help="scrape gene & exon information")
 
 def main(input_file, output_file=None, upstream=20, downstream=20, hg_version="hg19",
@@ -33,27 +33,23 @@ def main(input_file, output_file=None, upstream=20, downstream=20, hg_version="h
     said position/ranges gene/transcript/exon information. 
          \b\n
     A file or string can be used as input. STRING: either a variant position 
-    or a genomic range deliminated by a comma. FILE: deliminated file with 
+    or a genomic range deliminated by a comma. FILE: tab deliminated file with 
     the variant name and the variant position
          \b\n
-    Example:\b\n
-        get_seq chr1:169314424 --upstream 200 --downstream 200\n
-        get_seq chr1:169314424,169314600 --hg_version hg38\n
-        get_seq 1:169314424 --seq_file dir/test.seq 
-        get_seq input.txt --output_file output.txt --header --seq_dir dir/\n
+    Example: python3 get_seq.py chr1:169314424\n
     ''' 
     # allows one to pipe in an argument at the cmd
     input_file = input() if not input_file else input_file
     
     # intiate the classes in UCSC and transcribe_translate respectively
-    reference = ScrapeSeq(input_file,  upstream, downstream, hg_version, ensembl, header)
+    reference = ScrapeSeq(input_file, upstream, downstream, hg_version, ensembl, header)
     trans = ProteinRNA(transcribe, translate, rc)
     
     # if the arg given is a file, parse it in line by line otherwise assume its a string
     if os.path.isfile(input_file) is True:
         all_scrapped_info = parse_file(input_file, output_file, upstream, downstream,
-                                      hg_version, header, transcribe, translate, rc,
-                                      seq_file, seq_dir, reference, trans, ensembl)
+                                       hg_version, header, transcribe, translate, rc,
+                                       seq_file, seq_dir, reference, trans, ensembl)
     else:
         parse_string(input_file, output_file, upstream, downstream, hg_version, header,
                      transcribe, translate, rc, seq_file, seq_dir, reference, trans,
@@ -73,7 +69,8 @@ def parse_file(*args):
     ''' Parse a file line by line into the get_seq function
     '''
     input_file, output_file, upstream, downstream, hg_version, header, \
-    transcribe, translate, rc, seq_file, seq_dir, reference, trans, ensembl = args
+        transcribe, translate, rc, seq_file, seq_dir, reference, trans, \
+        ensembl = args
     
     # print a warning if --seq_file is used with input as a file
     print('WARNING: --seq_file argument ignored. Automatically searching seq_files'
@@ -108,7 +105,8 @@ def parse_string(*args):
     ''' Parse a string into the get_seq function
     '''
     input_file, output_file, upstream, downstream, hg_version, header, \
-    transcribe, translate, rc, seq_file, seq_dir, reference, trans, ensembl = args
+        transcribe, translate, rc, seq_file, seq_dir, reference, trans, \
+        ensembl = args
  
     # check the input for CUSTOM ERRORS and intialise the Ensembl class
     error_check = reference.handle_argument_exception(input_file)
@@ -123,13 +121,16 @@ def parse_string(*args):
     
 
 def get_seq(seq_name, var_pos, reference, trans, hg_version, pyensembl, sanger=None):
-    # default variables incase the below conditions are not met
+    ''' Get the reference sequence from a given position, possibly compare
+        to a sanger squence and get gene/exon information. 
+
+        sanger and gene/exon information is dependent upon whether the sanger 
+        and pyensembl is or is not None
+    '''
+    # default variables to - incase the below conditions are not met
     gene_name = gene_id = gene_type = gene_range = transcript = exon_id = \
-    exon_id = intron = exon = ref_base = sanger_base = "-"
+        exon_id = intron = exon = ref_base = sanger_base = "-"
     compare_result = "0"
-
-
-
 
     # check if var_pos is a GENOMIC REGION, else construct one from var_pos
     seq_range = reference.create_region(var_pos)
@@ -148,7 +149,6 @@ def get_seq(seq_name, var_pos, reference, trans, hg_version, pyensembl, sanger=N
             statement = compare[0]
             compare_result = compare[1]
 
-
     # determine whether to transcribe or translate to rna or protein EXPERIMENTAL
     sequence = str(trans.get_rna_seq(sequence))
     sequence = str(trans.get_protein_seq(sequence))
@@ -166,30 +166,27 @@ def get_seq(seq_name, var_pos, reference, trans, hg_version, pyensembl, sanger=N
             else:
                 transcript = "-"
             
-
     # determine whether to give a HEADER
     header = reference.header_option(seq_name,var_pos,seq_range,sequence, gene_name)
 
-
-
-
     # print reference sequence (no options)
     if 'sanger_sequence' not in locals():
-        print("\n".join((header, "Reference Sequence:\t"+sequence,"\n")))
+        print_out ="\n".join((header, "Reference Sequence:\t"+sequence,"\n"))
 
-    # print above and sanger sequence
+    # print reference and sanger sequence
     elif sanger_sequence :
-        print("\n".join((header,"Reference Sequence:\t"+sequence,
-                         "Sanger Sequence:\t"+sanger_sequence[0],
-                         statement,"\n")))
+        print_out = "\n".join((header,"Reference Sequence:\t"+sequence,
+                               "Sanger Sequence:\t"+sanger_sequence[0],
+                               statement,"\n"))
     
     # if no matching seq file 
     elif not sanger_sequence:
-        print("\n".join((header,"Reference Sequence:\t"+sequence,
-                         "Sanger Sequence:\tNo Match Found", "\n")))
+        print_out = "\n".join((header,"Reference Sequence:\t"+sequence,
+                               "Sanger Sequence:\tNo Match Found", "\n"))
 
 
-    # return everything in a 
+    # print results and return everything for outputing to a file
+    print(print_out)
     return("\t".join((seq_name, var_pos, seq_range, gene_name,
                       gene_id, gene_type, gene_range, transcript, 
                       exon_id, intron, exon, ref_base,
