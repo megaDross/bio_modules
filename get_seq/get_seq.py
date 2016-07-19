@@ -164,6 +164,8 @@ def get_seq(seq_name, var_pos, reference, trans, hg_version, pyensembl, sanger=N
             if transcript:
                 exon_info = get_exon_number(transcript, hg_version, var_pos)
                 exon_id, intron, exon = exon_info
+            else:
+                transcript = "-"
             
 
     # determine whether to give a HEADER
