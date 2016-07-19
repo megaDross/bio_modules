@@ -129,9 +129,6 @@ def get_seq(seq_name, var_pos, reference, trans, hg_version, pyensembl, sanger=N
     exon_id = intron = exon = ref_base = sanger_base = "-"
     compare_result = "0"
 
-
-
-
     # check if var_pos is a GENOMIC REGION, else construct one from var_pos
     seq_range = reference.create_region(var_pos)
     
@@ -191,7 +188,7 @@ def get_seq(seq_name, var_pos, reference, trans, hg_version, pyensembl, sanger=N
                          "Sanger Sequence:\tNo Match Found", "\n")))
 
 
-    # return everything in a 
+    # return everything in a tab delimited format 
     return("\t".join((seq_name, var_pos, seq_range, gene_name,
                       gene_id, gene_type, gene_range, transcript, 
                       exon_id, intron, exon, ref_base,
