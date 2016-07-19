@@ -1,6 +1,5 @@
 from __future__ import division, print_function
-import os, sys,re, click, requests, bs4, json
-import warnings
+import os, click
 from Ensembl import ScrapeEnsembl, get_exon_number
 from check_sanger import CompareSeqs 
 from transcription_translation import ProteinRNA
@@ -169,10 +168,7 @@ def get_seq(seq_name, var_pos, reference, trans, hg_version, pyensembl, sanger=N
             
 
     # determine whether to give a HEADER
-    if not pyensembl:
-        header = reference.header_option(seq_name,var_pos,seq_range,sequence)
-    else:
-        header = reference.header_option(seq_name,var_pos,seq_range,sequence, gene_name)
+    header = reference.header_option(seq_name,var_pos,seq_range,sequence, gene_name)
 
 
 
