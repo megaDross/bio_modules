@@ -1,6 +1,6 @@
 import re, os.path, sys, click
-from useful_tools import useful
-from useful_tools.output import write_to_output
+import useful
+from output import write_to_output
 
 # gives the dir/PATH of this program, will be used to find the defaulted primer_database
 # which are hg19 primers only.

@@ -1,7 +1,7 @@
 from __future__ import division
 import requests,re, os, bs4, click
-from useful_tools import useful
-from useful_tools.output import write_to_output
+import useful
+from output import write_to_output
 
 class AmbiguousBaseError(Exception):
     pass
