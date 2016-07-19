@@ -72,7 +72,7 @@ class TestGetSeqPrint(unittest.TestCase):
         ref_seq = ref_seq_bytes.decode(encoding='UTF-8')
         
         self.assertEqual(ref_seq,
-                         '> query chr1:169314424 chr1:169314404,169314444'
+                         '> query chr1:169314424 chr1:169314404,169314444 -'
                          '\nReference Sequence:\taggagcgatgtctcctct'
                                  'ttCattcctgattttgataattt\n\n\n')
 
@@ -87,7 +87,7 @@ class TestGetSeqPrint(unittest.TestCase):
         ref_seq = ref_seq_bytes.decode(encoding='UTF-8')
         
         self.assertEqual(ref_seq,
-                         '> query chr1:169314424 chr1:169314384,169314494'
+                         '> query chr1:169314424 chr1:169314384,169314494 -'
                          '\nReference Sequence:\tcttttaatttctgcagggatag'
                          'gagcgatgtctcctctttCattcctgattttgataatttgtatcttcagtcttttttct'
                          'tggtcagtctaaccaaagttttgcctatgt\n\n\n')
@@ -105,7 +105,7 @@ class TestGetSeqPrint(unittest.TestCase):
         ref_seq = ref_seq_bytes.decode(encoding='UTF-8')
         
         self.assertEqual(ref_seq,
-                         '> query chr15:48762884 chr15:48762864,48762904'
+                         '> query chr15:48762884 chr15:48762864,48762904 -'
                          '\nReference Sequence:\t'
                          'agcctatctcacactcacagCggaacaggccagggaggttg'                    
                          '\nSanger Sequence:\t'
