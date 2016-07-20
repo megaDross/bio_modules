@@ -13,7 +13,8 @@ file_path = useful.cwd_file_path(__file__)
 @click.option('--primer_database',default=file_path+"TAAD_Primer_Validation_Database.txt",help="defaulted to TAAD primer DB")  
 @click.option('--delimiters', default="\t",help="defaulted to tab")
 def main(input_file, output_file = None,
-         primer_database = file_path+"TAAD_Primer_Validation_Database.txt", delimiters = "\t"):
+         primer_database = file_path+"TAAD_Primer_Validation_Database.txt", 
+         delimiters = "\t"):
                     
     ''' Takes variant postion(s) as input and matches it with an appropriate primer
         pair in a given primer database. 
@@ -34,8 +35,6 @@ def main(input_file, output_file = None,
        
        # get all genomic locations within primer pairs, from all primers in the database
         all_primer_pos = get_all_primer_pos(primer_database)
-        print(all_primer_pos)
-        print("Y")
 
         # determine input type and process accordingly
         if os.path.isfile(input_file) is True:
@@ -74,7 +73,6 @@ def get_all_primer_pos(primer_database):
         
         # list of lists, where every single list is every genomic position within a primer pair
         # followed by bp distance of genomic position from the forward and reverse primer position
-        # NOTHING IS APPENDING TO THE LIST DESPITE DATA BEING GENERATED
         all_primer_pos = []     
 
         # generates all_primer_pos
@@ -93,9 +91,7 @@ def get_all_primer_pos(primer_database):
                                                 for i in range(start,stop))
             
             all_primer_pos.append(all_pos_in_primer)
-        print(all_primer_pos)
             
-
         # unpacks list of lists into a single list
         all_primers_pos_unpacked = [x for i in all_primer_pos for x in i]
         return all_primers_pos_unpacked
@@ -119,11 +115,10 @@ def match(var_pos,primer_info,var_name=None):
     
     # searches and generates matched primer pair for the variant position given
     for i in primer_info:   
-        #primer_name = i.split(" ")[0]
-        #primer_pos = i.split(" ")[1]
-        #variant_distance_f = i.split(" ")[2]
-        #variant_distance_r = i.split(" ")[3]    
-        primer_name, primer_pos, variant_distance_f, variant_distance_r = i
+        primer_name = i.split(" ")[0]
+        primer_pos = i.split(" ")[1]
+        variant_distance_f = i.split(" ")[2]
+        variant_distance_r = i.split(" ")[3]
         if var_pos == primer_pos:
             match = "\t".join((var_name,primer_name, variant_distance_f,
                                variant_distance_r))
