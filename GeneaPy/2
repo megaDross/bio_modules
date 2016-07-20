@@ -1,4 +1,4 @@
-import re, os.path, click
+import re, os.path, sys, click
 import useful
 from output import write_to_output
 
@@ -74,8 +74,7 @@ def get_all_primer_pos(primer_database):
         
         # list of lists, where every single list is every genomic position within a primer pair
         # followed by bp distance of genomic position from the forward and reverse primer position
-        # NOTHING IS APPENDING TO THE LIST DESPITE DATA BEING GENERATED
-        all_primer_pos = []     
+        all_primer_pos = []             
 
         # generates all_primer_pos
         for i in [i.rstrip("\n").split("\t") for i in primer_file]:
@@ -88,15 +87,14 @@ def get_all_primer_pos(primer_database):
             # use start and stop to iterate through every position in primer pair and
             # output primer_name, primer positions, distance of primer position from the
             # forward and reverse primer respectively and append to an empty list.
-            all_pos_in_primer = tuple(" ".join((primer_name,chrom+":"+str(i),
-                                                str(i-start),str(stop-i))) 
-                                                for i in range(start,stop))
+            all_pos_in_primer = [" ".join((primer_name,chrom+":"+str(i),
+                                            str(i-start),str(stop-i))) 
+                                for i in range(start,stop)]
             
             all_primer_pos.append(all_pos_in_primer)
-        print(all_primer_pos)
-            
-
+        
         # unpacks list of lists into a single list
+        print(all_pos_in_primer)
         all_primers_pos_unpacked = [x for i in all_primer_pos for x in i]
         return all_primers_pos_unpacked
         
@@ -119,11 +117,10 @@ def match(var_pos,primer_info,var_name=None):
     
     # searches and generates matched primer pair for the variant position given
     for i in primer_info:   
-        #primer_name = i.split(" ")[0]
-        #primer_pos = i.split(" ")[1]
-        #variant_distance_f = i.split(" ")[2]
-        #variant_distance_r = i.split(" ")[3]    
-        primer_name, primer_pos, variant_distance_f, variant_distance_r = i
+        primer_name = i.split(" ")[0]
+        primer_pos = i.split(" ")[1]
+        variant_distance_f = i.split(" ")[2]
+        variant_distance_r = i.split(" ")[3]    
         if var_pos == primer_pos:
             match = "\t".join((var_name,primer_name, variant_distance_f,
                                variant_distance_r))
