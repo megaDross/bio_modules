@@ -54,4 +54,6 @@ python3 unknown_primer.py --input_file in.txt --hg_version hg38 --output_file ou
 
 ## Testing
 To perform testing execute the following command within the test directory:
-  python3 -m unittest *.py
+```bash  
+python3 -m unittest *.py
+```
