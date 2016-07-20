@@ -156,7 +156,7 @@ def get_seq(seq_name, var_pos, reference, trans, hg_version, pyensembl, sanger=N
     # get gene information for the variant position
     if pyensembl:
         gene_info = pyensembl.get_gene_info()
-        if gene_info:
+        if isinstance(gene_info, tuple):
             gene_name, gene_id, gene_type, gene_range = gene_info
             transcript = pyensembl.get_canonical_transcript(gene_name)
 
