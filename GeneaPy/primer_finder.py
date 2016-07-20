@@ -34,7 +34,8 @@ def main(input_file, output_file = None,
             input_file = input()
        
        # get all genomic locations within primer pairs, from all primers in the database
-        all_primer_pos = get_all_primer_pos(primer_database)
+        all_primer_pos = get_all_primer_pos(primer_database)        
+        header = "\t".join(("Variant","Primer","Dist_from_F","Dist_from_R","\n"))
 
         # determine input type and process accordingly
         if os.path.isfile(input_file) is True:
@@ -48,11 +49,11 @@ def main(input_file, output_file = None,
 
         else:
             matched_primers = match(input_file,all_primer_pos,"query")
+            print(header[:-1])
             print(matched_primers)
 
         
         if output_file:
-            header = "\t".join(("Variant","Primer","Dist_from_F","Dist_from_R","\n"))
             write_to_output(all_matched_primers, output_file, header)
 
     except IndexError as e:
