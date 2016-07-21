@@ -112,7 +112,7 @@ def match(distance,var_pos,primer_info,var_name=None):
     # used if a string given as input instead of a file
     if var_name is None:
         var_name = var_pos
-    
+
     # stored matched primer information
     answer = []
     
@@ -137,12 +137,12 @@ def match(distance,var_pos,primer_info,var_name=None):
                                variant_distance_r))
             answer.append(match)
         
-
+    
     #if len(answer) > 1:
     #    print([x.split("\t")[:][1] for x in answer])
     # returns no match error if no primer pair is found, else return answer as string
     if not answer:
-        return  "no match found for: "+var_name
+        return  "\t".join((var_name, "-", "-", "-"))
     else:
         return "\n".join(answer)
                  
