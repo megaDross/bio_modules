@@ -12,7 +12,8 @@ file_path = useful.cwd_file_path(__file__)
 @click.option('--output_file',default=None,help="output; defaulted as matching_primers_output.txt")
 @click.option('--primer_database',default=file_path+"TAAD_Primer_Validation_Database.txt",help="defaulted to TAAD primer DB")  
 @click.option('--delimiters', default="\t",help="defaulted to tab")
-def main(input_file, output_file = None,
+@click.option('--distance', type=int, help="number of bp a primer must be from the position")
+def main(input_file, distance, output_file = None,
          primer_database = file_path+"TAAD_Primer_Validation_Database.txt", 
          delimiters = "\t"):
                     
@@ -36,6 +37,7 @@ def main(input_file, output_file = None,
        # get all genomic locations within primer pairs, from all primers in the database
         all_primer_pos = get_all_primer_pos(primer_database)        
         header = "\t".join(("Variant","Primer","Dist_from_F","Dist_from_R","\n"))
+        print(header[:-1])
 
         # determine input type and process accordingly
         if os.path.isfile(input_file) is True:
@@ -43,14 +45,13 @@ def main(input_file, output_file = None,
             for line in [line.rstrip("\n").split("\t") for line in open(input_file)]:
                 var_name = line[0]
                 var_pos = line[1].replace("chr","")
-                matched_primers = match(var_pos,all_primer_pos,var_name)
+                matched_primers = match(distance, var_pos,all_primer_pos,var_name)
                 all_matched_primers.append(matched_primers)
                 print(matched_primers)
 
         else:
             position = input_file.replace("chr","")
-            matched_primers = match(position,all_primer_pos,"query")
-            print(header[:-1])
+            matched_primers = match(distance, position,all_primer_pos,"query")
             print(matched_primers)
 
         
@@ -104,7 +105,7 @@ def get_all_primer_pos(primer_database):
        
 
 
-def match(var_pos,primer_info,var_name=None):
+def match(distance,var_pos,primer_info,var_name=None):
     ''' Match a given variant position against every genomic position covered
         in all the primer pairs in the primer database.
     '''
@@ -121,16 +122,29 @@ def match(var_pos,primer_info,var_name=None):
         primer_pos = i.split(" ")[1]
         variant_distance_f = i.split(" ")[2]
         variant_distance_r = i.split(" ")[3]
-        if var_pos == primer_pos:
+
+        # append all matching primers to the list
+        if not distance and var_pos == primer_pos:
             match = "\t".join((var_name,primer_name, variant_distance_f,
                                variant_distance_r))
-            answer.append(match)  
-    
+            answer.append(match)
+        
+        # only append matching primers that are of a given distance from the given position
+        elif distance and var_pos == primer_pos and \
+        int(variant_distance_f) > distance and \
+        int(variant_distance_r) > distance:
+            match = "\t".join((var_name,primer_name, variant_distance_f,
+                               variant_distance_r))
+            answer.append(match)
+        
+
+    #if len(answer) > 1:
+    #    print([x.split("\t")[:][1] for x in answer])
     # returns no match error if no primer pair is found, else return answer as string
     if not answer:
         return  "no match found for: "+var_name
     else:
-        return "".join(answer)
+        return "\n".join(answer)
                  
     
         
