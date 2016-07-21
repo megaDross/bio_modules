@@ -155,6 +155,7 @@ def get_seq(seq_name, var_pos, reference, trans, hg_version, pyensembl, sanger=N
      
     # get gene information for the variant position
     if pyensembl:
+        # ALL OF BELOW CONDITION SHOULD BE A FUNCTION IN ENSEMBL.PY THAT TAKES A POSITION or gene range AND HG_VERSION AND RETURNS, GENE_INFO, CANONICAL TRANSCRIPT AND EXON
         gene_info = pyensembl.get_gene_info()
         if isinstance(gene_info, tuple):
             gene_name, gene_id, gene_type, gene_range = gene_info

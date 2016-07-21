@@ -2,6 +2,7 @@ from __future__ import division
 import requests,re, os, bs4, click
 import useful
 from output import write_to_output
+from Ensembl import ScrapeEnsembl
 
 class AmbiguousBaseError(Exception):
     pass
@@ -44,19 +45,23 @@ def unknown_primer(primers=None, input_file=None,output_file=None,
             primer_name = line[0]
             f_primer = line[1].upper()
             r_primer = line[2].upper()
-            amplicon_info = get_unknown_primer_info(hg_version,primer_name,f_primer,r_primer)
-            print(amplicon_info)
+            amplicon_info = get_unknown_primer_info(hg_version,
+                                                    f_primer,r_primer)
+            gene_name = get_gene_name(amplicon_info.split("\t")[3], hg_version)
+            full_amplicon_info = "\t".join((primer_name, gene_name, amplicon_info))
+            print(full_amplicon_info)
     else:
         primer_name = "query"
         f_primer = primers[0]
         r_primer = primers[1]
-        amplicon_info = get_unknown_primer_info(hg_version, primer_name, f_primer, r_primer)
-        print(amplicon_info)
-    
-    
+        amplicon_info = get_unknown_primer_info(hg_version, 
+                                                f_primer, r_primer)
+        gene_name = get_gene_name(amplicon_info.split("\t")[3], hg_version)
+        full_amplicon_info = "\t".join((primer_name, gene_name, amplicon_info))
+        print(full_amplicon_info)
   
 
-def get_unknown_primer_info(hg_version, primer_name="query",f_primer=None,r_primer=None):
+def get_unknown_primer_info(hg_version,f_primer=None,r_primer=None):
     ''' Generate an amplicon sequence from inputted primer sequences, which
         is further manipulated t derive inofrmation from the sequence.
     '''     
@@ -92,7 +97,7 @@ def get_unknown_primer_info(hg_version, primer_name="query",f_primer=None,r_prim
 
 
         # return scraped information
-        output = (primer_name,f_primer,r_primer,str(amplicon_size),
+        output = (f_primer,r_primer,str(amplicon_size),
                   region,str(gc_percent)+"%",str(product_number))
         return "\t".join(output)
    
@@ -103,6 +108,21 @@ def get_unknown_primer_info(hg_version, primer_name="query",f_primer=None,r_prim
     except MultipleAmplicons:
         print("The following primers generate more than one amplicon:"+primer_name)
    
+
+def get_gene_name(primer_range, hg_version):
+    split_region = re.split(r'[:-]', primer_range)
+    chrom = split_region[0]
+    # position in the middle of generated amplicon
+    position = "".join((chrom,":",
+                        str(round((int(split_region[2])+int(split_region[1])) / 2))))
+    ensembl = ScrapeEnsembl(position, hg_version)
+    gene_info = ensembl.get_gene_info()
+    if isinstance(gene_info, tuple):    
+        gene_name, gene_id, gene_type, gene_range = gene_info
+    else:
+        gene_name = "-"
+    
+    return gene_name
 
 if __name__ == '__main__':
     unknown_primer()
