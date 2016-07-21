@@ -42,13 +42,14 @@ def main(input_file, output_file = None,
             all_matched_primers = []
             for line in [line.rstrip("\n").split("\t") for line in open(input_file)]:
                 var_name = line[0]
-                var_pos = line[1]
+                var_pos = line[1].replace("chr","")
                 matched_primers = match(var_pos,all_primer_pos,var_name)
                 all_matched_primers.append(matched_primers)
                 print(matched_primers)
 
         else:
-            matched_primers = match(input_file,all_primer_pos,"query")
+            position = input_file.replace("chr","")
+            matched_primers = match(position,all_primer_pos,"query")
             print(header[:-1])
             print(matched_primers)
 
