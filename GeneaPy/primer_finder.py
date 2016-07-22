@@ -36,7 +36,7 @@ def main(input_file, distance, size, gc, output_file = None,
        
        # get all genomic locations within primer pairs, from all primers in the database
         all_primer_pos = get_all_primer_pos(primer_database)        
-        header = "\t".join(("Variant","Primer", "Position", "Amplicon_Size", "GC%", 
+        header = "\t".join(("Variant","Primer", "Position", "Gene_Name", "Amplicon_Size", "GC%", 
                             "Amplicon_Number", "Dist_from_F","Dist_from_R","\n"))
         print(header[:-1])
 
@@ -93,16 +93,17 @@ def get_all_primer_pos(primer_database):
         # generates all_primer_pos
         for i in [i.rstrip("\n").split("\t") for i in primer_file]:
             primer_name = i[0]
-            product_size = i[3]
-            GC = i[5]
-            num_amplicons = i[6]
-            primer_range = re.split(r'[:-]',i[4])   # split into three components
+            gene_name = i[3]
+            product_size = i[4]
+            GC = i[6]
+            num_amplicons = i[7]
+            primer_range = re.split(r'[:-]',i[5])   # split into three components
             chrom = re.sub(r'[^0-9]','',primer_range[0])  # remove any non-integers
             start = int(primer_range[1])
             stop = int(primer_range[2])      
 
             # generate every position for current primer pair and append to empty list
-            all_pos_in_primer = ["\t".join((primer_name, chrom+":"+str(i),
+            all_pos_in_primer = ["\t".join((primer_name, chrom+":"+str(i), gene_name, 
                                             product_size, GC, num_amplicons,
                                             str(i-start), str(stop-i))) 
                                             for i in range(start,stop)]
@@ -123,26 +124,26 @@ def filter_positions(distance, size, gc, primer_info):
         set by the user
 
         Each tuple in the primer_info list should look like:
-            (primer name, primer position, product size,
+            (primer name, primer position, product size, gene_name
              GC% of amplicon, number amplicons generated,
              distance of position from F primer, distance from R)
     '''
     # filter out primers that do not generate unique amplicons
     primer_info = [x for x in primer_info
-                   if int(x[4]) == 1]
+                   if int(x[5]) == 1]
 
     if distance:
         primer_info = [x for x in primer_info 
-                      if int(x[5]) > distance 
-                      and int(x[6]) > distance]
+                      if int(x[6]) > distance 
+                      and int(x[7]) > distance]
 
     if size:
         primer_info = [x for x in primer_info if 
-                       int(x[2].split("bp")[0]) < size]
+                       int(x[3].split("bp")[0]) < size]
 
     if gc:
         primer_info = [x for x in primer_info if
-                       int(x[3].split(".")[0]) < gc]
+                       int(x[4].split(".")[0]) < gc]
     
     return(primer_info)
 
@@ -161,8 +162,9 @@ def match(var_pos, primer_info, var_name=None):
     answer = []
     # searches and generates matched primer pair for the variant position given
     for line in primer_info:  
-        primer_name, primer_pos, product_size, GC, num_amplicons, \
-            variant_distance_f, variant_distance_r = line
+        primer_name, primer_pos, product_size, gene_name, GC, \
+            num_amplicons, variant_distance_f, variant_distance_r \
+            = line
         
         
         # append all matching primers to the list

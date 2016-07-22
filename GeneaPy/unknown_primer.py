@@ -129,7 +129,8 @@ def get_unknown_primer_info(primer_name, hg_version,f_primer=None,r_primer=None)
         print("No amplicon generated from isPCR for primer: "+primer_name)
     except MultipleAmplicons:
         print("The following primers generate more than one amplicon:"+primer_name)
-   
+
+
 
 def get_gene_name(primer_range, hg_version):
     ''' Retrieve gene, transcript and exon information form the genomic
