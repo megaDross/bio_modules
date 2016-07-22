@@ -35,8 +35,18 @@ Takes variant position(s) as input and matches it with an appropriate primer in 
 # find if a primer pair is available for a single genomic position
 python3 primer_finder.py 15:48729400 --primer_database primer_database.txt
 
+# filter out primer pairs where the forward or reverse primer is less than 100bp from the given genmic position
+python3 primer_finder.py 15:48729400 --primer_database primer_database.txt --distance 100
+
+# filter out primer pairs where the amplcion generated is more than 300bp
+python3 primer_finder.py 15:48729400 --primer_database primer_database.txt --size 300
+
+# filter out primer pairs where the amplicon generated is more than 50% GC rich
+python3 primer_finder.py 15:48729400 --primer_database primer_database.txt --gc 50
+
 # find if primer pairs are available for multiple positions in a given input file and ouput to file
 python3 primer_finder.py --input_file in.txt --primer_database primer_database.txt --output_file out.txt
+
 ```
 
 
