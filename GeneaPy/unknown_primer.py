@@ -39,17 +39,22 @@ def unknown_primer(primers=None, input_file=None,output_file=None,
            unknown_primer --primers TAACAGATTGATGATGCATG CCCATGAGTGGCTCCTAAA 
     '''
     header = "\t".join(("Primer", "F_Primer","R_Primer", "Gene", "Product_Size",
-                        "Primer_Range","GC%","Number_Amplicons"))
+                        "Primer_Range","GC%","Number_Amplicons", "\n"))
     print(header)
 
     # determine whether the input is a file or string and process accordingly 
     if input_file:
+        all_matched_primers = []
         for line in [line.rstrip("\n").split("\t") for line in open(input_file)]:
             primer_name = line[0]
             f_primer = line[1].upper()
             r_primer = line[2].upper()
             full_amplicon_info = get_all_primer_info(primer_name, hg_version, 
                                                      f_primer, r_primer)
+            if not full_amplicon_info:
+                full_amplicon_info = "\t".join((primer_name, "-", "-", "-", 
+                                                "-", "-", "-", "-"))
+            all_matched_primers.append(full_amplicon_info)
             print(full_amplicon_info)
     else:
         primer_name = "query"
@@ -58,6 +63,9 @@ def unknown_primer(primers=None, input_file=None,output_file=None,
         full_amplicon_info = get_all_primer_info(primer_name, hg_version, 
                                                  f_primer, r_primer)
         print(full_amplicon_info)
+
+    if output_file:
+        write_to_output(all_matched_primers, output_file, header)
 
 
 

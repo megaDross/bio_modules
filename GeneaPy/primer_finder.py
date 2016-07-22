@@ -160,18 +160,16 @@ def match(var_pos, primer_info, var_name=None):
     
     # stored matched primer information
     answer = []
+
     # searches and generates matched primer pair for the variant position given
     for line in primer_info:  
         primer_name, primer_pos, product_size, gene_name, GC, \
             num_amplicons, variant_distance_f, variant_distance_r \
             = line
         
-        
         # append all matching primers to the list
         if var_pos == primer_pos:
             match = "\t".join(((var_name,) + line))
-            #match = "\t".join((var_name,primer_name, variant_distance_f,
-            #                       variant_distance_r))
             answer.append(match) 
 
     # returns no match error if no primer pair is found, else return answer as string
