@@ -1,10 +1,11 @@
 from __future__ import division, print_function
 import os, click
-from Ensembl import ScrapeEnsembl, get_exon_number
+import get_gene_exon_info
+import useful
+from Ensembl import ScrapeEnsembl
 from check_sanger import CompareSeqs 
 from transcription_translation import ProteinRNA
 from output import write_to_output
-import useful
 from UCSC import ScrapeSeq
 
 # get the absolute path to this file
@@ -155,18 +156,11 @@ def get_seq(seq_name, var_pos, reference, trans, hg_version, pyensembl, sanger=N
      
     # get gene information for the variant position
     if pyensembl:
-        # ALL OF BELOW CONDITION SHOULD BE A FUNCTION IN ENSEMBL.PY THAT TAKES A POSITION or gene range AND HG_VERSION AND RETURNS, GENE_INFO, CANONICAL TRANSCRIPT AND EXON
-        gene_info = pyensembl.get_gene_info()
-        if isinstance(gene_info, tuple):
-            gene_name, gene_id, gene_type, gene_range = gene_info
-            transcript = pyensembl.get_canonical_transcript(gene_name)
-
-            if transcript:
-                exon_info = get_exon_number(transcript, hg_version, var_pos)
-                exon_id, intron, exon = exon_info
-            else:
-                transcript = "-"
-            
+        all_info = get_gene_exon_info.gene_transcript_exon(var_pos, hg_version)
+        gene_name, gene_id, gene_type, gene_range = all_info[0]
+        transcript = all_info[1]
+        exon_id, intron, exon = all_info[2]
+         
     # determine whether to give a HEADER
     header = reference.header_option(seq_name,var_pos,seq_range,sequence, gene_name)
 

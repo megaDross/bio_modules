@@ -1,8 +1,8 @@
 from __future__ import division
 import requests,re, os, bs4, click
 import useful
+import get_gene_exon_info
 from output import write_to_output
-from Ensembl import ScrapeEnsembl
 
 class AmbiguousBaseError(Exception):
     pass
@@ -56,7 +56,8 @@ def unknown_primer(primers=None, input_file=None,output_file=None,
         r_primer = primers[1]
         amplicon_info = get_unknown_primer_info(hg_version, 
                                                 f_primer, r_primer)
-        gene_name = get_gene_name(amplicon_info.split("\t")[3], hg_version)
+        primer_range = amplicon_info.split("\t")[3]
+        gene_name = get_gene_name(primer_range, hg_version)
         full_amplicon_info = "\t".join((primer_name, gene_name, amplicon_info))
         print(full_amplicon_info)
   
@@ -110,19 +111,25 @@ def get_unknown_primer_info(hg_version,f_primer=None,r_primer=None):
    
 
 def get_gene_name(primer_range, hg_version):
-    split_region = re.split(r'[:-]', primer_range)
-    chrom = split_region[0]
-    # position in the middle of generated amplicon
-    position = "".join((chrom,":",
-                        str(round((int(split_region[2])+int(split_region[1])) / 2))))
-    ensembl = ScrapeEnsembl(position, hg_version)
-    gene_info = ensembl.get_gene_info()
-    if isinstance(gene_info, tuple):    
-        gene_name, gene_id, gene_type, gene_range = gene_info
-    else:
-        gene_name = "-"
-    
-    return gene_name
+    all_info = get_gene_exon_info.gene_transcript_exon(primer_range, hg_version)
+    gene_name, gene_id, gene_type, gene_range = all_info[0]
+    transcript = all_info[1]
+    exon_id, intron, exon = all_info[2]
 
+    return gene_name
+#    split_region = re.split(r'[:-]', primer_range)
+#    chrom = split_region[0]
+#    # position in the middle of generated amplicon
+#    position = "".join((chrom,":",
+#                        str(round((int(split_region[2])+int(split_region[1])) / 2))))
+#    ensembl = ScrapeEnsembl(position, hg_version)
+#    gene_info = ensembl.get_gene_info()
+#    if isinstance(gene_info, tuple):    
+#        gene_name, gene_id, gene_type, gene_range = gene_info
+#    else:
+#        gene_name = "-"
+#    
+#    return gene_name
+#
 if __name__ == '__main__':
     unknown_primer()
