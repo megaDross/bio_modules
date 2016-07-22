@@ -40,7 +40,7 @@ def unknown_primer(primers=None, input_file=None,output_file=None,
     '''
     header = "\t".join(("Primer", "F_Primer","R_Primer", "Gene", "Product_Size",
                         "Primer_Range","GC%","Number_Amplicons", "\n"))
-    print(header)
+    print(header[:-1])
 
     # determine whether the input is a file or string and process accordingly 
     if input_file:

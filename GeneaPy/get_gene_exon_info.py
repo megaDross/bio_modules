@@ -2,6 +2,13 @@ import re
 import Ensembl
 
 def gene_transcript_exon(position, hg_version, transcript=None):
+    ''' Use the Ensembl module to return all gene, transcript and exon infomation
+        relating to the given position
+
+        returns a tuple of tuples:
+            ((gene_name, gene_id, gene_type, gene_range), transcript,
+             (exon_id, intron, exon))
+    '''
     # defualt values
     gene_info = exon_info = ("-", "-", "-")
     transcript = "-"
@@ -9,12 +16,8 @@ def gene_transcript_exon(position, hg_version, transcript=None):
 
     # convert a genomic region to a position in the middle of the region
     if "-" in position and ":" in position:
-        split_region = re.split(r'[:-]', position)
-        chrom = split_region[0]
-        middle_region_position = str(round((int(split_region[2])+
-                                           int(split_region[1])) / 2))
-        position = "".join((chrom, ":", middle_region_position))
-    
+        position = create_position(position)
+
     ensembl = Ensembl.ScrapeEnsembl(position, hg_version)
     gene_info = ensembl.get_gene_info()
     
@@ -30,9 +33,25 @@ def gene_transcript_exon(position, hg_version, transcript=None):
     return (gene_info, transcript, exon_info)
 
 
+
+def create_position(position):
+    ''' From a genomic range, produce a position which is directly in 
+        the middle of the given range
+    '''
+    
+    split_region = re.split(r'[:-]', position)
+    chrom = split_region[0]
+    middle_region_position = str(round((int(split_region[2])+
+                                        int(split_region[1])) / 2))
+    position = "".join((chrom, ":", middle_region_position))
+    return position
+
+
+
+
 def get_exon_number(transcript, hg_version, pos):
     ''' From a transcript and genomic position, determine the exon number
-        using the ExonInfo class
+        using the ExonInfo class within the Ensmebl module
     '''
     
     ensembl = Ensembl.ExonInfo(transcript, hg_version, pos)

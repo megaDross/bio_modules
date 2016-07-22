@@ -15,8 +15,7 @@ file_path = useful.cwd_file_path(__file__)
 @click.option('--size', type=int, help="maximum desired amplicon size")
 @click.option('--gc', type=int, help="maximum desired GC content of amplicon")
 def main(input_file, distance, size, gc, output_file=None,
-         primer_database=file_path[:-8]+"test/primer_database.txt"):
-                    
+         primer_database=file_path[:-8]+"test/primer_database.txt"):           
     ''' Takes variant postion(s) as input and matches it with an appropriate primer
         pair in a given primer database. 
         \b\n
@@ -28,44 +27,41 @@ def main(input_file, distance, size, gc, output_file=None,
             primer_finder --input_file in.txt --output_file out.txt 
         
     '''
-    try:
-        # allows one to pipe in an argument at the cmd, requires required=False in 
-        # @click.argument()
-        if not input_file:
-            input_file = input()
-       
-       # get all genomic locations within primer pairs, from all primers in the database
-        all_primer_pos = get_all_primer_pos(primer_database)        
-        header = "\t".join(("Variant","Primer", "Position", "Gene_Name", "Amplicon_Size", "GC%", 
-                            "Amplicon_Number", "Dist_from_F","Dist_from_R","\n"))
-        print(header[:-1])
+    # allows one to pipe in an argument at the cmd, requires required=False in 
+    # @click.argument()
+    if not input_file:
+        input_file = input()
+    
+    # get all genomic locations within primer pairs, from all primers in the database
+    all_primer_pos = get_all_primer_pos(primer_database)        
+    header = "\t".join(("Variant","Primer", "Position", "Gene_Name", 
+                        "Amplicon_Size", "GC%", "Amplicon_Number", 
+                        "Dist_from_F","Dist_from_R","\n"))
+    print(header[:-1])
 
-        # determine input type and process accordingly
-        if os.path.isfile(input_file) is True:
-            all_matched_primers = []
-            for line in [line.rstrip("\n").split("\t") for line in open(input_file)]:
-                var_name = line[0]
-                var_pos = line[1].replace("chr","")
-                filtered_primer_pos = filter_positions(distance, size, gc,
-                                                       all_primer_pos)
-                matched_primers = match(var_pos,filtered_primer_pos,var_name)
-                all_matched_primers.append(matched_primers)
-                print(matched_primers)
-
-        else:
-            output_file = None
-            position = input_file.replace("chr","")
-            filtered_primer_pos = filter_positions(distance, size, gc, all_primer_pos)
-            matched_primers = match(position, filtered_primer_pos,"query")
+    # determine input type and process accordingly
+    if os.path.isfile(input_file) is True:
+        all_matched_primers = []
+        for line in [line.rstrip("\n").split("\t") for line in open(input_file)]:
+            var_name = line[0]
+            var_pos = line[1].replace("chr","")
+            filtered_primer_pos = filter_positions(distance, size, gc,
+                                                   all_primer_pos)
+            matched_primers = match(var_pos,filtered_primer_pos,var_name)
+            all_matched_primers.append(matched_primers)
             print(matched_primers)
 
-        
-        if output_file:
-            write_to_output(all_matched_primers, output_file, header)
+    else:
+        output_file = None
+        position = input_file.replace("chr","")
+        filtered_primer_pos = filter_positions(distance, size, gc, all_primer_pos)
+        matched_primers = match(position, filtered_primer_pos,"query")
+        print(matched_primers)
 
-    except IndexError as e:
-        return e.args[0]+"\n\n"+input_file+\
-        " is incorrectly deliminated or an incorrect delimiter was specified."+"\n"    
+    
+    if output_file:
+        write_to_output(all_matched_primers, output_file, header)
+
 
 
 
@@ -80,43 +76,42 @@ def get_all_primer_pos(primer_database):
         generate a list of every position in the primer and append to an empty
         list. A list of lists of every genomic position in every primer pair
         in a primer database is generated which is subsequently unpacked into
-        a single list of tuples. Each tuple contains: 
+        a single list of tuples. Each tuple of said list contains: 
             ('name', 'position in primer', 'distance from F', 'distance from R')
     '''
-    try:
-        primer_file = open(primer_database)
-        header = next(primer_file)    # skip database header
-        
-        # list of lists containing every position in every primer pair
-        all_primer_pos = []
+    
+    primer_file = open(primer_database)
+    header = next(primer_file)    # skip database header
+    
+    # list of lists containing every position in every primer pair
+    all_primer_pos = []
 
-        # generates all_primer_pos
-        for i in [i.rstrip("\n").split("\t") for i in primer_file]:
-            primer_name = i[0]
-            gene_name = i[3]
-            product_size = i[4]
-            GC = i[6]
-            num_amplicons = i[7]
-            primer_range = re.split(r'[:-]',i[5])   # split into three components
-            chrom = re.sub(r'[^0-9]','',primer_range[0])  # remove any non-integers
-            start = int(primer_range[1])
-            stop = int(primer_range[2])      
+    # generates all_primer_pos
+    for i in [i.rstrip("\n").split("\t") for i in primer_file]:
+        primer_name = i[0]
+        gene_name = i[3]
+        product_size = i[4]
+        GC = i[6]
+        num_amplicons = i[7]
+        primer_range = re.split(r'[:-]',i[5])   # split into three components
+        chrom = re.sub(r'[^0-9]','',primer_range[0])  # remove any non-integers
+        start = int(primer_range[1])
+        stop = int(primer_range[2])      
 
-            # generate every position for current primer pair and append to empty list
-            all_pos_in_primer = ["\t".join((primer_name, chrom+":"+str(i), gene_name, 
-                                            product_size, GC, num_amplicons,
-                                            str(i-start), str(stop-i))) 
-                                            for i in range(start,stop)]
-            
-            all_primer_pos.append(all_pos_in_primer)
-            
-        # unpacks list of lists into a single list of tuples
-        all_primers_pos_unpacked = [tuple(x.split("\t")) for i in all_primer_pos 
-                                    for x in i]
-        return all_primers_pos_unpacked
+        # generate every position for current primer pair and append to empty list
+        all_pos_in_primer = ["\t".join((primer_name, chrom+":"+str(i), gene_name, 
+                                        product_size, GC, num_amplicons,
+                                        str(i-start), str(stop-i))) 
+                                        for i in range(start,stop)]
         
-    except IndexError:
-        raise 
+        all_primer_pos.append(all_pos_in_primer)
+        
+    # unpacks list of lists into a single list of tuples
+    all_primers_pos_unpacked = [tuple(x.split("\t")) for i in all_primer_pos 
+                                for x in i]
+    return all_primers_pos_unpacked
+        
+
 
        
 def filter_positions(distance, size, gc, primer_info):
@@ -179,8 +174,7 @@ def match(var_pos, primer_info, var_name=None):
         return "\n".join(answer)
                  
     
-        
-
+    
 # excute only from outside file
 if __name__ == '__main__':
     main()
