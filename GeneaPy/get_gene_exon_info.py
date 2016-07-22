@@ -3,7 +3,8 @@ import Ensembl
 
 def gene_transcript_exon(position, hg_version, transcript=None):
     # defualt values
-    gene_info = exon_info = transcript = "-"
+    gene_info = exon_info = ("-", "-", "-")
+    transcript = "-"
 
 
     # convert a genomic region to a position in the middle of the region
@@ -26,7 +27,6 @@ def gene_transcript_exon(position, hg_version, transcript=None):
             exon_info = get_exon_number(transcript, hg_version, position)
             exon_id, intron, exon = exon_info
 
-    
     return (gene_info, transcript, exon_info)
 
 

@@ -38,33 +38,55 @@ def unknown_primer(primers=None, input_file=None,output_file=None,
            unknown_primer --input_file in.txt --output_file out.txt --hg_version hg38\n
            unknown_primer --primers TAACAGATTGATGATGCATG CCCATGAGTGGCTCCTAAA 
     '''
+    header = "\t".join(("Primer", "F_Primer","R_Primer", "Gene", "Product_Size",
+                        "Primer_Range","GC%","Number_Amplicons"))
+    print(header)
 
-    # determine what the input is and process accordingly 
+    # determine whether the input is a file or string and process accordingly 
     if input_file:
         for line in [line.rstrip("\n").split("\t") for line in open(input_file)]:
             primer_name = line[0]
             f_primer = line[1].upper()
             r_primer = line[2].upper()
-            amplicon_info = get_unknown_primer_info(hg_version,
-                                                    f_primer,r_primer)
-            gene_name = get_gene_name(amplicon_info.split("\t")[3], hg_version)
-            full_amplicon_info = "\t".join((primer_name, gene_name, amplicon_info))
+            full_amplicon_info = get_all_primer_info(primer_name, hg_version, 
+                                                     f_primer, r_primer)
             print(full_amplicon_info)
     else:
         primer_name = "query"
         f_primer = primers[0]
         r_primer = primers[1]
-        amplicon_info = get_unknown_primer_info(hg_version, 
-                                                f_primer, r_primer)
-        primer_range = amplicon_info.split("\t")[3]
-        gene_name = get_gene_name(primer_range, hg_version)
-        full_amplicon_info = "\t".join((primer_name, gene_name, amplicon_info))
+        full_amplicon_info = get_all_primer_info(primer_name, hg_version, 
+                                                 f_primer, r_primer)
         print(full_amplicon_info)
-  
 
-def get_unknown_primer_info(hg_version,f_primer=None,r_primer=None):
+
+
+
+def get_all_primer_info(primer_name, hg_version, f_primer, r_primer):
+    ''' Scrape primer information from UCSC and gene information from
+        Ensembl
+
+        Returns a string
+    '''
+    amplicon_info = get_unknown_primer_info(primer_name, hg_version, 
+                                            f_primer,r_primer)
+    if amplicon_info:
+        primer_range = amplicon_info[3]
+        gene_name = get_gene_name(primer_range, hg_version)
+        reorder_info = (primer_name,) + amplicon_info[:2] + (gene_name,) + amplicon_info[2:]
+        full_amplicon_info = "\t".join(reorder_info)  
+        return full_amplicon_info
+    
+    else:
+        pass
+
+
+
+def get_unknown_primer_info(primer_name, hg_version,f_primer=None,r_primer=None):
     ''' Generate an amplicon sequence from inputted primer sequences, which
-        is further manipulated t derive inofrmation from the sequence.
+        is further manipulated to gain the primer pairs metadata.
+    
+        Returns a tuple
     '''     
     try:
         # check for ambigous bases
@@ -78,17 +100,16 @@ def get_unknown_primer_info(hg_version,f_primer=None,r_primer=None):
         req.raise_for_status()                                # get the request error code if failed
         entire_url = bs4.BeautifulSoup(req.text,"html.parser")
         pre_elements = entire_url.select('pre')               # get all <pre> elements on webpage
-            
         # if nothing between pre-elements, raise error
         if not pre_elements:
             raise NoAmplicon
+
         isPCR = pre_elements[0].getText()                     # get text for first <pre> element
         amplicon = "\n".join(isPCR.split("\n")[1:])           # split newlines, take 2nd to last and join back together
 
-
         # use amplicon sequence and header to get additional information
         amplicon_header = "\n".join(isPCR.split("\n")[:1])
-        split_header =  amplicon_header[1:].split(" ")
+        split_header = amplicon_header[1:].split(" ")
         region = split_header[0].replace("+","-").replace("chr","")
         amplicon_size = split_header[1]
         gc_percent = useful.gc_content(amplicon)
@@ -100,7 +121,7 @@ def get_unknown_primer_info(hg_version,f_primer=None,r_primer=None):
         # return scraped information
         output = (f_primer,r_primer,str(amplicon_size),
                   region,str(gc_percent)+"%",str(product_number))
-        return "\t".join(output)
+        return output
    
     except AmbiguousBaseError:
         print("Skipping, non-ATGC base found in: "+primer_name)
@@ -111,25 +132,19 @@ def get_unknown_primer_info(hg_version,f_primer=None,r_primer=None):
    
 
 def get_gene_name(primer_range, hg_version):
+    ''' Retrieve gene, transcript and exon information form the genomic
+        region in which the primer pair derive from
+
+        Returns a tuple of tuples
+    '''
     all_info = get_gene_exon_info.gene_transcript_exon(primer_range, hg_version)
     gene_name, gene_id, gene_type, gene_range = all_info[0]
     transcript = all_info[1]
     exon_id, intron, exon = all_info[2]
 
     return gene_name
-#    split_region = re.split(r'[:-]', primer_range)
-#    chrom = split_region[0]
-#    # position in the middle of generated amplicon
-#    position = "".join((chrom,":",
-#                        str(round((int(split_region[2])+int(split_region[1])) / 2))))
-#    ensembl = ScrapeEnsembl(position, hg_version)
-#    gene_info = ensembl.get_gene_info()
-#    if isinstance(gene_info, tuple):    
-#        gene_name, gene_id, gene_type, gene_range = gene_info
-#    else:
-#        gene_name = "-"
-#    
-#    return gene_name
-#
+
+
+
 if __name__ == '__main__':
     unknown_primer()
