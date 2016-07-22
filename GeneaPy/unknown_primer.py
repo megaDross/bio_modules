@@ -1,5 +1,5 @@
 from __future__ import division
-import requests,re, os, bs4, click
+import requests,re, bs4, click
 import useful
 import get_gene_exon_info
 from output import write_to_output
@@ -103,13 +103,14 @@ def get_unknown_primer_info(primer_name, hg_version,f_primer=None,r_primer=None)
 
         # generate amplicon sequence using isPCR tool
         req = requests.get('https://genome.ucsc.edu/cgi-bin/hgPcr?hgsid=483'
-                           '751629_vuLjoO4UVF9h4vF4TEp9U8OQiFd7&org=Human&db='
-                           hg_version+'&wp_target=genome&wp_f="+f_primer+"&wp_r='+r_primer+
-                           '&Submit=submit&wp_size=4000&wp_perfect=15&wp_good=15&boolshad.wp_flipReverse=0')
-        req.raise_for_status()                                # get the request error code if failed
+                           '751629_vuLjoO4UVF9h4vF4TEp9U8OQiFd7&org=Human&db'
+                           '='+hg_version+'&wp_target=genome&wp_f='+f_primer+
+                           '&wp_r='+r_primer+'&Submit=submit&wp_size=4000&wp_'
+                           'perfect=15&wp_good=15&boolshad.wp_flipReverse=0')
+        req.raise_for_status()                              
         entire_url = bs4.BeautifulSoup(req.text,"html.parser")
-        pre_elements = entire_url.select('pre')               # get all <pre> elements on webpage
-        # if nothing between pre-elements, raise error
+        pre_elements = entire_url.select('pre') 
+        
         if not pre_elements:
             raise NoAmplicon
 

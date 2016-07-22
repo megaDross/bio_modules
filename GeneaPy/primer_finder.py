@@ -10,12 +10,12 @@ file_path = useful.cwd_file_path(__file__)
 @click.command('primer_finder') 
 @click.argument('input_file',nargs=1, required=False)
 @click.option('--output_file',default=None,help="output; defaulted as matching_primers_output.txt")
-@click.option('--primer_database',default=file_path+"TAAD_Primer_Validation_Database.txt",help="defaulted to TAAD primer DB")  
+@click.option('--primer_database',default=file_path[:-8]+"test/primer_database.txt", help="defaulted to TAAD primer DB")  
 @click.option('--distance', type=int, help="number of bp a primer must be from the position")
 @click.option('--size', type=int, help="maximum desired amplicon size")
 @click.option('--gc', type=int, help="maximum desired GC content of amplicon")
-def main(input_file, distance, size, gc, output_file = None,
-         primer_database = file_path+"TAAD_Primer_Validation_Database.txt"):
+def main(input_file, distance, size, gc, output_file=None,
+         primer_database=file_path[:-8]+"test/primer_database.txt"):
                     
     ''' Takes variant postion(s) as input and matches it with an appropriate primer
         pair in a given primer database. 
