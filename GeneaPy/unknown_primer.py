@@ -92,7 +92,7 @@ def get_all_primer_info(primer_name, hg_version, f_primer, r_primer):
 
 def get_unknown_primer_info(primer_name, hg_version,f_primer=None,r_primer=None):
     ''' Generate an amplicon sequence from inputted primer sequences, which
-        is further manipulated to gain the primer pairs metadata.
+        is further manipulated to gain the proposed amplicons metadata.
     
         Returns a tuple
     '''     
@@ -102,9 +102,10 @@ def get_unknown_primer_info(primer_name, hg_version,f_primer=None,r_primer=None)
             raise AmbiguousBaseError
 
         # generate amplicon sequence using isPCR tool
-        req = requests.get("https://genome.ucsc.edu/cgi-bin/hgPcr?hgsid=483751629_vuLjoO4UVF9h4vF4TEp9U8OQiFd7&org=Human&db="+
-                           hg_version+"&wp_target=genome&wp_f="+f_primer+"&wp_r="+r_primer+
-                           "&Submit=submit&wp_size=4000&wp_perfect=15&wp_good=15&boolshad.wp_flipReverse=0")
+        req = requests.get('https://genome.ucsc.edu/cgi-bin/hgPcr?hgsid=483'
+                           '751629_vuLjoO4UVF9h4vF4TEp9U8OQiFd7&org=Human&db='
+                           hg_version+'&wp_target=genome&wp_f="+f_primer+"&wp_r='+r_primer+
+                           '&Submit=submit&wp_size=4000&wp_perfect=15&wp_good=15&boolshad.wp_flipReverse=0')
         req.raise_for_status()                                # get the request error code if failed
         entire_url = bs4.BeautifulSoup(req.text,"html.parser")
         pre_elements = entire_url.select('pre')               # get all <pre> elements on webpage
@@ -141,8 +142,8 @@ def get_unknown_primer_info(primer_name, hg_version,f_primer=None,r_primer=None)
 
 
 def get_gene_name(primer_range, hg_version):
-    ''' Retrieve gene, transcript and exon information form the genomic
-        region in which the primer pair derive from
+    ''' Retrieve gene, transcript and exon information from the genomic
+        region in which the proposed amplicon derive from
 
         Returns a tuple of tuples
     '''
