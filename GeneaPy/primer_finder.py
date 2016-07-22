@@ -18,14 +18,6 @@ def main(input_file, distance, size, gc, output_file=None,
          primer_database=file_path[:-8]+"test/primer_database.txt"):           
     ''' Takes variant postion(s) as input and matches it with an appropriate primer
         pair in a given primer database. 
-        \b\n
-        input can be either: FILE; tab deliminated file with variant name and variant
-        position, STRING;  variant position
-        \b\n
-        Examples:\b\n
-            primer_finder 15:48729400 --primer_database primer_database.txt
-            primer_finder --input_file in.txt --output_file out.txt 
-        
     '''
     # allows one to pipe in an argument at the cmd, requires required=False in 
     # @click.argument()

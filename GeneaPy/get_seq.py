@@ -32,12 +32,6 @@ def main(input_file, output_file=None, upstream=20, downstream=20, hg_version="h
     From a genomic postion, genomic range or tab-deliminated file produce a
     reference sequence that can be compared with a sanger trace along with 
     said position/ranges gene/transcript/exon information. 
-         \b\n
-    A file or string can be used as input. STRING: either a variant position 
-    or a genomic range deliminated by a comma. FILE: tab deliminated file with 
-    the variant name and the variant position
-         \b\n
-    Example: python3 get_seq.py chr1:169314424\n
     ''' 
     # allows one to pipe in an argument at the cmd
     input_file = input() if not input_file else input_file

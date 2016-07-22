@@ -26,17 +26,9 @@ class IncorrectVariant(Exception):
 def unknown_primer(primers=None, input_file=None,output_file=None,
                    hg_version="hg19"):
                    
-    ''' Takes primer sequences as input and uses the UCSC isPCR tool
-        to generate amplicon sequence information.
+    ''' From a given primer pair, generate amplicon sequence information by
+        parsing to the UCSC isPCR tool
         \b\n
-        A file or string can be used as input.
-        STRING: --primers option with 2 arguments (primer seqs) given.
-        FILE: --input_file option deliminated file with the primer name, 
-        F-primer seq and R-primer seq.
-        \b\n                    
-        Example:\b\n
-           unknown_primer --input_file in.txt --output_file out.txt --hg_version hg38\n
-           unknown_primer --primers TAACAGATTGATGATGCATG CCCATGAGTGGCTCCTAAA 
     '''
     header = "\t".join(("Primer", "F_Primer","R_Primer", "Gene", "Product_Size",
                         "Primer_Range","GC%","Number_Amplicons", "\n"))
