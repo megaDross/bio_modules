@@ -1,5 +1,5 @@
 from __future__ import division, print_function
-import os, click
+import os, click, sys, traceback
 import get_gene_exon_info
 import useful
 from Ensembl import ScrapeEnsembl
@@ -122,66 +122,93 @@ def get_seq(seq_name, var_pos, reference, trans, hg_version, pyensembl, sanger=N
         sanger and gene/exon information is dependent upon whether the sanger 
         and pyensembl is or is not None
     '''
-    # default variables to - incase the below conditions are not met
-    gene_name = gene_id = gene_type = gene_range = transcript = exon_id = \
-        exon_id = intron = exon = ref_base = sanger_base = "-"
-    compare_result = "0"
+    try:
+        # default variables to - incase the below conditions are not met
+        gene_name = gene_id = gene_type = gene_range = transcript = exon_id = \
+            exon_id = intron = exon = ref_base = sanger_base = "-"
+        compare_result = "0"
 
-    # check if var_pos is a GENOMIC REGION, else construct one from var_pos
-    seq_range = reference.create_region(var_pos)
-    
-    # use UCSC to get the genomic ranges DNA sequence
-    sequence = reference.get_region_info(seq_range)
-    
-    # if CompareSeqs class has been intiated try and find a matching .seq file
-    if sanger:
-        sanger_sequence = sanger.match_with_seq_file(sequence)
-        # if .seq file found compare the ref var_pos base and the sanger var_pos base
-        if sanger_sequence:
-            ref_base = sanger_sequence[1] 
-            sanger_base = sanger_sequence[2] 
-            compare = CompareSeqs.compare_nucleotides(ref_base,sanger_base) 
-            statement = compare[0]
-            compare_result = compare[1]
+        # check if var_pos is a GENOMIC REGION, else construct one from var_pos
+        seq_range = reference.create_region(var_pos)
+        
+        # use UCSC to get the genomic ranges DNA sequence
+        sequence = reference.get_region_info(seq_range)
+        
+        # if CompareSeqs class has been intiated try and find a matching .seq file
+        if sanger:
+            sanger_sequence = sanger.match_with_seq_file(sequence)
+            # if .seq file found compare the ref var_pos base and the sanger var_pos base
+            if sanger_sequence:
+                ref_base = sanger_sequence[1] 
+                sanger_base = sanger_sequence[2] 
+                compare = CompareSeqs.compare_nucleotides(ref_base,sanger_base) 
+                statement = compare[0]
+                compare_result = compare[1]
 
-    # determine whether to transcribe or translate to rna or protein EXPERIMENTAL
-    sequence = str(trans.get_rna_seq(sequence))
-    sequence = str(trans.get_protein_seq(sequence))
-     
-    # get gene information for the variant position
-    if pyensembl:
-        all_info = get_gene_exon_info.gene_transcript_exon(var_pos, hg_version)
-        gene_name, gene_id, gene_type, gene_range = all_info[0]
-        transcript = all_info[1]
-        exon_id, intron, exon = all_info[2]
+        # determine whether to transcribe or translate to rna or protein EXPERIMENTAL
+        sequence = str(trans.get_rna_seq(sequence))
+        sequence = str(trans.get_protein_seq(sequence))
          
-    # determine whether to give a HEADER
-    header = reference.header_option(seq_name,var_pos,seq_range,sequence, gene_name)
+        # get gene information for the variant position
+        if pyensembl:
+            all_info = get_gene_exon_info.gene_transcript_exon(var_pos, hg_version)
+            gene_name, gene_id, gene_type, gene_range = all_info[0]
+            transcript = all_info[1]
+            exon_id, intron, exon = all_info[2]
+             
+        # determine whether to give a HEADER
+        header = reference.header_option(seq_name,var_pos,seq_range,sequence, gene_name)
 
-    # print reference sequence (no options)
-    if 'sanger_sequence' not in locals():
-        print_out ="\n".join((header, "Reference Sequence:\t"+sequence,"\n"))
+        # print reference sequence (no options)
+        if 'sanger_sequence' not in locals():
+            print_out ="\n".join((header, "Reference Sequence:\t"+sequence,"\n"))
 
-    # print reference and sanger sequence
-    elif sanger_sequence :
-        print_out = "\n".join((header,"Reference Sequence:\t"+sequence,
-                               "Sanger Sequence:\t"+sanger_sequence[0],
-                               statement,"\n"))
+        # print reference and sanger sequence
+        elif sanger_sequence :
+            print_out = "\n".join((header,"Reference Sequence:\t"+sequence,
+                                   "Sanger Sequence:\t"+sanger_sequence[0],
+                                   statement,"\n"))
+        
+        # if no matching seq file 
+        elif not sanger_sequence:
+            print_out = "\n".join((header,"Reference Sequence:\t"+sequence,
+                                   "Sanger Sequence:\tNo Match Found", "\n"))
+
+
+        # print results and return everything for outputing to a file
+        print(print_out)
+        return("\t".join((seq_name, var_pos, seq_range, gene_name,
+                          gene_id, gene_type, gene_range, transcript, 
+                          exon_id, intron, exon, ref_base,
+                          sanger_base, str(compare_result))))
     
-    # if no matching seq file 
-    elif not sanger_sequence:
-        print_out = "\n".join((header,"Reference Sequence:\t"+sequence,
-                               "Sanger Sequence:\tNo Match Found", "\n"))
+    except ValueError as e:
+        t, v, tb = sys.exc_info()
+        sam = traceback.format_exception(t, v, tb)
+        msg = " ".join(("ERROR: No %s information found for",
+                        seq_name,"at",var_pos,"in",hg_version))
+        ensembl_error(sam[1], msg)
 
 
-    # print results and return everything for outputing to a file
-    print(print_out)
-    return("\t".join((seq_name, var_pos, seq_range, gene_name,
-                      gene_id, gene_type, gene_range, transcript, 
-                      exon_id, intron, exon, ref_base,
-                      sanger_base, str(compare_result))))
+def ensembl_error(error, msg):
+    ''' Handle ValueErrors that occur within get_seq()
+        and determine whether they affect gene, transcript 
+        or exona information. Print to the screen and write 
+        to an error file.
+    '''   
+    with open("stderror_get_seq.txt", "a") as out:
+        if "gene" in error:
+            msg = msg % "gene"
+        elif "transcript" in error:
+            msg = msg % "transcript"
+        elif "exon" in error:
+            msg = msg % "exon"
+        else:
+            msg = "unknown cause of ValueError"
+            
+        print(msg)
+        out.write(msg+"\n")
 
- 
 
                
 if __name__ == '__main__':

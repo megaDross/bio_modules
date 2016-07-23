@@ -39,8 +39,9 @@ def gene_transcript_exon(position, hg_version, transcript=None):
         e_type, e_value, e_traceback = sys.exc_info()
         sam = traceback.format_exception(e_type, e_value, e_traceback)
         if "exon_info" in sam[1]:
-            print(" ".join(("ERROR: No exon information found for",
-                           position,"in",hg_version)))
+            msg = " ".join(("ERROR: No exon information found for",
+                           position,"in",hg_version))
+            return msg
 
 
 def create_position(position):

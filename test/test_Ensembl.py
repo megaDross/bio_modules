@@ -99,17 +99,19 @@ class TestGeneTranscriptExon(unittest.TestCase):
                         (('ADCY5', 'ENSG00000173175', 'protein_coding', 
                           '3:123282296-123449758'), 'ENST00000462833', 
                          ('-', '1/20', '-')))
-
-    #def test_exon_error(self):
-    #    '''
-    #    '''
-    #    self.assertEqual(gene_transcript_exon("16:15812194", "hg38"),
-    #                     "ERROR: No exon information found for 16:15812194 in hg38")
+   
+    def test_exon_error(self):
+        ''' Ensure the exon error props up
+        
+            DOESN'T ACTUALLY TEST THE ERROR AS 
+        '''
+        self.assertEqual(gene_transcript_exon("16:15812194", "hg38"),
+                         "ERROR: No exon information found for 16:15812194 in hg38")
 
 
 class TestCreatePosition(unittest.TestCase):
-    
-
+    ''' Ensure create_position works as expected
+    '''
     def test_it(self):
         self.assertEqual(create_position("1:10000900-10001000"),
                          "1:10000950")
