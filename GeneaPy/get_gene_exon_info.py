@@ -1,5 +1,6 @@
-import re
-import Ensembl
+import re, traceback, logging, sys
+from GeneaPy import Ensembl
+
 
 def gene_transcript_exon(position, hg_version, transcript=None):
     ''' Use the Ensembl module to return all gene, transcript and exon infomation
@@ -9,29 +10,37 @@ def gene_transcript_exon(position, hg_version, transcript=None):
             ((gene_name, gene_id, gene_type, gene_range), transcript,
              (exon_id, intron, exon))
     '''
-    # defualt values
-    gene_info = exon_info = ("-", "-", "-")
-    transcript = "-"
+    try:
+        # defualt values
+        gene_info = exon_info = ("-", "-", "-")
+        transcript = "-"
 
 
-    # convert a genomic region to a position in the middle of the region
-    if "-" in position and ":" in position:
-        position = create_position(position)
+        # convert a genomic region to a position in the middle of the region
+        if "-" in position and ":" in position:
+            position = create_position(position)
 
-    ensembl = Ensembl.ScrapeEnsembl(position, hg_version)
-    gene_info = ensembl.get_gene_info()
-    
-    
-    if isinstance(gene_info, tuple):
-        gene_name, gene_id, gene_type, gene_range = gene_info
-        transcript = ensembl.get_canonical_transcript(gene_name)
+        ensembl = Ensembl.ScrapeEnsembl(position, hg_version)
+        gene_info = ensembl.get_gene_info()
+        
+        
+        if isinstance(gene_info, tuple):
+            gene_name, gene_id, gene_type, gene_range = gene_info
+            transcript = ensembl.get_canonical_transcript(gene_name)
 
-        if transcript:
-            exon_info = get_exon_number(transcript, hg_version, position)
-            exon_id, intron, exon = exon_info
+            if transcript:
+                exon_info = get_exon_number(transcript, hg_version, position)
+                exon_id, intron, exon = exon_info
 
-    return (gene_info, transcript, exon_info)
+        return (gene_info, transcript, exon_info)
 
+    except TypeError as e:
+        # get traceback from a string so one can identify what is causing the error
+        e_type, e_value, e_traceback = sys.exc_info()
+        sam = traceback.format_exception(e_type, e_value, e_traceback)
+        if "exon_info" in sam[1]:
+            print(" ".join(("ERROR: No exon information found for",
+                           position,"in",hg_version)))
 
 
 def create_position(position):
@@ -78,4 +87,9 @@ def get_exon_number(transcript, hg_version, pos):
         return (exon_id[0], "-" ,str(exon_num)+"/"+str(last_exon))
 
 
-
+#print(gene_transcript_exon("15:48762884", "hg19"))
+#print(gene_transcript_exon("15:48762884", "hg38"))
+#print(gene_transcript_exon("16:15812194", "hg19"))
+#print(gene_transcript_exon("16:15812194", "hg38"))
+#print(gene_transcript_exon("3:123418990", "hg19"))
+#print(gene_transcript_exon("3:123418990", "hg38"))

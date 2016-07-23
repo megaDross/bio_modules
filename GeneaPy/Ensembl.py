@@ -1,4 +1,4 @@
-import re, requests
+import re, requests, sys
 from pyensembl import EnsemblRelease
 
 
@@ -25,7 +25,8 @@ class ScrapeEnsembl():
             pos = int(self.query.split(":")[1])
             gene_name = self.hg.gene_names_at_locus(contig=chrom, position=pos)
             if not gene_name:
-                msg = " ".join(("No gene found at",self.query,"for genome version",str(self.hg_version)))
+                msg = " ".join(("No gene found at",self.query,"for genome version",
+                                str(self.hg_version)))
                 return msg 
             
             gene_info = self.hg.genes_by_name(gene_name[0])
@@ -54,7 +55,7 @@ class ScrapeEnsembl():
             size = int(stop) - int(start)
             if transcript_type == "protein_coding":
                 protein_coding_transcripts.append((size,transcript,transcript_type)) 
-
+        
         # sort by size and return the largest protein coding transcript
         if protein_coding_transcripts:    
             canonical_transcript = sorted(protein_coding_transcripts)[-1][1]
@@ -81,7 +82,7 @@ class ExonInfo():
                 grch = ""
             else:
                 print("incompatible human genome version")
-            
+                sys.exit() 
 
             url = "".join(("http://",grch,"rest.ensembl.org/overlap/id/",self.transcript,
                            "?feature=exon;content-type=application/json;expand=1"))
@@ -89,6 +90,7 @@ class ExonInfo():
             req.raise_for_status()
             exon_dics = req.json()
             return exon_dics
+        
         except requests.exceptions.RequestException as e:
             return e
 
@@ -108,7 +110,7 @@ class ExonInfo():
                 exon_region.add(exon_start_end)
 
         return exon_region
-       
+        
 
     def all_intron_regions(self,sorted_exon_regions):
         ''' Get all intron numbers, start and stop positions

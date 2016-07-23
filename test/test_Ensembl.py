@@ -1,9 +1,10 @@
 from GeneaPy.Ensembl import *
+from GeneaPy.get_gene_exon_info import *
 import unittest
 # python3 -m unittest test_Ensembl.py
 
 
-class TestGeneTranscript(unittest.TestCase):
+class TestEnsembl(unittest.TestCase):
     ''' Methods that test the ScarpeEnsembl 
         class found in Ensembl.py
     '''
@@ -37,15 +38,17 @@ class TestGeneTranscript(unittest.TestCase):
         ''' Ensure the correct canonical transcript is returned when 
             parsing a genomic position
         '''
-        self.assertEqual(ScrapeEnsembl("15:48762884", "hg38").get_canonical_transcript('CEP152'), 
+        self.assertEqual(ScrapeEnsembl("15:48762884", "hg38").
+                         get_canonical_transcript('CEP152'), 
                          "ENST00000380950")
-        self.assertEqual(ScrapeEnsembl("21:33036150", "hg19").get_canonical_transcript('SOD1'),
+        self.assertEqual(ScrapeEnsembl("21:33036150", "hg19").
+                         get_canonical_transcript('SOD1'),
                          "ENST00000270142")
 
         
 class TestExon(unittest.TestCase):
     ''' Methods that test the get_exon_number function 
-        in Ensembl.py
+        in get_gene_exon_info.py
     '''
 
     def test_get_exon_number_exon(self):
@@ -67,6 +70,50 @@ class TestExon(unittest.TestCase):
                          ('-', '1/1', '-'))
 
 
+class TestGeneTranscriptExon(unittest.TestCase):
+    ''' Methods that test the gene_transcript_exon and create_position
+        methods in get_exon_gene_info.py
+    '''
+
+    def test_function(self):
+        '''
+        '''
+        self.assertEqual(gene_transcript_exon("15:48762884", "hg19"),
+                         (('FBN1', 'ENSG00000166147', 'protein_coding', 
+                           '15:48700503-48938046'), 'ENST00000316623',
+                          ('ENSE00003582511', '-', '36/66')))
+
+        self.assertEqual(gene_transcript_exon("16:15812194", "hg19"),
+                         (('MYH11', 'ENSG00000133392', 'protein_coding', 
+                           '16:15797029-15950890'), 'ENST00000452625',
+                          ('ENSE00003528672', '-', '38/43')))
+    
+    def test_hg38(self):
+        '''
+        '''
+        self.assertEqual(gene_transcript_exon("15:48762884", "hg38"),
+                         (('CEP152', 'ENSG00000103995', 'protein_coding', 
+                           '15:48712928-48811146'), 'ENST00000380950', 
+                          ('-', '17/26', '-')))
+        self.assertEqual(gene_transcript_exon("3:123418990", "hg38"),
+                        (('ADCY5', 'ENSG00000173175', 'protein_coding', 
+                          '3:123282296-123449758'), 'ENST00000462833', 
+                         ('-', '1/20', '-')))
+
+    #def test_exon_error(self):
+    #    '''
+    #    '''
+    #    self.assertEqual(gene_transcript_exon("16:15812194", "hg38"),
+    #                     "ERROR: No exon information found for 16:15812194 in hg38")
+
+
+class TestCreatePosition(unittest.TestCase):
+    
+
+    def test_it(self):
+        self.assertEqual(create_position("1:10000900-10001000"),
+                         "1:10000950")
+    
 if __name__ == '__main__':
     unittest.main()
 
