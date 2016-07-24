@@ -129,6 +129,22 @@ class TestGetSeqPrint(unittest.TestCase):
         self.assertEqual(ref_seq, open(file_path[:-5]+'test/test_out_print.txt').read())
 
 
+    def test_ab1_conversion(self):
+        ref_seq_bytes = subprocess.check_output(["python3",get_seq, "17:48269160",
+                                                "--header", "--seq_file",
+                                                 file_path[:-5]+'test/test_files/'
+                                                'A09_29XX1917_WYN13_F_001.ab1'])
+        ref_seq = ref_seq_bytes.decode(encoding='UTF-8')
+        
+        self.assertEqual(ref_seq,
+                         '> query 17:48269160 17:48269140,48269180 -'
+                         '\nReference Sequence:\t'
+                         'tgccctcaccttagcaccatCgttgccgggagcaccgttgg'                    
+                         '\nSanger Sequence:\t'
+                         'tgccctcaccttagcaccatC/Tgttgccgggagcaccgttgg'
+                         '\nthe nucleotides given are DIFFERENT\n\n\n')
+
+
 
 class GetSeqFileOut(unittest.TestCase):
     ''' Test the written output file of the get_seq.py click application

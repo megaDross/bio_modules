@@ -48,8 +48,15 @@ class TestCheckSanger(unittest.TestCase):
         self.assertEqual(CompareSeqs(60, 60, TestCheckSanger.test_dir+"C02_HX15_RD_GS_U_HX15_RD_F_006.seq").match_with_seq_file("agtaggcagcgtgactgtggtgtccaggcggccctcacctgctgtgtggctttgcggaccCggtcgctcatggcctccatgttgccctgctcctcctccagctcctcctccagctgggcga"),('agtaggcagcgtgnctgtggtgtccaggcggccctcacctgctgtgtggctttgcggaccNggtcgctcatggcctccatgttgccctgctcctcctccagctcctcctccagctgggcga', 'C', 'N'))
 
 
-
-
+    def test_ab1_file_name_conversion(self):
+        self.assertEqual(CompareSeqs.convert_ab1_to_seq(TestCheckSanger.test_dir+
+                         "A09_29XX1917_WYN13_F_001.ab1"), TestCheckSanger.test_dir+
+                         "A09_29XX1917_WYN13_F_001.seq")
+    
+    def test_converted_ab1_sequence(self):
+        warnings.filterwarnings("ignore")
+        self.assertEqual(open(TestCheckSanger.test_dir+"A09_29XX1917_WYN13_F_001.seq").
+                         read().replace("\n", ""), "NNNNNNNNNNNCNNNCNNNNGANGGTGAGACCTGGTCCCTGGGCCACTTGCNNAGCCCCTTCCACGCTGCCCTCACCTTAGCACCATYGTTGCCGGGAGCACCGTTGGCCCCTCGGGGACCAGCAGGACCAGGGGGACCTTGCACACCACGCTCGCCAGGGAAACCTCTCTCGCCCTAGAAGGGAAGGACAGGGCATGTGAAGGCTGCTCTGGAGATAGGGCCAAGTACAACGCACCTTGACGGATGCAGCGAGAGAGGCCTACTTACTCTTGCTCCAGAGGGGCCAGGGGCGCCAAGGTCTCCAGGAACACCCTGAGGGGGAGGGAGAGAGGAACAGACAGTGAGCAAAACCTACCTGGGGCCACTCTGCTGGAAAGCACGGTCCTTCCTCCTGGGGTCTGGCCGTGATTAGAGAGGAACCCCTTCTCAGCACTGAATTGAGATTATCCCAAACAGCCCCTCTCTTCCTCCTAGGGATGTGTCAAAGGCTTCCCCCCTCCCCAAACTATGGACCAAGATTTATCAATAGAAGGGTTGAGGGAAAGTCACAGNNNNNA")
 if __name__ == '__main__':
     unittest.main()
 

@@ -1,3 +1,4 @@
+from Bio import SeqIO
 import os, re
 
 class CompareSeqs(object):
@@ -5,7 +6,7 @@ class CompareSeqs(object):
         with a sanger sequence contained within a .seq file
     '''
     def __init__(self, upstream, downstream, seq_file=None):
-        self.seq_file = open(seq_file, "r").read().replace("\n","")
+        self.seq_file = open(seq_file).read().replace("\n","")
         self.upstream = upstream
         self.downstream = downstream
     
@@ -17,7 +18,8 @@ class CompareSeqs(object):
 
     @staticmethod
     def get_matching_seq_file(query, directory):
-        ''' Find a file name that best matches given query
+        ''' Find a file name that best matches given query and return the
+            sequence string in matched file
         '''
         # appending is required in case there is more than one match, returns first match
         store_matches = []
@@ -28,6 +30,29 @@ class CompareSeqs(object):
                 
         sorted_matches = sorted(store_matches)
         return sorted_matches[0]
+
+    @staticmethod
+    def convert_ab1_to_seq(ab1):
+        ''' Extract the sequence string from .ab1 file and return
+
+            WARNING: This method needs ALOT of testing
+        '''
+        handle = open(ab1, "rb")
+        new_file_name = ab1.replace("ab1", "seq")
+        new_file = open(new_file_name, "w")
+
+        # Use SeqIO and re to get the sequence from the ab1 file
+        for record in SeqIO.parse(handle, "abi"):
+            seq = re.findall(r"N[ACGTNYRKMSWBDHV]{100,1000}",str(record))
+            unique_seq = set(sorted(seq))
+            if len(unique_seq) == 1:
+                sequence = list(unique_seq)[0]
+                new_file.write(sequence)
+                new_file.close()
+                return(new_file_name)
+            else:
+                print("something happened")
+
 
     def match_with_seq_file(self,sequence):
         ''' Find part of a given sequence in a given seq_file and return the equivalent 
@@ -92,5 +117,6 @@ class CompareSeqs(object):
             
             else:
                 return "not found"
+
 
 

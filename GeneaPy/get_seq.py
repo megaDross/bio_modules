@@ -81,8 +81,10 @@ def parse_file(*args):
         error_check = reference.handle_argument_exception(var_pos)
         # intialise the class in Ensembl.py
         pyensembl = ScrapeEnsembl(var_pos, hg_version) if ensembl else None
-        # find a .seq file with seq_name in its title
+        # find a file with seq_name in its title, if ab1 matched then convert to .seq
         seq_file = CompareSeqs.get_matching_seq_file(seq_name, seq_dir)
+        if seq_file and seq_file.endswith("ab1"):
+            seq_file = CompareSeqs.convert_ab1_to_seq(seq_file)
         # intialise the check_sanger class
         sanger = CompareSeqs(upstream, downstream, seq_file)
         # parse it all into get_seq()
@@ -108,6 +110,8 @@ def parse_string(*args):
     pyensembl = ScrapeEnsembl(input_file, hg_version) if ensembl else None
     
     # intialiase the check_sanger class and parse it all into the get_seq()
+    if seq_file and seq_file.endswith("ab1"):
+        seq_file = CompareSeqs.convert_ab1_to_seq(seq_file)
     sanger = CompareSeqs(upstream,downstream, seq_file) if seq_file else None
     get_seq("query", input_file, reference, trans, hg_version, pyensembl, sanger)
 
