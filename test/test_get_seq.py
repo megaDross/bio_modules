@@ -7,7 +7,6 @@ file_path = GeneaPy.useful.cwd_file_path(__file__)
 get_seq = file_path[:-5]+"GeneaPy/get_seq.py"
 
 
-
 class TestGetSeqPrint(unittest.TestCase):
     ''' Test the printed output of the get_seq.py click application
     '''
@@ -155,6 +154,22 @@ class GetSeqFileOut(unittest.TestCase):
         ''' Remove unwanted test files
         '''
         os.remove(file_path[:-5]+'test/yyy.txt')
+
+
+
+class TestErrors(unittest.TestCase):
+    ''' Test the expected error messages are printed
+    '''
+    def test_gene_info_error(self):
+        ''' esnsure gene information error is printed
+        ''' 
+        ref_seq_bytes = subprocess.check_output(["python3",get_seq, "16:15812194",
+                                                 "--header", "--ensembl", "--hg_version",
+                                                 "hg38"])
+        ref_seq = ref_seq_bytes.decode(encoding='UTF-8')        
+        self.assertEqual(ref_seq,'ERROR: No gene information found for query'
+                         ' at 16:15812194 in hg38\n')
+
 
 if __name__ == '__main__':
     unittest.main()
