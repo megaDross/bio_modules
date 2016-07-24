@@ -64,8 +64,23 @@ class TestUnknownPrimerIO(unittest.TestCase):
         primer_bytes = subprocess.check_output(["python3", unknown_primer, 
                                                 "--input_file", 
                                                 "test_primer_database.txt"]),
-        primer = primer_bytes.decode(encoding='UTF-8')
-        self.assertEqual(primer, open("test_print_out_unknown_primer.txt").read())
+        # primer is recognised as a tuple, hence the [0] 
+        primer = primer_bytes[0].decode(encoding='UTF-8')
+        self.assertIn(open("test_print_out_unknown_primer.txt").read(), 
+                      primer)
+
+    def test_out_file(self):
+        ''' Test the file outputted as expected by unknown primer
+        '''
+        warnings.filterwarnings("ignore") 
+        primer_bytes = subprocess.check_output(["python3", unknown_primer, 
+                                                "--input_file", 
+                                                "test_primer_database.txt",
+                                                "--output_file", "outout.txt"]),
+        
+        self.assertEqual(open("test_output_file_unknown_primer.txt").read(), 
+                         open("outout.txt").read())
+        os.remove("outout.txt")
 
 
 class TestUnknownPrimerExceptions(unittest.TestCase):
@@ -73,6 +88,9 @@ class TestUnknownPrimerExceptions(unittest.TestCase):
     '''
     def test_multiple_amplicons(self):
         ''' Test that the MultipleAmplicons exception is raised as expected
+        
+            assertRaise refused to work as MultipleAmplicons excpetion was 
+            unrecognised, hence the unusual approach below. 
         '''
         warnings.filterwarnings("ignore") 
         primer_bytes = subprocess.check_output(["python3", unknown_primer, 
