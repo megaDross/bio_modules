@@ -102,24 +102,27 @@ def get_unknown_primer_info(primer_name, hg_version,f_primer=None,r_primer=None)
         req.raise_for_status()                              
         entire_url = bs4.BeautifulSoup(req.text,"html.parser")
         pre_elements = entire_url.select('pre') 
-        
         if not pre_elements:
             raise NoAmplicon
 
-        isPCR = pre_elements[0].getText()                     # get text for first <pre> element
-        amplicon = "\n".join(isPCR.split("\n")[1:])           # split newlines, take 2nd to last and join back together
+        html_to_text = pre_elements[0].getText()         
+        isPCR = html_to_text.split(">")
+        amplicon_header = ["\n".join(x.split("\n")[:1]) for x in isPCR][1:] 
+        amplicon = ["\n".join(x.split("\n")[1:]) for x in isPCR][1:] 
+        product_number = len(amplicon)
+        if product_number > 1:
+            raise MultipleAmplicons('The following primers generate more' 
+                                    'than one amplicon: '+primer_name)
+        else:
+            amplicon_header = amplicon_header[0]
+            amplicon = amplicon[0]
 
         # use amplicon sequence and header to get additional information
-        amplicon_header = "\n".join(isPCR.split("\n")[:1])
-        split_header = amplicon_header[1:].split(" ")
+        split_header = amplicon_header.split(" ")
         region = split_header[0].replace("+","-").replace("chr","")
         amplicon_size = split_header[1]
         gc_percent = useful.gc_content(amplicon)
-        product_number = len(pre_elements)
-        if product_number > 1:
-            raise MultipleAmplicons        
-
-
+        
         # return scraped information
         output = (f_primer,r_primer,str(amplicon_size),
                   region,str(gc_percent)+"%",str(product_number))
@@ -130,7 +133,7 @@ def get_unknown_primer_info(primer_name, hg_version,f_primer=None,r_primer=None)
     except NoAmplicon:
         print("No amplicon generated from isPCR for primer: "+primer_name)
     except MultipleAmplicons:
-        print("The following primers generate more than one amplicon:"+primer_name)
+        print("The following primers generate more than one amplicon: "+primer_name)
 
 
 
@@ -140,12 +143,17 @@ def get_gene_name(primer_range, hg_version):
 
         Returns a tuple of tuples
     '''
-    all_info = get_gene_exon_info.gene_transcript_exon(primer_range, hg_version)
-    gene_name, gene_id, gene_type, gene_range = all_info[0]
-    transcript = all_info[1]
-    exon_id, intron, exon = all_info[2]
+    try:
+        all_info = get_gene_exon_info.gene_transcript_exon(primer_range, hg_version)
+        gene_name, gene_id, gene_type, gene_range = all_info[0]
+        transcript = all_info[1]
+        exon_id, intron, exon = all_info[2]
 
-    return gene_name
+        return gene_name
+    
+    except TypeError:
+        print(" ".join(("No gene found at", primer_range, "in", hg_version)))
+        return "-"
 
 
 
