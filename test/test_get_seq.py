@@ -17,8 +17,7 @@ class TestGetSeqPrint(unittest.TestCase):
         ref_seq_bytes = subprocess.check_output(["python3",get_seq, "chr1:169314424"])
         ref_seq = ref_seq_bytes.decode(encoding='UTF-8')
         
-        self.assertEqual(ref_seq,'\nReference Sequence:\taggagcgatgtctcctct'
-                                 'ttCattcctgattttgataattt\n\n\n')
+        self.assertEqual(ref_seq,'\naggagcgatgtctcctctttCattcctgattttgataattt\n\n\n')
     
     def test_piping(self):
         ''' Check that piping a genomic position into get_seq.py works
@@ -34,8 +33,7 @@ class TestGetSeqPrint(unittest.TestCase):
         ref_seq_bytes = ref_seq_popen.communicate()[0]
         ref_seq = ref_seq_bytes.decode(encoding='UTF-8')
         
-        self.assertEqual(ref_seq,'\nReference Sequence:'
-                         '\taggagcgatgtctcctctttCattcctgattttgataattt\n\n\n')
+        self.assertEqual(ref_seq,'\naggagcgatgtctcctctttCattcctgattttgataattt\n\n\n')
  
     def test_genomic_range(self):
         ''' Test the printed output from parsing a genomic range is as expected
@@ -45,8 +43,7 @@ class TestGetSeqPrint(unittest.TestCase):
                                                  "chr1:169314404,169314444"])
         ref_seq = ref_seq_bytes.decode(encoding='UTF-8')
         
-        self.assertEqual(ref_seq,'\nReference Sequence:\taggagcgatgtctcctct'
-                                 'ttCattcctgattttgataattt\n\n\n')
+        self.assertEqual(ref_seq,'\naggagcgatgtctcctctttCattcctgattttgataattt\n\n\n')
  
     def test_hg_version(self):
         ''' Test the printed output from parsing a genomic position and hg38
@@ -57,8 +54,7 @@ class TestGetSeqPrint(unittest.TestCase):
                                                 "--hg_version", "hg38"])
         ref_seq = ref_seq_bytes.decode(encoding='UTF-8')
         
-        self.assertEqual(ref_seq,'\nReference Sequence:\tgaacttaactatatgacaaaA'
-                         'atcacatgaaagatttaagt\n\n\n')
+        self.assertEqual(ref_seq,'\ngaacttaactatatgacaaaAatcacatgaaagatttaagt\n\n\n')
     
    
     def test_header(self):
@@ -72,8 +68,7 @@ class TestGetSeqPrint(unittest.TestCase):
         
         self.assertEqual(ref_seq,
                          '> query chr1:169314424 chr1:169314404,169314444 -'
-                         '\nReference Sequence:\taggagcgatgtctcctct'
-                                 'ttCattcctgattttgataattt\n\n\n')
+                         '\naggagcgatgtctcctctttCattcctgattttgataattt\n\n\n')
 
     def test_upstream_downstream(self):
         ''' Test the printed output from parsing a genomic position, header option
@@ -87,7 +82,7 @@ class TestGetSeqPrint(unittest.TestCase):
         
         self.assertEqual(ref_seq,
                          '> query chr1:169314424 chr1:169314384,169314494 -'
-                         '\nReference Sequence:\tcttttaatttctgcagggatag'
+                         '\ncttttaatttctgcagggatag'
                          'gagcgatgtctcctctttCattcctgattttgataatttgtatcttcagtcttttttct'
                          'tggtcagtctaaccaaagttttgcctatgt\n\n\n')
 

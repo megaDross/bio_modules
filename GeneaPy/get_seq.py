@@ -165,7 +165,7 @@ def get_seq(seq_name, var_pos, reference, trans, hg_version, pyensembl, sanger=N
 
         # print reference sequence (no options)
         if 'sanger_sequence' not in locals():
-            print_out ="\n".join((header, "Reference Sequence:\t"+sequence,"\n"))
+            print_out ="\n".join((header, sequence,"\n"))
 
         # print reference and sanger sequence
         elif sanger_sequence :
