@@ -67,3 +67,7 @@ To perform testing execute the following command within the test directory:
 ```bash  
 python3 -m unittest *.py
 ```
+
+
+## TODO
+- write some code in get_seq to put the reverse complement of the scrapped seq int the mat CompareSanger.match_with_seq_file() method.
