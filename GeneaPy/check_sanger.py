@@ -1,14 +1,19 @@
 from Bio import SeqIO
-import os, re
+import os, re, subprocess
+import useful
+
+
+file_path = useful.cwd_file_path(__file__)
 
 class CompareSeqs(object):
     ''' A collection of methods used to compare a reference sequence 
         with a sanger sequence contained within a .seq file
     '''
-    def __init__(self, upstream, downstream, seq_file=None):
+    def __init__(self, upstream, downstream, seq_file=None, seq_dir=None):
         self.seq_file = open(seq_file).read().replace("\n","")
         self.upstream = upstream
         self.downstream = downstream
+        self.seq_dir = seq_dir
     
     UIPAC = {"A":"A", "C":"C", "G":"G", "T":"T",
              "R":"A/G", "Y":"C/T", "S":"G/C",
@@ -43,15 +48,11 @@ class CompareSeqs(object):
 
         # Use SeqIO and re to get the sequence from the ab1 file
         for record in SeqIO.parse(handle, "abi"):
-            seq = re.findall(r"N[ACGTNYRKMSWBDHV]{100,1000}",str(record))
-            unique_seq = set(sorted(seq))
-            if len(unique_seq) == 1:
-                sequence = list(unique_seq)[0]
+                raw_data = record.annotations.get("abif_raw")
+                sequence = raw_data.get("PBAS2")
                 new_file.write(sequence)
                 new_file.close()
                 return(new_file_name)
-            else:
-                print("something happened")
 
 
     def match_with_seq_file(self,sequence):
@@ -59,7 +60,7 @@ class CompareSeqs(object):
             full sequence deriving from the .seq file
 
             returns a tuple containing the matched sanger sequence and the variant 
-            position base
+            position base and the index of the var_pos_seq
         '''
         if self.seq_file:
             preseq = sequence[:self.upstream].upper()
@@ -74,7 +75,8 @@ class CompareSeqs(object):
                 downstream_seq = self.seq_file[end+1:end+self.downstream+1]
                 full_seq = "".join((matched_seq.lower(),var_pos_seq.upper(),
                                      downstream_seq.lower()))
-                return(full_seq,ref_seq,var_pos_seq.upper())
+                
+                return (full_seq,ref_seq,var_pos_seq.upper(), end)
 
             elif re.search(postseq, self.seq_file):
                 #print("POST")
@@ -86,7 +88,7 @@ class CompareSeqs(object):
                 upstream_seq = self.seq_file[(start-1)-self.downstream:start-1]
                 full_seq = "".join((upstream_seq.lower(),var_pos_seq.upper(),
                                     matched_seq.lower()))
-                return(full_seq,ref_seq,var_pos_seq.upper())
+                return (full_seq,ref_seq,var_pos_seq.upper(), start-1)
             
             
             else:
@@ -117,6 +119,30 @@ class CompareSeqs(object):
             
             else:
                 return "not found"
+
+
+    @staticmethod
+    def get_het_call(ab1_file, var_index):
+        ''' Get the two bases being called as N
+        '''
+        ttuner = "/home/david/bin/tracetuner_3.0.6beta/rel/Linux_64/ttuner"
+        out_dir = filepath.split("/")[:-1]+"test/test_files/"
+        subprocess.call([ttuner, "-tabd", out_dir, "-het", "-id", self.seq_dir])
+        subprocess.call([ttuner, "-s", "-id", self.seq_dir])
+
+        ttuner_seq_file = open(out_dir+ab1_file+".seq")
+        tab_file = open(out_dir+ab1_file+".tab")
+        split_tab = [x.rstrip("\n").split(" ") for x in tab_file 
+                     if not x.startswith("#")]
+      
+        het_base1 = "".join([x.replace("\n", "") for x in ttuner_seq_file 
+                         if not x.startswith(">")])
+       
+        for line in split_tab:
+            het_base2, qual, scan_pos, index = (line[3], line[9], line[17], line[24])
+        
+        return het_base1+"/"+het_base2    
+
 
 
 

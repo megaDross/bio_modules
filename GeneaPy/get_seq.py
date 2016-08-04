@@ -86,7 +86,7 @@ def parse_file(*args):
         if seq_file and seq_file.endswith("ab1"):
             seq_file = CompareSeqs.convert_ab1_to_seq(seq_file)
         # intialise the check_sanger class
-        sanger = CompareSeqs(upstream, downstream, seq_file)
+        sanger = CompareSeqs(upstream, downstream, seq_file, seq_dir)
         # parse it all into get_seq()
         sequence_info = get_seq(seq_name, var_pos, reference, trans, 
                                 hg_version, pyensembl, sanger)
@@ -143,8 +143,9 @@ def get_seq(seq_name, var_pos, reference, trans, hg_version, pyensembl, sanger=N
             sanger_sequence = sanger.match_with_seq_file(sequence)
             # if .seq file found compare the ref var_pos base and the sanger var_pos base
             if sanger_sequence:
-                ref_base = sanger_sequence[1] 
-                sanger_base = sanger_sequence[2] 
+                full_seq, ref_base, sanger_base, var_index = sanger_sequence
+                if sanger_base == "N":
+                    sanger_base = (ab1_file, var_index)
                 compare = CompareSeqs.compare_nucleotides(ref_base,sanger_base) 
                 statement = compare[0]
                 compare_result = compare[1]
