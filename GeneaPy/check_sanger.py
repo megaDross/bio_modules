@@ -136,7 +136,7 @@ class CompareSeqs(object):
 
 
     def get_het_call(self, var_index):
-        ''' Get the two bases being called as N
+        ''' Get the two bases being called at a given variant position
         '''
         if self.seq_file.endswith(".ab1"):
             ttuner = "/home/david/bin/tracetuner_3.0.6beta/rel/Linux_64/ttuner"
@@ -149,11 +149,13 @@ class CompareSeqs(object):
             if not os.path.isfile(self.seq_file+".seq"):
                 subprocess.call([ttuner, "-sd", self.seq_dir, "-id", self.seq_dir])
 
+            # open tab file and split by space
             tab_file = open(self.seq_file+".tab")
             split_tab = [x.rstrip("\n").split(" ") for x in tab_file 
                          if not x.startswith("#")]
-            print(tab_file.read())
-            print(var_index)
+            
+           # print(tab_file.read())
+           # print(var_index)
             
             # if an index in the tab file matches the variants index, then append the associated base to an empty list
             all_matches = []
@@ -164,8 +166,7 @@ class CompareSeqs(object):
 
 
             het_call = "/".join(all_matches)
-
-            return het_call#het_base1+"/"+het_base2    
+            return het_call
 
 
 

@@ -71,3 +71,21 @@ python3 -m unittest *.py
 
 ## TODO
 - write some code in get_seq to put the reverse complement of the scrapped seq int the mat CompareSanger.match_with_seq_file() method.
+- test ttuner with: 
+  - A01_HUK4_16_23DW_HUK4_F_001.ab1 with variant at 2:189863418
+      the Tab file shows an A and a G at position 302 even though the index of the converted seq file at the variant position 296    
+
+  - B01_CXE_EM_CXE_F_003.ab1 17:48273298
+    teh Tab file shows a W at position at position 150 while the index fro the converted seq file is at variant position 146
+
+I have been checking the documentation the docs to try and understand why there is a difference in index numbers between the seq and tab file. No luck
+
+The problem may have due to using the BioSeq method to convert ab1 into seq instead of ttuners.
+    ttuner -sd <dir> -id <dir> 
+
+
+The following AB1 files, in addition to the aforementioned, have given the expected output:
+  HX11-LG C/G 20:45354323
+  FUK20-VG  A/G 15:48782270
+  HX9-AD  G 15:48787732
+  FUK31 C 17:48274593
