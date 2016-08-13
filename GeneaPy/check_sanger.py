@@ -1,6 +1,6 @@
 from Bio import SeqIO
 import os, re, subprocess
-import useful
+import GeneaPy.useful as useful
 
 
 file_path = useful.cwd_file_path(__file__)
@@ -10,7 +10,10 @@ class CompareSeqs(object):
         with a sanger sequence contained within a .seq file
     '''
     def __init__(self, upstream, downstream, seq_file=None, seq_dir=None):
-        self.seq_file = open(seq_file).read().replace("\n","")
+        if seq_file.endswith(".seq"):
+            self.seq_file = open(seq_file).read().replace("\n","")
+        else:
+            self.seq_file = seq_file
         self.upstream = upstream
         self.downstream = downstream
         self.seq_dir = seq_dir
@@ -121,27 +124,27 @@ class CompareSeqs(object):
                 return "not found"
 
 
-    @staticmethod
-    def get_het_call(ab1_file, var_index):
+    def get_het_call(self, var_index):
         ''' Get the two bases being called as N
         '''
-        ttuner = "/home/david/bin/tracetuner_3.0.6beta/rel/Linux_64/ttuner"
-        out_dir = filepath.split("/")[:-1]+"test/test_files/"
-        subprocess.call([ttuner, "-tabd", out_dir, "-het", "-id", self.seq_dir])
-        subprocess.call([ttuner, "-s", "-id", self.seq_dir])
+        if self.seq_file.endswith(".ab1"):
+            ttuner = "/home/david/bin/tracetuner_3.0.6beta/rel/Linux_64/ttuner"
+            out_dir = filepath.split("/")[:-1]+"test/test_files/"
+            subprocess.call([ttuner, "-tabd", out_dir, "-het", "-id", self.seq_dir])
+            subprocess.call([ttuner, "-s", "-id", self.seq_dir])
 
-        ttuner_seq_file = open(out_dir+ab1_file+".seq")
-        tab_file = open(out_dir+ab1_file+".tab")
-        split_tab = [x.rstrip("\n").split(" ") for x in tab_file 
-                     if not x.startswith("#")]
+            ttuner_seq_file = open(out_dir+self.seq_file+".seq")
+            tab_file = open(out_dir+self.seq_file+".tab")
+            split_tab = [x.rstrip("\n").split(" ") for x in tab_file 
+                         if not x.startswith("#")]
       
-        het_base1 = "".join([x.replace("\n", "") for x in ttuner_seq_file 
-                         if not x.startswith(">")])
+            het_base1 = "".join([x.replace("\n", "") for x in ttuner_seq_file 
+                             if not x.startswith(">")])
        
-        for line in split_tab:
-            het_base2, qual, scan_pos, index = (line[3], line[9], line[17], line[24])
-        
-        return het_base1+"/"+het_base2    
+            for line in split_tab:
+                het_base2, qual, scan_pos, index = (line[3], line[9], line[17], line[24])
+            
+            return het_base1+"/"+het_base2    
 
 
 

@@ -83,8 +83,8 @@ def parse_file(*args):
         pyensembl = ScrapeEnsembl(var_pos, hg_version) if ensembl else None
         # find a file with seq_name in its title, if ab1 matched then convert to .seq
         seq_file = CompareSeqs.get_matching_seq_file(seq_name, seq_dir)
-        if seq_file and seq_file.endswith("ab1"):
-            seq_file = CompareSeqs.convert_ab1_to_seq(seq_file)
+        #if seq_file and seq_file.endswith("ab1"):
+        #    seq_file = CompareSeqs.convert_ab1_to_seq(seq_file)
         # intialise the check_sanger class
         sanger = CompareSeqs(upstream, downstream, seq_file, seq_dir)
         # parse it all into get_seq()
@@ -110,8 +110,8 @@ def parse_string(*args):
     pyensembl = ScrapeEnsembl(input_file, hg_version) if ensembl else None
     
     # intialiase the check_sanger class and parse it all into the get_seq()
-    if seq_file and seq_file.endswith("ab1"):
-        seq_file = CompareSeqs.convert_ab1_to_seq(seq_file)
+    #if seq_file and seq_file.endswith("ab1"):
+    #    seq_file = CompareSeqs.convert_ab1_to_seq(seq_file)
     sanger = CompareSeqs(upstream,downstream, seq_file) if seq_file else None
     get_seq("query", input_file, reference, trans, hg_version, pyensembl, sanger)
 
@@ -145,7 +145,8 @@ def get_seq(seq_name, var_pos, reference, trans, hg_version, pyensembl, sanger=N
             if sanger_sequence:
                 full_seq, ref_base, sanger_base, var_index = sanger_sequence
                 if sanger_base == "N":
-                    sanger_base = (ab1_file, var_index)
+                    het_call = sanger.get_het_call( var_index)
+                    sanger_base = het_call if het_call else sanger_base 
                 compare = CompareSeqs.compare_nucleotides(ref_base,sanger_base) 
                 statement = compare[0]
                 compare_result = compare[1]
