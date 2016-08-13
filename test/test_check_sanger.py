@@ -39,13 +39,13 @@ class TestCheckSanger(unittest.TestCase):
         ''' Test that the presequence is found within the seq file
         '''
         warnings.filterwarnings("ignore")
-        self.assertEqual(CompareSeqs(20, 20, TestCheckSanger.test_dir+"B02_CX1_AD_UKB2_CX1_F_004.seq").match_with_seq_file("agcctatctcacactcacagCggaacaggccagggaggttg"),('agcctatctcacactcacagG/Cggaacaggccagggaggttg', 'C', 'G/C'))
+        self.assertEqual(CompareSeqs(20, 20, TestCheckSanger.test_dir+"B02_CX1_AD_UKB2_CX1_F_004.seq").match_with_seq_file("agcctatctcacactcacagCggaacaggccagggaggttg"),('agcctatctcacactcacagG/Cggaacaggccagggaggttg', 'C', 'G/C', 290))
 
     def test_match_with_seq_file_postseq(self):
         ''' Test that the postsequence is found within the seq file
         '''
         warnings.filterwarnings("ignore")
-        self.assertEqual(CompareSeqs(60, 60, TestCheckSanger.test_dir+"C02_HX15_RD_GS_U_HX15_RD_F_006.seq").match_with_seq_file("agtaggcagcgtgactgtggtgtccaggcggccctcacctgctgtgtggctttgcggaccCggtcgctcatggcctccatgttgccctgctcctcctccagctcctcctccagctgggcga"),('agtaggcagcgtgnctgtggtgtccaggcggccctcacctgctgtgtggctttgcggaccNggtcgctcatggcctccatgttgccctgctcctcctccagctcctcctccagctgggcga', 'C', 'N'))
+        self.assertEqual(CompareSeqs(60, 60, TestCheckSanger.test_dir+"C02_HX15_RD_GS_U_HX15_RD_F_006.seq").match_with_seq_file("agtaggcagcgtgactgtggtgtccaggcggccctcacctgctgtgtggctttgcggaccCggtcgctcatggcctccatgttgccctgctcctcctccagctcctcctccagctgggcga"),('agtaggcagcgtgnctgtggtgtccaggcggccctcacctgctgtgtggctttgcggaccNggtcgctcatggcctccatgttgccctgctcctcctccagctcctcctccagctgggcga', 'C', 'N', 119))
 
 
     def test_ab1_file_name_conversion(self):
