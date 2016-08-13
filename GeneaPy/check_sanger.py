@@ -42,7 +42,8 @@ class CompareSeqs(object):
     @staticmethod
     def convert_ab1_to_seq(ab1):
         ''' Extract the sequence string from .ab1 file and return
-
+            
+            INCOMPATIBLE WITH TTUNER!!!!!!!
             WARNING: This method needs ALOT of testing
         '''
         handle = open(ab1, "rb")
@@ -58,40 +59,50 @@ class CompareSeqs(object):
                 return(new_file_name)
 
 
+
     def match_with_seq_file(self,sequence):
         ''' Find part of a given sequence in a given seq_file and return the equivalent 
-            full sequence deriving from the .seq file
 
             returns a tuple containing the matched sanger sequence and the variant 
             position base and the index of the var_pos_seq
         '''
+        
         if self.seq_file:
+            if self.seq_file.endswith("ab1"):
+                ttuner = "/home/david/bin/tracetuner_3.0.6beta/rel/Linux_64/ttuner"
+                #subprocess.call([ttuner, "-sd", self.seq_dir[:-1], "-id", self.seq_dir[:-1]])
+                seq_file = "".join([x.rstrip("\n") for x in open(self.seq_file+".seq")
+                                            if not x.startswith(">")])
+            else:
+                seq_file = self.seq_file
+            
             preseq = sequence[:self.upstream].upper()
             ref_seq = sequence[self.upstream].upper()
             postseq = sequence[self.upstream:].upper()[1:]
             
-            
-            if re.search(preseq, self.seq_file):    
-                start, end, matched_seq = CompareSeqs.get_start_end_indexes(preseq, 
-                                                                            self.seq_file)
-                var_pos_seq = CompareSeqs.UIPAC.get(self.seq_file[end])
-                downstream_seq = self.seq_file[end+1:end+self.downstream+1]
-                full_seq = "".join((matched_seq.lower(),var_pos_seq.upper(),
+            if re.search(preseq, seq_file):    
+                start, end, upstream_seq = CompareSeqs.get_start_end_indexes(preseq, 
+                                                                            seq_file)
+                var_pos_seq = CompareSeqs.UIPAC.get(seq_file[end])
+                downstream_seq = seq_file[end+1:end+self.downstream+1]
+                full_seq = "".join((upstream_seq.lower(),var_pos_seq.upper(),
                                      downstream_seq.lower()))
                 
-                return (full_seq,ref_seq,var_pos_seq.upper(), end)
+                return (upstream_seq.lower(), downstream_seq.lower(),
+                        ref_seq, var_pos_seq.upper(), end)
 
-            elif re.search(postseq, self.seq_file):
-                #print("POST")
-                start, end, matched_seq = CompareSeqs.get_start_end_indexes(postseq, 
-                                                                            self.seq_file)
-                var_pos_seq = CompareSeqs.UIPAC.get(self.seq_file[start-1])
+            elif re.search(postseq, seq_file):
+                start, end, downstream_seq = CompareSeqs.get_start_end_indexes(postseq, 
+                                                                            seq_file)
+                var_pos_seq = CompareSeqs.UIPAC.get(seq_file[start-1])
                 # below may not work great if it produces a negative number for indexing
                 # i.e if start index = 6, self.downstream = 20
-                upstream_seq = self.seq_file[(start-1)-self.downstream:start-1]
+                upstream_seq = seq_file[(start-1)-self.downstream:start-1]
                 full_seq = "".join((upstream_seq.lower(),var_pos_seq.upper(),
-                                    matched_seq.lower()))
-                return (full_seq,ref_seq,var_pos_seq.upper(), start-1)
+                                    downstream_seq.lower()))
+                
+                return (upstream_seq.lower(), downstream_seq.lower(), 
+                        ref_seq,var_pos_seq.upper(), start-1)
             
             
             else:
@@ -129,22 +140,32 @@ class CompareSeqs(object):
         '''
         if self.seq_file.endswith(".ab1"):
             ttuner = "/home/david/bin/tracetuner_3.0.6beta/rel/Linux_64/ttuner"
-            out_dir = filepath.split("/")[:-1]+"test/test_files/"
-            subprocess.call([ttuner, "-tabd", out_dir, "-het", "-id", self.seq_dir])
-            subprocess.call([ttuner, "-s", "-id", self.seq_dir])
 
-            ttuner_seq_file = open(out_dir+self.seq_file+".seq")
-            tab_file = open(out_dir+self.seq_file+".tab")
+            # if no tab or seq files found then create them
+            if not os.path.isfile(self.seq_file+".tab"):
+                subprocess.call([ttuner, "-tabd", self.seq_dir, "-id", 
+                                 self.seq_dir, "-mix"])
+
+            if not os.path.isfile(self.seq_file+".seq"):
+                subprocess.call([ttuner, "-sd", self.seq_dir, "-id", self.seq_dir])
+
+            tab_file = open(self.seq_file+".tab")
             split_tab = [x.rstrip("\n").split(" ") for x in tab_file 
                          if not x.startswith("#")]
-      
-            het_base1 = "".join([x.replace("\n", "") for x in ttuner_seq_file 
-                             if not x.startswith(">")])
-       
-            for line in split_tab:
-                het_base2, qual, scan_pos, index = (line[3], line[9], line[17], line[24])
+            print(tab_file.read())
+            print(var_index)
             
-            return het_base1+"/"+het_base2    
+            # if an index in the tab file matches the variants index, then append the associated base to an empty list
+            all_matches = []
+            for line in split_tab:
+                het_base2, qual, scan_pos, index = (line[3], line[9], line[17], line[-1])
+                if int(index) == int(var_index):
+                   all_matches.append(het_base2)
+
+
+            het_call = "/".join(all_matches)
+
+            return het_call#het_base1+"/"+het_base2    
 
 
 

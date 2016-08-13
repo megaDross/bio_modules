@@ -1,0 +1,18 @@
+# CHROMAT_FILE: WYN13-DD-60_R.scf
+# SOFTWARE_VERSION: TT_3.0.4beta
+# NUM_ABC: 12
+# NUM_SUBSTITUTIONS: 12
+# NUM_DELETIONS: 0
+# base2   qv2       pos2       ind2
+   G      12         136         9
+   T       9         134         9
+   K      11         997        75
+   T       9         997        75
+   W      30        1009        76
+   T       9        1007        76
+   W       6        6523       546
+   A       9        6522       546
+   W       6        6533       547
+   T       9        6533       547
+   G       9        6642       556
+   A       9        6645       556

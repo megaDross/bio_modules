@@ -22,12 +22,12 @@ file_path = useful.cwd_file_path(__file__)
 @click.option('--translate/--np',default='n',help="translate RNA seq into protein seq")
 @click.option('--rc/--no_rc',default='n',help="reverse complement the DNA")
 @click.option('--seq_file', default=None, help="match sequence with .seq file contents")
-@click.option('--seq_dir', default=file_path+"seq_files/", help="path to directory containing .seq files")
+@click.option('--seq_dir', default=file_path[:-8]+"test/test_files/", help="path to directory containing .seq files")
 @click.option('--ensembl/--ne', default='n', help="scrape gene & exon information")
 
 def main(input_file, output_file=None, upstream=20, downstream=20, hg_version="hg19",
          header="n", transcribe="n", translate="n", rc='n', seq_file=None,
-         seq_dir=file_path+"seq_files/", ensembl="n"):
+         seq_dir=file_path[:-8]+"test/test_files/", ensembl="n"):
     '''
     From a genomic postion, genomic range or tab-deliminated file produce a
     reference sequence that can be compared with a sanger trace along with 
@@ -112,7 +112,7 @@ def parse_string(*args):
     # intialiase the check_sanger class and parse it all into the get_seq()
     #if seq_file and seq_file.endswith("ab1"):
     #    seq_file = CompareSeqs.convert_ab1_to_seq(seq_file)
-    sanger = CompareSeqs(upstream,downstream, seq_file) if seq_file else None
+    sanger = CompareSeqs(upstream,downstream, seq_file, seq_dir) if seq_file else None
     get_seq("query", input_file, reference, trans, hg_version, pyensembl, sanger)
 
     
@@ -143,10 +143,16 @@ def get_seq(seq_name, var_pos, reference, trans, hg_version, pyensembl, sanger=N
             sanger_sequence = sanger.match_with_seq_file(sequence)
             # if .seq file found compare the ref var_pos base and the sanger var_pos base
             if sanger_sequence:
-                full_seq, ref_base, sanger_base, var_index = sanger_sequence
-                if sanger_base == "N":
-                    het_call = sanger.get_het_call( var_index)
-                    sanger_base = het_call if het_call else sanger_base 
+                upstream_seq, downstream_seq, ref_base, sanger_base, \
+                        var_index = sanger_sequence
+
+                het_call = sanger.get_het_call( var_index)
+                if het_call:
+                    sanger_base = het_call 
+                    full_seq = "".join((upstream_seq,het_call,downstream_seq))
+                else:
+                    full_seq = "".join((upstream_seq,sanger_base,downstream_seq))
+
                 compare = CompareSeqs.compare_nucleotides(ref_base,sanger_base) 
                 statement = compare[0]
                 compare_result = compare[1]
@@ -172,7 +178,7 @@ def get_seq(seq_name, var_pos, reference, trans, hg_version, pyensembl, sanger=N
         # print reference and sanger sequence
         elif sanger_sequence :
             print_out = "\n".join((header,"Reference Sequence:\t"+sequence,
-                                   "Sanger Sequence:\t"+sanger_sequence[0],
+                                   "Sanger Sequence:\t"+full_seq,
                                    statement,"\n"))
         
         # if no matching seq file 

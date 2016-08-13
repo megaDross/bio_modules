@@ -1,0 +1,12 @@
+# CHROMAT_FILE: HX10-MZ-UKB2_R.ab1
+# SOFTWARE_VERSION: TT_3.0.4beta
+# NUM_ABC: 6
+# NUM_SUBSTITUTIONS: 6
+# NUM_DELETIONS: 0
+# base2   qv2       pos2       ind2
+   A       9         193        14
+   G      22         190        14
+   K      27        1000        81
+   T      11        1001        81
+   T      13        4491       374
+   C      18        4490       374
