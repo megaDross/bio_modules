@@ -31,13 +31,18 @@ class CompareSeqs(object):
         '''
         # appending is required in case there is more than one match, returns first match
         store_matches = []
-        for f in os.listdir(directory):
+        for f in [x for x in os.listdir(directory) if x.endswith(".ab1")]:
             if query in f:
                 file_match = directory+f
                 store_matches.append(file_match)
-                
+        
+        
         sorted_matches = sorted(store_matches)
-        return sorted_matches[0]
+        
+        if "_" in query or sorted_matches:
+            return sorted_matches[0]
+        else:
+            CompareSeqs.get_matching_seq_file(query.replace("-","_"),directory)
 
     @staticmethod
     def convert_ab1_to_seq(ab1):

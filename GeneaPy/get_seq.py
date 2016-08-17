@@ -83,8 +83,6 @@ def parse_file(*args):
         pyensembl = ScrapeEnsembl(var_pos, hg_version) if ensembl else None
         # find a file with seq_name in its title, if ab1 matched then convert to .seq
         seq_file = CompareSeqs.get_matching_seq_file(seq_name, seq_dir)
-        #if seq_file and seq_file.endswith("ab1"):
-        #    seq_file = CompareSeqs.convert_ab1_to_seq(seq_file)
         # intialise the check_sanger class
         sanger = CompareSeqs(upstream, downstream, seq_file, seq_dir)
         # parse it all into get_seq()

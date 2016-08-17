@@ -22,7 +22,7 @@ python3 get_seq.py chr1,169315000,169316550 --header
 # return a reference sequence 100b upstream and 200bp downstream from a given position scrapped from human genome version 38
 python3 get_seq.py 1:169314424 --upstream 100 --downstream 200 --hg_version hg38
 
-# return a reference sequence for each psition in a given input file, generate genomic/transcript/exonic infomation and compare to an automatically paired .seq file from a given directory. Finally, output all scrapped data to file.
+# return a reference sequence for each position in a given input file, generate genomic/transcript/exonic infomation and compare to an automatically paired .seq file from a given directory. Finally, output all scrapped data to file.
 python3 get_seq.py in.txt --header --ensembl --seq_dir ../seq_files/ --output_file out.txt
 ```
 
@@ -71,21 +71,16 @@ python3 -m unittest *.py
 
 ## TODO
 - write some code in get_seq to put the reverse complement of the scrapped seq int the mat CompareSanger.match_with_seq_file() method.
-- test ttuner with: 
-  - A01_HUK4_16_23DW_HUK4_F_001.ab1 with variant at 2:189863418
-      the Tab file shows an A and a G at position 302 even though the index of the converted seq file at the variant position 296    
 
-  - B01_CXE_EM_CXE_F_003.ab1 17:48273298
-    teh Tab file shows a W at position at position 150 while the index fro the converted seq file is at variant position 146
+- Process every match made in CompareSeqs.get_matching_seq_file() until an alternative base is found, instead of just processing the first one in the list
 
-I have been checking the documentation the docs to try and understand why there is a difference in index numbers between the seq and tab file. No luck
+- Fix the testing outcomes when --input_file and --output_file is use in get_seq.py
 
-The problem may have due to using the BioSeq method to convert ab1 into seq instead of ttuners.
-    ttuner -sd <dir> -id <dir> 
-
-
-The following AB1 files, in addition to the aforementioned, have given the expected output:
+The following AB1 files have given the expected output:
   HX11-LG C/G 20:45354323
   FUK20-VG  A/G 15:48782270
   HX9-AD  G 15:48787732
   FUK31 C 17:48274593
+  A01_HUK4_16_23DW_HUK4_ A/G 2:189863418
+  B01_CXE_EM_CXE_F_003 W 17:48273298
+
