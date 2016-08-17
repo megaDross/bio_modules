@@ -1,6 +1,6 @@
 ## TODO
 
-- write some code in get_seq to put the reverse complement of the scrapped seq int the mat CompareSanger.match_with_seq_file() method.
+- write some code in get_seq to put the reverse complement of the scrapped seq int the mat CompareSanger.match_with_seq_file() method. Reverse complement the preseq then match then reverse complement the full_seq
 
 - Process every match made in CompareSeqs.get_matching_seq_file() until an alternative base is found, instead of just processing the first one in the list. Also write the file used to compare to reference seq in the output file
 
@@ -8,7 +8,7 @@
 
 - remove transcription-translation feature. They are not useful, just some pointless bells and whistles.
 
-- Use locally download genome instead of UCSC: have a script that downloads the genome and indexes it by calling tabix via subprocess
+- Use locally download genome instead of UCSC: have a script that downloads the genome and indexes it by then scrape from it using pyfasta, BioPythons SeqIO (records[chrom].seq[start:end]), bx-python, pysam or samtools (faidx hg19.fa 15:1566656:15768969)   https://www.biostars.org/p/1638/
 
 
 
