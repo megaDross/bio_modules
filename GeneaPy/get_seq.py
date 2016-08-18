@@ -81,15 +81,30 @@ def parse_file(*args):
         error_check = reference.handle_argument_exception(var_pos)
         # intialise the class in Ensembl.py
         pyensembl = ScrapeEnsembl(var_pos, hg_version) if ensembl else None
-        # find a file with seq_name in its title, if ab1 matched then convert to .seq
+        # find a list of files with seq_name in its title, if ab1 matched then convert to .seq
         seq_file = CompareSeqs.get_matching_seq_file(seq_name, seq_dir)
-        # intialise the check_sanger class
-        sanger = CompareSeqs(upstream, downstream, seq_file, seq_dir)
+        # intialise the check_sanger class for every found seq_file
+        sanger = [CompareSeqs(upstream, downstream, x, seq_dir) for x in seq_file]
         # parse it all into get_seq()
-        sequence_info = get_seq(seq_name, var_pos, reference, trans, 
-                                hg_version, pyensembl, sanger)
-        # append each lines returned data to an emty list
-        all_scrapped_info.append(sequence_info)
+        sequence_info = [get_seq(seq_name, var_pos, reference, trans, 
+                                hg_version, pyensembl, x) for x in sanger]
+
+        # filter out sequences where no seq file was found
+        filtered_answer = [x for x in sequence_info if "-" not in x[1].split("\t")[11]]
+
+        # if a het call was found in some of the matching seq files, then print and return its values. Otherwise, return no seq_file matched values
+        if filtered_answer:
+            print_out, answer = filtered_answer[0]
+            print(print_out)
+            # append each lines returned data to an emty list
+            all_scrapped_info.append(answer)
+
+        elif sequence_info:
+            print_out, answer = sequence_info[0]
+            print(print_out)
+            all_scrapped_info.append(answer)
+
+    
     # return all scrapped data
     return all_scrapped_info
 
@@ -111,7 +126,9 @@ def parse_string(*args):
     #if seq_file and seq_file.endswith("ab1"):
     #    seq_file = CompareSeqs.convert_ab1_to_seq(seq_file)
     sanger = CompareSeqs(upstream,downstream, seq_file, seq_dir) if seq_file else None
-    get_seq("query", input_file, reference, trans, hg_version, pyensembl, sanger)
+    sequence_info = get_seq("query", input_file, reference, trans, 
+                             hg_version, pyensembl, sanger)
+    print(sequence_info[0])
 
     
 
@@ -186,12 +203,15 @@ def get_seq(seq_name, var_pos, reference, trans, hg_version, pyensembl, sanger=N
 
 
         # print results and return everything for outputing to a file
-        print(print_out)
-        return("\t".join((seq_name, var_pos, seq_range, gene_name,
+        answer = "\t".join((seq_name, var_pos, seq_range, gene_name,
                           gene_id, gene_type, gene_range, transcript, 
                           exon_id, intron, exon, ref_base,
-                          sanger_base, str(compare_result))))
-    
+                          sanger_base, str(compare_result)))
+             
+         
+        return (print_out, answer)
+   
+
     except ValueError as e:
         t, v, tb = sys.exc_info()
         sam = traceback.format_exception(t, v, tb)

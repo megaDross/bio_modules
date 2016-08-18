@@ -10,24 +10,30 @@
 
 - allow user to input there own transcript for scrapping exon information
 
-- Use locally download genome instead of UCSC: have a script that downloads the genome and indexes it by then scrape from it using pyfasta, BioPythons SeqIO (records[chrom].seq[start:end]), bx-python, pysam or samtools (faidx hg19.fa 15:1566656:15768969)   https://www.biostars.org/p/1638/
-
 - Create a configuration file/dict which has things like path to genome and seq_dir i.e.
       configuration = {"hg19": "path/to/hg19.fa", "hg38": "path/to/hg38.fa",
                        "seq_dir": "path/to/seq_dir/"}
 
 
+## DONE
+
+- Use locally download genome instead of UCSC: have a script that downloads the genome and indexes it by then scrape from it using pyfasta, BioPythons SeqIO (records[chrom].seq[start:end]), bx-python, pysam or samtools (faidx hg19.fa 15:1566656:15768969)   https://www.biostars.org/p/1638/
+
+- sort matching het calls at the given index in order of quality score (highest to lowest) and return the two highest scoring bases
 
 
 
+## TESTING
 
 The following AB1 files have given the expected output:
-  FUK20-VG  A/G 15:48782270
-  HX9-AD  G 15:48787732
-  FUK31 C 17:48274593
-  A01_HUK4_16_23DW_HUK4_ A/G 2:189863418
-  B01_CXE_EM_CXE_F_003 W 17:48273298
+  B02_FUK20_VG_UKB_FUK20_F_004.ab1    A/G 15:48782270
+  G03_HX9_AD_HX9_F_013.ab1            G 15:48787732
+  D01_FUK31_LS_UKB_FUK31_F_007.ab1    C 17:48274593
+  A01_HUK4_16_23DW_HUK4_              A/G 2:189863418
+  B01_CXE_EM_CXE_F_003                W 17:48273298
 
 The following AB1 files is giving 4 bases instead of the expected T/G. Good candidate for filtering bases by quality scores:
-  15:48737567  H01_FUK15_RL_UKB_FUK15_F_015.ab1
+  H01_FUK15_RL_UKB_FUK15_F_015.ab1  A/G  15:48737567 
 
+The following is a good match for multiple matching seq files:
+  G03_HX9_AD_HX9_F_013.ab1   G 15:48787732
