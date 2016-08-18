@@ -2,10 +2,6 @@
 
 - write some code in get_seq to put the reverse complement of the scrapped seq int the mat CompareSanger.match_with_seq_file() method. Reverse complement the preseq then match then reverse complement the full_seq
 
-- Process every match made in CompareSeqs.get_matching_seq_file() until an alternative base is found, instead of just processing the first one in the list. Also write the file used to compare to reference seq in the output file
-
-- Fix the testing outcomes when --input_file and --output_file is use in get_seq.py
-
 - remove transcription-translation feature. They are not useful, just some pointless bells and whistles.
 
 - allow user to input there own transcript for scrapping exon information
@@ -14,13 +10,20 @@
       configuration = {"hg19": "path/to/hg19.fa", "hg38": "path/to/hg38.fa",
                        "seq_dir": "path/to/seq_dir/"}
 
+- write tests for the newly implemented features in this branch
+
+- tidy up code
+
 
 ## DONE
+
+- Fix the testing outcomes when --input_file and --output_file is use in get_seq.py
 
 - Use locally download genome instead of UCSC: have a script that downloads the genome and indexes it by then scrape from it using pyfasta, BioPythons SeqIO (records[chrom].seq[start:end]), bx-python, pysam or samtools (faidx hg19.fa 15:1566656:15768969)   https://www.biostars.org/p/1638/
 
 - sort matching het calls at the given index in order of quality score (highest to lowest) and return the two highest scoring bases
 
+- Process every match made in CompareSeqs.get_matching_seq_file() until an alternative base is found, instead of just processing the first one in the list. Also write the file used to compare to reference seq in the output file
 
 
 ## TESTING
