@@ -1,5 +1,5 @@
 import requests, bs4, re 
-
+import pysam
 
 class WrongHGversion(Exception):
     pass
@@ -93,7 +93,27 @@ class ScrapeSeq():
         answer = "".join((downstream.lower(),var.upper(),upstream.lower()))
         
         return answer
-    
+
+   
+    def get_region_info_locally(self, seq_range, genome_path):
+        ''' Use a locally downloaded genome instead of scrapping from UCSC
+        '''
+        # get the sequence associated with a given genomic range from a given fasta file
+        chrom, start, end = tuple(re.split(r"[:,]", seq_range))
+        chrom = "".join(("chr",chrom))
+        genome = pysam.FastaFile(genome_path)
+
+        # -1 is required otherwise the first base is missing, no idea why
+        seq = genome.fetch(chrom, int(start)-1, int(end))
+
+        # split up sequence and make var upper
+        downstream = seq[self.upstream]
+        var = seq[self.upstream]
+        upstream = seq[self.upstream+1:len(seq)]
+        answer = "".join((downstream.lower(),var.upper(),upstream.lower()))
+        
+        return answer
+       
     
     def header_option(self,seq_name,var_pos,seq_range,sequence, gene_name=None):
         ''' determine whether to place a header above the returned sequence, based 

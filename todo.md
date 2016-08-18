@@ -8,9 +8,13 @@
 
 - remove transcription-translation feature. They are not useful, just some pointless bells and whistles.
 
+- allow user to input there own transcript for scrapping exon information
+
 - Use locally download genome instead of UCSC: have a script that downloads the genome and indexes it by then scrape from it using pyfasta, BioPythons SeqIO (records[chrom].seq[start:end]), bx-python, pysam or samtools (faidx hg19.fa 15:1566656:15768969)   https://www.biostars.org/p/1638/
 
-
+- Create a configuration file/dict which has things like path to genome and seq_dir i.e.
+      configuration = {"hg19": "path/to/hg19.fa", "hg38": "path/to/hg38.fa",
+                       "seq_dir": "path/to/seq_dir/"}
 
 
 
