@@ -22,7 +22,6 @@
 
 
 The following AB1 files have given the expected output:
-  HX11-LG C/G 20:45354323
   FUK20-VG  A/G 15:48782270
   HX9-AD  G 15:48787732
   FUK31 C 17:48274593

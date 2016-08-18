@@ -167,9 +167,14 @@ class CompareSeqs(object):
                 if int(index) == int(var_index):
                     all_matches.append((qual, het_base2))
 
-            # sort matches by quality and return highest bases as het call
+            # sort matches by quality and return highest bases as het call if more than one call is found for the given position/index
             sorted_matches = sorted(all_matches) 
-            het_call = "/".join((sorted_matches[0][1],sorted_matches[1][1]))
+
+            if len(sorted_matches) > 1:
+                het_call = "/".join((sorted_matches[0][1],sorted_matches[1][1])) 
+            else:
+                het_call = None
+
             return het_call
 
 
