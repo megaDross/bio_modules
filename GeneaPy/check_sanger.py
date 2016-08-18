@@ -154,23 +154,22 @@ class CompareSeqs(object):
             if not os.path.isfile(self.seq_file+".seq"):
                 subprocess.call([ttuner, "-sd", self.seq_dir, "-id", self.seq_dir])
 
-            # open tab file and split by space
+            # open tab file and split by space and filter out empty strings
             tab_file = open(self.seq_file+".tab")
             split_tab = [x.rstrip("\n").split(" ") for x in tab_file 
-                         if not x.startswith("#")]
-            
-           # print(tab_file.read())
-           # print(var_index)
+                         if not x.startswith("#")] 
+            filtered_tab = useful.filter_list_of_lists(split_tab)
             
             # if an index in the tab file matches the variants index, then append the associated base to an empty list
             all_matches = []
-            for line in split_tab:
-                het_base2, qual, scan_pos, index = (line[3], line[9], line[17], line[-1])
+            for line in filtered_tab:
+                het_base2, qual, scan_pos, index = (line[0], line[1], line[2], line[3])
                 if int(index) == int(var_index):
-                   all_matches.append(het_base2)
+                    all_matches.append((qual, het_base2))
 
-
-            het_call = "/".join(all_matches)
+            # sort matches by quality and return highest bases as het call
+            sorted_matches = sorted(all_matches) 
+            het_call = "/".join((sorted_matches[0][1],sorted_matches[1][1]))
             return het_call
 
 

@@ -65,4 +65,16 @@ def chunks(l, n):
     for i in range(0, len(l), n):
         yield l[i:i+n]
 
+def filter_list_of_lists(list_of_lists):
+    ''' Filter out empty strings from all lists in a list of lists
+    '''
+    filtered_lists = []
+    for row in list_of_lists:
+        filtered = []
+        for element in row:
+            if element:
+                filtered.append(element)
+        filtered_lists.append(filtered)
+
+    return filtered_lists
 

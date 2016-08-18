@@ -29,3 +29,6 @@ The following AB1 files have given the expected output:
   A01_HUK4_16_23DW_HUK4_ A/G 2:189863418
   B01_CXE_EM_CXE_F_003 W 17:48273298
 
+The following AB1 files is giving 4 bases instead of the expected T/G. Good candidate for filtering bases by quality scores:
+  15:48737567  H01_FUK15_RL_UKB_FUK15_F_015.ab1
+
