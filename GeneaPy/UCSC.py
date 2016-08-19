@@ -107,7 +107,7 @@ class ScrapeSeq():
         seq = genome.fetch(chrom, int(start)-1, int(end))
 
         # split up sequence and make var upper
-        downstream = seq[self.upstream]
+        downstream = seq[:self.upstream]
         var = seq[self.upstream]
         upstream = seq[self.upstream+1:len(seq)]
         answer = "".join((downstream.lower(),var.upper(),upstream.lower()))

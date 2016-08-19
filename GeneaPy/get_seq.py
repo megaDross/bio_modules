@@ -23,11 +23,12 @@ file_path = useful.cwd_file_path(__file__)
 @click.option('--rc/--no_rc',default='n',help="reverse complement the DNA")
 @click.option('--seq_file', default=None, help="match sequence with .seq file contents")
 @click.option('--seq_dir', default=file_path[:-8]+"test/test_files/", help="path to directory containing .seq files")
+@click.option('--genome', default=None, help="use locally stored genome instead of UCSC")
 @click.option('--ensembl/--ne', default='n', help="scrape gene & exon information")
 
 def main(input_file, output_file=None, upstream=20, downstream=20, hg_version="hg19",
          header="n", transcribe="n", translate="n", rc='n', seq_file=None,
-         seq_dir=file_path[:-8]+"test/test_files/", ensembl="n"):
+         seq_dir=file_path[:-8]+"test/test_files/", ensembl="n", genome=None):
     '''
     From a genomic postion, genomic range or tab-deliminated file produce a
     reference sequence that can be compared with a sanger trace along with 
@@ -44,11 +45,12 @@ def main(input_file, output_file=None, upstream=20, downstream=20, hg_version="h
     if os.path.isfile(input_file) is True:
         all_scrapped_info = parse_file(input_file, output_file, upstream, downstream,
                                        hg_version, header, transcribe, translate, rc,
-                                       seq_file, seq_dir, reference, trans, ensembl)
+                                       seq_file, seq_dir, reference, trans, ensembl,
+                                       genome)
     else:
         parse_string(input_file, output_file, upstream, downstream, hg_version, header,
                      transcribe, translate, rc, seq_file, seq_dir, reference, trans,
-                     ensembl)
+                     ensembl, genome)
     
     # write the header and each element per line to the file
     if output_file:
@@ -65,7 +67,7 @@ def parse_file(*args):
     '''
     input_file, output_file, upstream, downstream, hg_version, header, \
         transcribe, translate, rc, seq_file, seq_dir, reference, trans, \
-        ensembl = args
+        ensembl, genome = args
     
     # print a warning if --seq_file is used with input as a file
     print('WARNING: --seq_file argument ignored. Automatically searching seq_files'
@@ -87,7 +89,7 @@ def parse_file(*args):
         sanger = [CompareSeqs(upstream, downstream, x, seq_dir) for x in seq_file]
         # parse it all into get_seq()
         sequence_info = [get_seq(seq_name, var_pos, reference, trans, 
-                                hg_version, pyensembl, x) for x in sanger]
+                                hg_version, pyensembl, genome, x) for x in sanger]
 
         # filter out sequences where no seq file was found
         filtered_answer = [x for x in sequence_info if "-" not in x[1].split("\t")[11]]
@@ -116,7 +118,7 @@ def parse_string(*args):
     '''
     input_file, output_file, upstream, downstream, hg_version, header, \
         transcribe, translate, rc, seq_file, seq_dir, reference, trans, \
-        ensembl = args
+        ensembl, genome = args
  
     # check the input for CUSTOM ERRORS and intialise the Ensembl class
     error_check = reference.handle_argument_exception(input_file)
@@ -127,14 +129,15 @@ def parse_string(*args):
     #    seq_file = CompareSeqs.convert_ab1_to_seq(seq_file)
     sanger = CompareSeqs(upstream,downstream, seq_file, seq_dir) if seq_file else None
     sequence_info = get_seq("query", input_file, reference, trans, 
-                             hg_version, pyensembl, sanger)
+                             hg_version, pyensembl, genome, sanger)
     print(sequence_info[0])
 
     
 
     
 
-def get_seq(seq_name, var_pos, reference, trans, hg_version, pyensembl, sanger=None):
+def get_seq(seq_name, var_pos, reference, trans, hg_version, pyensembl, 
+            genome, sanger=None):
     ''' Get the reference sequence from a given position, possibly compare
         to a sanger squence and get gene/exon information. 
 
@@ -150,8 +153,11 @@ def get_seq(seq_name, var_pos, reference, trans, hg_version, pyensembl, sanger=N
         # check if var_pos is a GENOMIC REGION, else construct one from var_pos
         seq_range = reference.create_region(var_pos)
         
-        # use UCSC to get the genomic ranges DNA sequence
-        sequence = reference.get_region_info(seq_range)
+        # use loacally stored genome or UCSC to get the genomic ranges DNA sequence
+        if genome:
+            sequence = reference.get_region_info_locally(seq_range, genome)
+        else:
+            sequence = reference.get_region_info(seq_range)
         
         # if CompareSeqs class has been intiated try and find a matching .seq file
         if sanger:
