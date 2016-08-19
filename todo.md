@@ -10,6 +10,8 @@
       configuration = {"hg19": "path/to/hg19.fa", "hg38": "path/to/hg38.fa",
                        "seq_dir": "path/to/seq_dir/"}
 
+- An option that allows you to use an annotated genome to get gene/transcript/exon info http://www.ensembl.org/info/data/ftp/index.html
+
 - write tests for the newly implemented features in this branch
 
 - tidy up code
