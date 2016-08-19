@@ -1,4 +1,4 @@
-import os, sys
+import os, sys, io
 
    
 def write_to_output(seq_list, output_name, header=None):
@@ -6,7 +6,7 @@ def write_to_output(seq_list, output_name, header=None):
     '''
     # create a list comprehension of all input and open output file
     seq_list = [x for x in seq_list]
-    output = open(output_name,"w")
+    output = io.open(output_name,"w", encoding='utf-8')
 
     # if header parsed then write to output file
     if header:
