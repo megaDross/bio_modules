@@ -2,13 +2,11 @@
 
 - Write some code that gets gene information at a given position from REST ensembl directly instead of relying on the bloated pyensembl module
 
-- a boolean option (--download) which will download human genome, ttuner etc.
-
 - write tests for the newly implemented features in this branch
 
 - tidy up code
 
-- refuse to analyse if the quality is terrible c04_GXYUK2_RD_PP_GXYuk2_RD_R_006.ab1 is a good candidate for testing this (produces alot of het calls at varying location so perhaps count number of het calls and it its over a certain threshold then qualit bad?)
+- LONG TERM: detect InDels and not just SNVs
 
 
 
@@ -41,6 +39,8 @@
 - before returning het call check if K M etc. so it doesnt get called like K/A
 
 - in output_file, place the name of the seq_file used to compare to the var_base
+
+- a boolean option (--download) which will download human genome, ttuner etc.
 
 
 

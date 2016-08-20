@@ -6,6 +6,7 @@ from Ensembl import ScrapeEnsembl
 from check_sanger import CompareSeqs 
 from output import write_to_output
 from UCSC import ScrapeSeq
+import subprocess
 
 # get the absolute path to this file
 file_path = useful.cwd_file_path(__file__)
@@ -21,31 +22,34 @@ file_path = useful.cwd_file_path(__file__)
 @click.option('--seq_dir', default=file_path[:-8]+"test/test_files/", help="path to directory containing .seq files")
 @click.option('--genome', default=None, help="use locally stored genome instead of UCSC")
 @click.option('--ensembl/--ne', default='n', help="scrape gene & exon information")
+@click.option('--download/--donot', default='n', help="download ttuner and/or human genome fasta")
 
 def main(input_file, output_file=None, upstream=20, downstream=20, hg_version="hg19",
-         header="n", seq_file=None,
+         header="n", seq_file=None, download='n',
          seq_dir=file_path[:-8]+"test/test_files/", ensembl="n", genome=None):
     '''
     From a genomic postion, genomic range or tab-deliminated file produce a
     reference sequence that can be compared with a sanger trace along with 
     said position/ranges gene/transcript/exon information. 
     ''' 
+    # whether to download ttuner and or human genomes
+    if download:
+        subprocess.call([file_path+"download.sh"])
+        sys.exit()
+
     # allows one to pipe in an argument at the cmd
     input_file = input() if not input_file else input_file
-    
+
     # intiate the classes in UCSC 
     reference = ScrapeSeq(input_file, upstream, downstream, hg_version, ensembl, header)
     
     # if the arg given is a file, parse it in line by line otherwise assume its a string
     if os.path.isfile(input_file) is True:
         all_scrapped_info = parse_file(input_file, output_file, upstream, downstream,
-                                       hg_version, header,   
-                                       seq_file, seq_dir, reference,  ensembl,
-                                       genome)
+                                       hg_version, header, seq_file, seq_dir, reference,  ensembl, genome)
     else:
         parse_string(input_file, output_file, upstream, downstream, hg_version, header,
-                        seq_file, seq_dir, reference, 
-                     ensembl, genome)
+                     seq_file, seq_dir, reference, ensembl, genome)
     
     # write the header and each element per line to the file
     if output_file:
