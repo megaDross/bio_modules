@@ -67,7 +67,6 @@ class CompareSeqs(object):
             returns a tuple containing the matched sanger sequence and the variant 
             position base and the index of the var_pos_seq
         '''
-        print("num:\t"+str(num))
         if int(num) < 1:
             return None
         
@@ -81,7 +80,6 @@ class CompareSeqs(object):
                 seq_file = self.seq_file
             
             
-            print("Sequence Length:\t"+str(len(seq_file)))
             preseq = sequence[:self.upstream].upper()
             ref_seq = sequence[self.upstream].upper()
             postseq = sequence[self.upstream:].upper()[1:]
@@ -98,7 +96,6 @@ class CompareSeqs(object):
                 downstream_seq = seq_file[end+1:end+self.downstream+1]
                 full_seq = "".join((upstream_seq.lower(),var_pos_seq.upper(),
                                      downstream_seq.lower()))
-                print("preseq\t"+full_seq)
                 
                 return (upstream_seq.lower(), downstream_seq.lower(),
                         ref_seq, var_pos_seq.upper(), end)
@@ -117,13 +114,11 @@ class CompareSeqs(object):
                 upstream_seq = seq_file[(start-1)-self.downstream:start-1]
                 full_seq = "".join((upstream_seq.lower(),var_pos_seq.upper(),
                                     downstream_seq.lower()))
-                print("postseq\t"+full_seq)
                 return (upstream_seq.lower(), downstream_seq.lower(), 
                         ref_seq,var_pos_seq.upper(), start-1)
 
              
             else:
-                print("RECURSION")
                 update_object = CompareSeqs(self.upstream, self.downstream, 
                                             useful.reverse_complement(seq_file), 
                                             self.seq_dir)
@@ -157,7 +152,7 @@ class CompareSeqs(object):
                 return "not found"
 
 
-    def get_het_call(self, var_index, ref_base):
+    def get_het_call(self, var_index):
         ''' Get the two bases being called at a given variant position
         '''
         if self.seq_file.endswith(".ab1"):
@@ -176,8 +171,6 @@ class CompareSeqs(object):
             split_tab = [x.rstrip("\n").split(" ") for x in tab_file 
                          if not x.startswith("#")] 
             filtered_tab = useful.filter_list_of_lists(split_tab)
-            print("Var_index for _R:\t"+str(var_index))
-            print(filtered_tab)
 
             # if an index in the tab file matches the variants index, then append the associated base to an empty list
             all_matches = []
@@ -188,38 +181,44 @@ class CompareSeqs(object):
 
             # sort matches by quality and return highest bases as het call if more than one call is found for the given position/index
             sorted_matches = sorted(all_matches) 
+            
+            return sorted_matches
 
-            non_singular_bases = ["Y", "R", "W", "S", "K", "M"]
+    
+    def base_caller(self, sorted_matches, ref_base):
+        ''' use the sorted matches from get_het_call() to call the approiriate base
+        '''
+        non_singular_bases = ["Y", "R", "W", "S", "K", "M"]
+        
+        # if only one base, check if its a non singular base
+        if len(sorted_matches) ==  1 and sorted_matches[0] not in non_singular_bases:
+            het_call = "/".join((ref_base, sorted_matches[0][1]))
+        
+        elif len(sorted_matches) == 1:
+            het_call = sorted_matches[0]
+        
+        # if more than one base 
+        elif len(sorted_matches) > 1:
+            first_call, second_call = (sorted_matches[0][1], sorted_matches[1][1])
             
-            # if only one base, check if its a non singular base
-            if len(sorted_matches) ==  1 and sorted_matches[0] not in non_singular_bases:
-                het_call = "/".join((ref_base, sorted_matches[0][1]))
-            
-            elif len(sorted_matches) == 1:
-                het_call = sorted_matches[0]
-            
-            # if more than one base 
-            elif len(sorted_matches) > 1:
-                first_call, second_call = (sorted_matches[0][1], sorted_matches[1][1])
+            # if more any calls have a non singular base within them
+            if [True for x in [first_call, second_call] if x in non_singular_bases]:
                 
-                # if more any calls have a non singular base within them
-                if [True for x in [first_call, second_call] if x in non_singular_bases]:
-                    
-                    clean_calls = [x for x in [first_call, second_call] if x not in 
-                                   non_singular_bases]
-                    
-                    if len(clean_calls) == 1 and ref_base != clean_calls[0]:
-                        het_call = "/".join((ref_base, clean_calls[0]))
-                    else: 
-                        het_call = ref_base
-
-                else:
-                    het_call = "/".join((first_call,second_call))
+                clean_calls = [x for x in [first_call, second_call] if x not in 
+                               non_singular_bases]
+                
+                if len(clean_calls) == 1 and ref_base != clean_calls[0]:
+                    het_call = "/".join((ref_base, clean_calls[0]))
+                else: 
+                    het_call = ref_base
 
             else:
-                het_call = None
+                het_call = "/".join((first_call,second_call))
 
-            return het_call
+        else:
+            het_call = None
+
+        return het_call
 
 
 
