@@ -1,6 +1,11 @@
 from __future__ import division
 import re, os, sys
 
+complement = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A',
+              'Y': 'R', 'R': 'Y', 'W': 'W', 'S': 'S', 'K': 'M', 'M': 'K',
+              'D': 'H', 'V': 'B', 'H': 'D', 'B': 'V',
+              'N': 'N'}
+
 
 class conditional_decorator(object):
     ''' Allows own to only use a decorator if a certain condition has been met.
@@ -77,4 +82,13 @@ def filter_list_of_lists(list_of_lists):
         filtered_lists.append(filtered)
 
     return filtered_lists
+
+
+def reverse_complement(seq):
+    ''' reverse complement a given DNA sequence
+    '''
+    reverse_complement = "".join(complement.get(base, base) for base in reversed(seq))
+    return(reverse_complement)
+
+
 

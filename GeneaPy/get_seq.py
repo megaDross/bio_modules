@@ -158,10 +158,11 @@ def get_seq(seq_name, var_pos, reference,  hg_version, pyensembl, genome, sanger
             sanger_sequence = sanger.match_with_seq_file(sequence)
             # if .seq file found compare the ref var_pos base and the sanger var_pos base
             if sanger_sequence:
+                print("About to call hets")
                 upstream_seq, downstream_seq, ref_base, sanger_base, \
                         var_index = sanger_sequence
-
-                het_call = sanger.get_het_call( var_index)
+                
+                het_call = sanger.get_het_call(var_index, ref_base)
                 if het_call:
                     sanger_base = het_call 
                     full_seq = "".join((upstream_seq,het_call,downstream_seq))
