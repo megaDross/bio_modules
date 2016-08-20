@@ -1,8 +1,18 @@
-## TODO
+## TODO - TOP
 
-- write some code in get_seq to put the reverse complement of the scrapped seq int the mat CompareSanger.match_with_seq_file() method. Reverse complement the preseq then match then reverse complement the full_seq
+- Write some code that gets gene information at a given position from REST ensembl directly instead of relying on the bloated pyensembl module
 
-- remove transcription-translation feature. They are not useful, just some pointless bells and whistles.
+- a boolean option (--download) which will download human genome, ttuner etc.
+
+- write tests for the newly implemented features in this branch
+
+- tidy up code
+
+- refuse to analyse if the quality is terrible c04_GXYUK2_RD_PP_GXYuk2_RD_R_006.ab1 is a good candidate for testing this (produces alot of het calls at varying location so perhaps count number of het calls and it its over a certain threshold then qualit bad?)
+
+
+
+## TODO - MINOR
 
 - allow user to input there own transcript for scrapping exon information
 
@@ -10,13 +20,8 @@
       configuration = {"hg19": "path/to/hg19.fa", "hg38": "path/to/hg38.fa",
                        "seq_dir": "path/to/seq_dir/"}
 
-- Write some code that gets gene information at a given position from REST ensembl directly instead of relying on the bloated pyensembl module
-
 - An option that allows you to use an annotated genome to get gene/transcript/exon info http://www.ensembl.org/info/data/ftp/index.html
 
-- write tests for the newly implemented features in this branch
-
-- tidy up code
 
 
 ## DONE
@@ -29,6 +34,19 @@
 
 - Process every match made in CompareSeqs.get_matching_seq_file() until an alternative base is found, instead of just processing the first one in the list. Also write the file used to compare to reference seq in the output file
 
+- remove transcription-translation feature. They are not useful, just some pointless bells and whistles.
+
+- write some code in get_seq to put the reverse complement of the scrapped seq int the mat CompareSanger.match_with_seq_file() method. Reverse complement the preseq then match then reverse complement the full_seq
+
+- before returning het call check if K M etc. so it doesnt get called like K/A
+
+- in output_file, place the name of the seq_file used to compare to the var_base
+
+
+
+## BUGS
+
+- if reverse complement is used then the opposite bases will be called i.e we expect G/T but because we used _R file we get the reverse C/A. Ensure this is actually/ definitely happening and fix accordingly
 
 ## TESTING
 
@@ -44,3 +62,8 @@ The following AB1 files is giving 4 bases instead of the expected T/G. Good cand
 
 The following is a good match for multiple matching seq files:
   G03_HX9_AD_HX9_F_013.ab1   G 15:48787732
+
+AB1 files where the _R.ab1 has the variant present but the _F.ab1 does not:
+  C04_GXYUK2_RD_PP_GXYUK2_RD_R_006.ab1  G/C 2:189861900       post_seq
+  HUK3-SC-R.ab1                         G/A    2:189861205
+

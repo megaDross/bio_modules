@@ -51,7 +51,7 @@ def main(input_file, output_file=None, upstream=20, downstream=20, hg_version="h
     if output_file:
         header = "\t".join(("Name", "Position", "Seq_Range", "Gene_Name", 
                             "Gene_ID", "Type", "Gene_Range", "Transcript","Exon_ID",
-                            "Intron", "Exon", "Ref", "Seq", "Result", "\n"))
+                            "Intron", "Exon", "AB1", "Ref", "Seq", "Result", "\n"))
         write_to_output(all_scrapped_info, output_file, header)
 
 
@@ -141,7 +141,7 @@ def get_seq(seq_name, var_pos, reference,  hg_version, pyensembl, genome, sanger
     try:
         # default variables to - incase the below conditions are not met
         gene_name = gene_id = gene_type = gene_range = transcript = exon_id = \
-            exon_id = intron = exon = ref_base = sanger_base = "-"
+            exon_id = intron = exon = ref_base = sanger_base = seq_file_used = "-"
         compare_result = "0"
 
         # check if var_pos is a GENOMIC REGION, else construct one from var_pos
@@ -156,8 +156,10 @@ def get_seq(seq_name, var_pos, reference,  hg_version, pyensembl, genome, sanger
         # if CompareSeqs class has been intiated try and find a matching .seq file
         if sanger:
             sanger_sequence = sanger.match_with_seq_file(sequence)
+
             # if .seq file found compare the ref var_pos base and the sanger var_pos base
             if sanger_sequence:
+                seq_file_used = sanger.seq_file.split("/")[-1]
                 upstream_seq, downstream_seq, ref_base, sanger_base, \
                         var_index = sanger_sequence
                 
@@ -200,11 +202,11 @@ def get_seq(seq_name, var_pos, reference,  hg_version, pyensembl, genome, sanger
             print_out = "\n".join((header,"Reference Sequence:\t"+sequence,
                                    "Sanger Sequence:\tNo Match Found", "\n"))
 
-
+        
         # print results and return everything for outputing to a file
         answer = "\t".join((seq_name, var_pos, seq_range, gene_name,
                           gene_id, gene_type, gene_range, transcript, 
-                          exon_id, intron, exon, ref_base,
+                          exon_id, intron, exon, seq_file_used, ref_base,
                           sanger_base, str(compare_result)))
              
          
