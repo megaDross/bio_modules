@@ -3,15 +3,16 @@ from GeneaPy import useful
 import unittest, warnings
 
 
+test_dir = useful.cwd_file_path(__file__)+"test_files/"
+
 class TestCheckSanger(unittest.TestCase):
     
-    test_dir = useful.cwd_file_path(__file__)+"test_files/"
     
     def test_get_matching_seq_file(self):
         ''' Ensure the query matches the expected file in he selected dir
         '''
         self.assertEqual(CompareSeqs.get_matching_seq_file("test2", 
-                         TestCheckSanger.test_dir)[0], 
+                         test_dir)[0], 
                          "/home/david/scripts-x14.04/python/modules/GeneaPy/test/test_files/test2_R.ab1")
 
     def test_compare_nucleotides(self):
@@ -26,36 +27,36 @@ class TestCheckSanger(unittest.TestCase):
         ''' Test that the preseq returns the expected index numbers 
         '''
         warnings.filterwarnings("ignore")
-        self.assertEqual(CompareSeqs.get_start_end_indexes("TTCCTCCTTCAAACTTCGCA",   open(TestCheckSanger.test_dir+"F01_LX18_SP_UKB2_LX18_F_011.seq", "r").read().replace("\n", "")), (337, 357, "TTCCTCCTTCAAACTTCGCA"))
+        self.assertEqual(CompareSeqs.get_start_end_indexes("TTCCTCCTTCAAACTTCGCA",   CompareSeqs.handle_seq_file(test_dir+"F01_LX18_SP_UKB2_LX18_F_011.ab1", test_dir)), (337, 357, "TTCCTCCTTCAAACTTCGCA"))
 
     def test_get_start_and_indexes_preseq(self):
         ''' Test that the postseq returns the expected index numbers
         '''
         warnings.filterwarnings("ignore")
         self.assertEqual(CompareSeqs.get_start_end_indexes("agcctatctcacactcacag".upper()
-, open(TestCheckSanger.test_dir+"B02_CX1_AD_UKB2_CX1_F_004.seq", "r").read().replace("\n", "")), (270, 290, "AGCCTATCTCACACTCACAG"))
+, open(test_dir+"B02_CX1_AD_UKB2_CX1_F_004.seq", "r").read().replace("\n", "")), (270, 290, "AGCCTATCTCACACTCACAG"))
 
     def test_match_with_seq_file_preseq(self):
         ''' Test that the presequence is found within the seq file
         '''
         warnings.filterwarnings("ignore")
-        self.assertEqual(CompareSeqs(20, 20, TestCheckSanger.test_dir+"B02_CX1_AD_UKB2_CX1_F_004.seq").match_with_seq_file("agcctatctcacactcacagCggaacaggccagggaggttg"),('agcctatctcacactcacag', 'ggaacaggccagggaggttg', 'C', 'G/C', 290))
+        self.assertEqual(CompareSeqs(20, 20, test_dir+"B02_CX1_AD_UKB2_CX1_F_004.seq").match_with_seq_file("agcctatctcacactcacagCggaacaggccagggaggttg"),('agcctatctcacactcacag', 'ggaacaggccagggaggttg', 'C', 'G/C', 290))
 
     def test_match_with_seq_file_postseq(self):
         ''' Test that the postsequence is found within the seq file
         '''
         warnings.filterwarnings("ignore")
-        self.assertEqual(CompareSeqs(60, 60, TestCheckSanger.test_dir+"C02_HX15_RD_GS_U_HX15_RD_F_006.seq").match_with_seq_file("agtaggcagcgtgactgtggtgtccaggcggccctcacctgctgtgtggctttgcggaccCggtcgctcatggcctccatgttgccctgctcctcctccagctcctcctccagctgggcga"),('agtaggcagcgtgnctgtggtgtccaggcggccctcacctgctgtgtggctttgcggacc', 'ggtcgctcatggcctccatgttgccctgctcctcctccagctcctcctccagctgggcga', 'C', 'N', 119))
+        self.assertEqual(CompareSeqs(60, 60, test_dir+"C02_HX15_RD_GS_U_HX15_RD_F_006.seq").match_with_seq_file("agtaggcagcgtgactgtggtgtccaggcggccctcacctgctgtgtggctttgcggaccCggtcgctcatggcctccatgttgccctgctcctcctccagctcctcctccagctgggcga"),('agtaggcagcgtgnctgtggtgtccaggcggccctcacctgctgtgtggctttgcggacc', 'ggtcgctcatggcctccatgttgccctgctcctcctccagctcctcctccagctgggcga', 'C', 'N', 119))
 
 
     def test_ab1_file_name_conversion(self):
-        self.assertEqual(CompareSeqs.convert_ab1_to_seq(TestCheckSanger.test_dir+
-                         "A09_29XX1917_WYN13_F_001.ab1"), TestCheckSanger.test_dir+
+        self.assertEqual(CompareSeqs.convert_ab1_to_seq(test_dir+
+                         "A09_29XX1917_WYN13_F_001.ab1"), test_dir+
                          "A09_29XX1917_WYN13_F_001.seq")
     
     def test_converted_ab1_sequence(self):
         warnings.filterwarnings("ignore")
-        self.assertEqual(open(TestCheckSanger.test_dir+"A09_29XX1917_WYN13_F_001.seq").
+        self.assertEqual(open(test_dir+"A09_29XX1917_WYN13_F_001.seq").
                          read().replace("\n", ""), "NNNNNNNNNNNCNNNCNNNNGANGGTGAGACCTGGTCCCTGGGCCACTTGCNNAGCCCCTTCCACGCTGCCCTCACCTTAGCACCATYGTTGCCGGGAGCACCGTTGGCCCCTCGGGGACCAGCAGGACCAGGGGGACCTTGCACACCACGCTCGCCAGGGAAACCTCTCTCGCCCTAGAAGGGAAGGACAGGGCATGTGAAGGCTGCTCTGGAGATAGGGCCAAGTACAACGCACCTTGACGGATGCAGCGAGAGAGGCCTACTTACTCTTGCTCCAGAGGGGCCAGGGGCGCCAAGGTCTCCAGGAACACCCTGAGGGGGAGGGAGAGAGGAACAGACAGTGAGCAAAACCTACCTGGGGCCACTCTGCTGGAAAGCACGGTCCTTCCTCCTGGGGTCTGGCCGTGATTAGAGAGGAACCCCTTCTCAGCACTGAATTGAGATTATCCCAAACAGCCCCTCTCTTCCTCCTAGGGATGTGTCAAAGGCTTCCCCCCTCCCCAAACTATGGACCAAGATTTATCAATAGAAGGGTTGAGGGAAAGTCACAGNNNNNA")
 if __name__ == '__main__':
     unittest.main()

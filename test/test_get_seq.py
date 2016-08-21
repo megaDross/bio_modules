@@ -95,16 +95,15 @@ class TestGetSeqPrint(unittest.TestCase):
         ref_seq_bytes = subprocess.check_output(["python3",get_seq, "chr15:48762884",
                                                 "--header", "--seq_file",
                                                  file_path[:-5]+'test/test_files/'
-                                                'B02_CX1_AD_UKB2_CX1_F_004.abi'])
+                                                'B02_CX1_AD_UKB2_CX1_F_004.ab1'])
         ref_seq = ref_seq_bytes.decode(encoding='UTF-8')
-        
         self.assertEqual(ref_seq,
                          '> query chr15:48762884 15:48762864,48762904 -'
                          '\nReference Sequence:\t'
                          'agcctatctcacactcacagCggaacaggccagggaggttg'                    
                          '\nSanger Sequence:\t'
-                         'agcctatctcacactcacagG/Cggaacaggccaggg'
-                         'aggttg\nthe nucleotides given are '
+                         'agcctatctcacactcacagC/Gggaacaggccagggaggttg'
+                         '\nthe nucleotides given are '
                          'DIFFERENT\n\n\n')
 
 
@@ -120,8 +119,15 @@ class TestGetSeqPrint(unittest.TestCase):
                                                  file_path[:-5]+'test/test_files/',
                                                  '--header', '--ensembl'])
         ref_seq = ref_seq_bytes.decode(encoding='UTF-8')
-
         self.assertEqual(ref_seq, open(file_path[:-5]+'test/test_out_print.txt').read())
+
+
+    def test_seq_tab_file_creation(self):
+        ''' Make this test the same as test_input_file() except delete the .tab and .seq
+            files associated with the query names in the test_in.txt. This will only pass
+            if the .seq and .tab files are created successfully.
+        '''
+        pass
 
 
     def test_ab1_conversion(self):
@@ -178,8 +184,8 @@ class TestErrors(unittest.TestCase):
                                                  "--header", "--ensembl", "--hg_version",
                                                  "hg38"])
         ref_seq = ref_seq_bytes.decode(encoding='UTF-8')        
-        self.assertEqual(ref_seq,'ERROR: No gene information found for query'
-                         ' at 16:15812194 in hg38\nNone')
+        self.assertEqual(ref_seq,'ERROR: No exon information found for query'
+                         ' at 16:15812194 in hg38\nNone\n')
 
 
 if __name__ == '__main__':

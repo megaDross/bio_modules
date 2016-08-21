@@ -1,5 +1,7 @@
 ## TODO - TOP
 
+- parse every single query from the TAAD spreadsheet to get_seq and check the results (base changes) are the same as those found in the spreadsheet. This is the only way to truly determine the accuracy of get_seq.py
+
 - write tests for the newly implemented features in this branch
 
 - tidy up code
@@ -40,7 +42,7 @@
 
 - a boolean option (--download) which will download human genome, ttuner etc.
 
-
+- ensure altered program works with existing testing and debug according to errors rasied
 
 ## BUGS
 
