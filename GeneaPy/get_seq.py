@@ -151,8 +151,12 @@ def parse_string(*args):
     sanger = CompareSeqs(upstream,downstream, seq_file, seq_dir) if seq_file else None
     sequence_info = get_seq("query", input_file, reference,  
                              hg_version, pyensembl, genome, sanger)
-    print(sequence_info[0])
 
+    # this condition fixes a subscripting error that occurs if ensembl_error() is triggered
+    if isinstance(sequence_info, tuple):
+        print(sequence_info[0])
+    else:
+        print(sequence_info)
     
 
     
@@ -232,8 +236,7 @@ def get_seq(seq_name, var_pos, reference,  hg_version, pyensembl, genome, sanger
         all_data = (seq_name, var_pos, seq_range, gene_name,gene_id, gene_type,
                     gene_range, transcript, exon_id, intron, exon, seq_file_used, ref_base, sanger_base, str(compare_result))
         answer = "\t".join(all_data)
-             
-         
+        
         return (print_out, answer)
    
 
@@ -243,6 +246,7 @@ def get_seq(seq_name, var_pos, reference,  hg_version, pyensembl, genome, sanger
         msg = " ".join(("ERROR: No %s information found for",
                         seq_name,"at",var_pos,"in",hg_version))
         ensembl_error(sam[1], msg)
+        exon_id = intron = exon = "-"
 
 
 def ensembl_error(error, msg):
@@ -251,7 +255,7 @@ def ensembl_error(error, msg):
         or exona information. Print to the screen and write 
         to an error file.
     '''   
-    with open("stderror_get_seq.txt", "a") as out:
+    with open(file_path + "stderror_get_seq.txt", "a") as out:
         if "gene" in error:
             msg = msg % "gene"
         elif "transcript" in error:
@@ -263,7 +267,6 @@ def ensembl_error(error, msg):
             
         print(msg)
         out.write(msg+"\n")
-
 
                
 if __name__ == '__main__':

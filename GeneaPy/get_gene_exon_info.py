@@ -44,7 +44,7 @@ def gene_transcript_exon(position, hg_version, transcript=None):
         if "exon_info" in sam[1]:
             msg = " ".join(("ERROR: No exon information found for",
                            position,"in",hg_version))
-            return msg
+            return (gene_info, transcript, msg)
 
 
 def create_position(position):
