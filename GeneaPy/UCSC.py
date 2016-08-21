@@ -52,6 +52,9 @@ class ScrapeSeq():
             in upstream and downstream respectively from the given variant position 
             to return a genomic range.
         '''
+        # PySam doesnt like chr preceding position/range
+        var_pos = var_pos.replace('chr', '')
+
         # check if var_pos is a GENOMIC REGION, else construct one from var_pos
         if re.search(r"[,-]",var_pos):
             var_pos = var_pos.replace("-",",")
