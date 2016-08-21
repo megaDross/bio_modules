@@ -12,7 +12,7 @@ class TestCheckSanger(unittest.TestCase):
         '''
         self.assertEqual(CompareSeqs.get_matching_seq_file("test2", 
                          TestCheckSanger.test_dir), 
-                         TestCheckSanger.test_dir+"test2_R.seq")
+                         TestCheckSanger.test_dir+"test2_R")
 
     def test_compare_nucleotides(self):
         ''' Test both conditional outputs of the compare_nucleotides method
