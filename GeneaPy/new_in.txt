@@ -1,0 +1,8 @@
+FUK20_VG	15:48782270
+HX9-AD	15:48787732
+FUK31	17:48274593
+B01_CXE_EM_CXE_F_003	17:48273298
+A01_HUK4_16_23DW_HUK4_F_001	2:189863418
+FUK16	17:48275146	# this should have no match found
+FUK15_RL	15:48737567	# there are 4 alt bases at the var position in the ab1 file. should give only 2 alt bases with highest quality score
+HX9_AD	15:48787732	# Matches string with muliple ab1 files. Make sure it selects the ab1 which contains the preseq/postseq.

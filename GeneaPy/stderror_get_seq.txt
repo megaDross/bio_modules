@@ -1,0 +1,4 @@
+ERROR: No gene information found for LX5-FC at 3:123426599 in hg19
+ERROR: No exon information found for query at 16:15812194 in hg38
+ERROR: No exon information found for query at 16:15812194 in hg38
+ERROR: No exon information found for query at 16:15812194 in hg38
