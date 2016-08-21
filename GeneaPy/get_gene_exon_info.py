@@ -32,6 +32,9 @@ def gene_transcript_exon(position, hg_version, transcript=None):
                 exon_info = get_exon_number(transcript, hg_version, position)
                 exon_id, intron, exon = exon_info
 
+            else:
+                transcript = "-"
+
         return (gene_info, transcript, exon_info)
 
     except TypeError as e:

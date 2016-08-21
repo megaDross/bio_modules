@@ -185,7 +185,7 @@ def get_seq(seq_name, var_pos, reference,  hg_version, pyensembl, genome, sanger
 
             # if .seq file found compare the ref var_pos base and the sanger var_pos base
             if sanger_sequence:
-                seq_file_used = sanger.seq_file.split("/")[-1]
+                seq_file_used = sanger.seq_filename.split("/")[-1]
                 upstream_seq, downstream_seq, ref_base, sanger_base, \
                         var_index = sanger_sequence
                 
@@ -228,12 +228,10 @@ def get_seq(seq_name, var_pos, reference,  hg_version, pyensembl, genome, sanger
             print_out = "\n".join((header,"Reference Sequence:\t"+sequence,
                                    "Sanger Sequence:\tNo Match Found", "\n"))
 
-        
         # print results and return everything for outputing to a file
-        answer = "\t".join((seq_name, var_pos, seq_range, gene_name,
-                          gene_id, gene_type, gene_range, transcript, 
-                          exon_id, intron, exon, seq_file_used, ref_base,
-                          sanger_base, str(compare_result)))
+        all_data = (seq_name, var_pos, seq_range, gene_name,gene_id, gene_type,
+                    gene_range, transcript, exon_id, intron, exon, seq_file_used, ref_base, sanger_base, str(compare_result))
+        answer = "\t".join(all_data)
              
          
         return (print_out, answer)
