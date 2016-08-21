@@ -67,7 +67,7 @@ class TestGetSeqPrint(unittest.TestCase):
         ref_seq = ref_seq_bytes.decode(encoding='UTF-8')
         
         self.assertEqual(ref_seq,
-                         '> query 1:169314424 chr1:169314404,169314444 -'
+                         '> query chr1:169314424 1:169314404,169314444 -'
                          '\naggagcgatgtctcctctttCattcctgattttgataattt\n\n\n')
 
     def test_upstream_downstream(self):
@@ -81,7 +81,7 @@ class TestGetSeqPrint(unittest.TestCase):
         ref_seq = ref_seq_bytes.decode(encoding='UTF-8')
         
         self.assertEqual(ref_seq,
-                         '> query 1:169314424 chr1:169314384,169314494 -'
+                         '> query chr1:169314424 1:169314384,169314494 -'
                          '\ncttttaatttctgcagggatag'
                          'gagcgatgtctcctctttCattcctgattttgataatttgtatcttcagtcttttttct'
                          'tggtcagtctaaccaaagttttgcctatgt\n\n\n')
@@ -95,11 +95,11 @@ class TestGetSeqPrint(unittest.TestCase):
         ref_seq_bytes = subprocess.check_output(["python3",get_seq, "chr15:48762884",
                                                 "--header", "--seq_file",
                                                  file_path[:-5]+'test/test_files/'
-                                                'B02_CX1_AD_UKB2_CX1_F_004.seq'])
+                                                'B02_CX1_AD_UKB2_CX1_F_004.abi'])
         ref_seq = ref_seq_bytes.decode(encoding='UTF-8')
         
         self.assertEqual(ref_seq,
-                         '> query 15:48762884 chr15:48762864,48762904 -'
+                         '> query chr15:48762884 15:48762864,48762904 -'
                          '\nReference Sequence:\t'
                          'agcctatctcacactcacagCggaacaggccagggaggttg'                    
                          '\nSanger Sequence:\t'
@@ -179,7 +179,7 @@ class TestErrors(unittest.TestCase):
                                                  "hg38"])
         ref_seq = ref_seq_bytes.decode(encoding='UTF-8')        
         self.assertEqual(ref_seq,'ERROR: No gene information found for query'
-                         ' at 16:15812194 in hg38\n')
+                         ' at 16:15812194 in hg38\nNone')
 
 
 if __name__ == '__main__':

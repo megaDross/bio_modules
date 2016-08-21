@@ -105,7 +105,7 @@ class TestGeneTranscriptExon(unittest.TestCase):
         
             DOESN'T ACTUALLY TEST THE ERROR AS 
         '''
-        self.assertEqual(gene_transcript_exon("16:15812194", "hg38"),
+        self.assertEqual(gene_transcript_exon("16:15812194", "hg38")[-1],
                          "ERROR: No exon information found for 16:15812194 in hg38")
 
 

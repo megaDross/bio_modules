@@ -1,0 +1,24 @@
+# CHROMAT_FILE: LZ7-AG-F.ab1
+# SOFTWARE_VERSION: TT_3.0.4beta
+# NUM_ABC: 18
+# NUM_SUBSTITUTIONS: 18
+# NUM_DELETIONS: 0
+# base2   qv2       pos2       ind2
+   M       7         270        19
+   C       9         272        19
+   S      12         932        73
+   G      12         930        73
+   Y      11         964        76
+   C      13         962        76
+   M      10        1059        84
+   A      11        1061        84
+   Y      10        1070        85
+   T      11        1072        85
+   S      10        1092        87
+   C      11        1093        87
+   S      10        1479       120
+   K       6        1484       120
+   C      11        1477       120
+   T       7        1488       120
+   R      13        4827       400
+   A      14        4827       400

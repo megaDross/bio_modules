@@ -10,15 +10,7 @@ class CompareSeqs(object):
         with a sanger sequence contained within a .seq file
     '''
     def __init__(self, upstream, downstream, seq_file=None, seq_dir=None):
-        if seq_file.endswith(".seq"):
-            self.seq_file = open(seq_file).read().replace("\n","")
-
-        elif seq_file.endswith("ab1"):
-            self.seq_file = "".join([x.rstrip("\n") for x in open(seq_file+".seq")
-                                            if not x.startswith(">")]) 
-        else:
-            self.seq_file = seq_file
-
+        self.seq_file = CompareSeqs.handle_seq_file(seq_file, seq_dir)
         self.seq_filename = seq_file
         self.upstream = upstream
         self.downstream = downstream
@@ -29,6 +21,33 @@ class CompareSeqs(object):
              "W":"A/T", "K":"G/T", "M":"A/C",
              "B":"C/G/T", "D":"A/G/T", "H":"A/C/T",
              "V":"A/C/G", "N":"N"}
+
+    @staticmethod
+    def handle_seq_file(seq_file, seq_dir):
+        ''' decide what to process seq_file
+        '''
+        ttuner = "/home/david/bin/tracetuner_3.0.6beta/rel/Linux_64/ttuner"
+
+        if seq_file.endswith(".seq"):
+            seq_file = open(seq_file).read().replace("\n","")
+
+        elif seq_file.endswith("ab1") and os.path.isfile(seq_file+".seq") \
+            and os.path.isfile(seq_file+".tab"):
+            seq_file = "".join([x.rstrip("\n") for x in open(seq_file+".seq")
+                                            if not x.startswith(">")]) 
+ 
+        elif seq_file.endswith("ab1") and not os.path.isfile(seq_file+".tab"):
+            print("Creating .seq files and .tab files.....")
+            subprocess.call([ttuner, "-tabd", seq_dir, "-id", 
+                             seq_dir, "-mix"], stdout=open(os.devnull, 'wb'),
+                             stderr=open(os.devnull, 'wb'))
+            subprocess.call([ttuner, "-sd", seq_dir, "-id", seq_dir], 
+                            stdout=open(os.devnull, 'wb'), stderr=open(os.devnull, 'wb'))
+
+        else:
+            seq_file = seq_file
+
+        return seq_file
 
     @staticmethod
     def get_matching_seq_file(query, directory):
@@ -153,16 +172,6 @@ class CompareSeqs(object):
     def get_het_call(self, var_index):
         ''' Get the two bases being called at a given variant position
         '''
-        ttuner = "/home/david/bin/tracetuner_3.0.6beta/rel/Linux_64/ttuner"
-
-        # if no tab or seq files found then create them
-        if not os.path.isfile(self.seq_filename+".tab"):
-            subprocess.call([ttuner, "-tabd", self.seq_dir, "-id", 
-                             self.seq_dir, "-mix"])
-
-        if not os.path.isfile(self.seq_filename+".seq"):
-            subprocess.call([ttuner, "-sd", self.seq_dir, "-id", self.seq_dir])
-
         # open tab file and split by space and filter out empty strings
         tab_file = open(self.seq_filename+".tab")
         split_tab = [x.rstrip("\n").split(" ") for x in tab_file 

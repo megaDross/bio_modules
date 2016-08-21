@@ -104,8 +104,9 @@ def parse_file(*args):
         error_check = reference.handle_argument_exception(var_pos)
         # intialise the class in Ensembl.py
         pyensembl = ScrapeEnsembl(var_pos, hg_version) if ensembl else None
-        # find a list of files with seq_name in its title, if ab1 matched then convert to .seq
+        # find a list of files with seq_name in its title, if ab1 matched then convert it to a .seq and .tab file
         seq_file = CompareSeqs.get_matching_seq_file(seq_name, seq_dir)
+        convert = [CompareSeqs.handle_seq_file(x, seq_dir) for x in seq_file if seq_file]
         # intialise the check_sanger class for every found seq_file
         sanger = [CompareSeqs(upstream, downstream, x, seq_dir) for x in seq_file]
         # parse it all into get_seq()
@@ -186,7 +187,6 @@ def get_seq(seq_name, var_pos, reference,  hg_version, pyensembl, genome, sanger
         # if CompareSeqs class has been intiated try and find a matching .seq file
         if sanger:
             sanger_sequence = sanger.match_with_seq_file(sequence)
-
             # if .seq file found compare the ref var_pos base and the sanger var_pos base
             if sanger_sequence:
                 seq_file_used = sanger.seq_filename.split("/")[-1]
