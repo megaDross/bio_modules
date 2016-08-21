@@ -1,10 +1,10 @@
 ## TODO - TOP
 
-- Write some code that gets gene information at a given position from REST ensembl directly instead of relying on the bloated pyensembl module
-
 - write tests for the newly implemented features in this branch
 
 - tidy up code
+
+- Write some code that gets gene information at a given position from REST ensembl directly instead of relying on the bloated pyensembl module
 
 - LONG TERM: detect InDels and not just SNVs
 
@@ -14,9 +14,7 @@
 
 - allow user to input there own transcript for scrapping exon information
 
-- Create a configuration file/dict which has things like path to genome and seq_dir i.e.
-      configuration = {"hg19": "path/to/hg19.fa", "hg38": "path/to/hg38.fa",
-                       "seq_dir": "path/to/seq_dir/"}
+- Create a configuration file/dict which has things like path to genome and seq_dir i.e. use configparser
 
 - An option that allows you to use an annotated genome to get gene/transcript/exon info http://www.ensembl.org/info/data/ftp/index.html
 

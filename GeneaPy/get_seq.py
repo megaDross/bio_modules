@@ -7,26 +7,38 @@ from check_sanger import CompareSeqs
 from output import write_to_output
 from UCSC import ScrapeSeq
 import subprocess
+import config
+
 
 # get the absolute path to this file
 file_path = useful.cwd_file_path(__file__)
- 
+home = os.path.expanduser("~")
+
+# read the config file
+if os.path.isfile(home+"/.config/GeneaPy.config") is True:
+    ttuner_path, default_hg_version, genome_path = config.read_config("hg19")
+else:
+    ttuner_path, default_hg_version, genome_path = (None, None, None)
+
+
 @click.command('main')
 @click.argument('input_file',nargs=1, required=False)
 @click.option('--output_file',default=None, help='give an output file, requires input to be a file')
 @click.option('--upstream', default=20, help="number of bases to get upstream, default: 20") 
 @click.option('--downstream',default=20, help="number of bases to get downstream, default: 20")
-@click.option('--hg_version',default="hg19", help="human genome version. default: hg19")
+@click.option('--hg_version',default=default_hg_version, help="human genome version. default: hg19")
 @click.option('--header/--no_header',default='n',help="header gives metadata i.e. sequence name etc.")
-@click.option('--seq_file', default=None, help="match sequence with .seq file contents")
-@click.option('--seq_dir', default=file_path[:-8]+"test/test_files/", help="path to directory containing .seq files")
-@click.option('--genome', default=None, help="use locally stored genome instead of UCSC")
+@click.option('--seq_file', default=None, help="match sequence with AB1/seq file contents")
+@click.option('--seq_dir', default=file_path[:-8]+"test/test_files/", help="path to directory containing AB1/seq files")
+@click.option('--genome', default=genome_path, help="use locally stored genome instead of UCSC")
 @click.option('--ensembl/--ne', default='n', help="scrape gene & exon information")
-@click.option('--download/--donot', default='n', help="download ttuner and/or human genome fasta")
+@click.option('--download/--donot', default='n', help="download ttuner and/or human genome fasta files")
+@click.option('--configure/--noconfig', default='n', help="configure get_seq")
 
-def main(input_file, output_file=None, upstream=20, downstream=20, hg_version="hg19",
-         header="n", seq_file=None, download='n',
-         seq_dir=file_path[:-8]+"test/test_files/", ensembl="n", genome=None):
+def main(input_file, output_file=None, upstream=20, downstream=20,
+         hg_version=default_hg_version, header="n", seq_file=None, download='n', 
+         configure='n',seq_dir=file_path[:-8]+"test/test_files/", ensembl="n", 
+         genome=genome_path):
     '''
     From a genomic postion, genomic range or tab-deliminated file produce a
     reference sequence that can be compared with a sanger trace along with 
@@ -35,7 +47,17 @@ def main(input_file, output_file=None, upstream=20, downstream=20, hg_version="h
     # whether to download ttuner and or human genomes
     if download:
         subprocess.call([file_path+"download.sh"])
+        config.config() 
         sys.exit()
+
+    # write a config file
+    if configure:
+        config.config()
+        sys.exit()
+       
+    # ensures the wrong human genome isnt used
+    if hg_version not in genome:
+        genome = None
 
     # allows one to pipe in an argument at the cmd
     input_file = input() if not input_file else input_file
