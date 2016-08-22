@@ -22,12 +22,6 @@ Sanger Sequence:	tgaatccatcataacacaagCacctgtactctccagggata
 the nucleotides given are the SAME
 
 
-> HX15_RD_GS 16:15812194 16:15812174,15812214 MYH11
-Reference Sequence:	gctgtgtggctttgcggaccCggtcgctcatggcctccatg
-Sanger Sequence:	gctgtgtggctttgcggaccC/Tggtcgctcatggcctccatg
-the nucleotides given are DIFFERENT
-
-
 > LX15_NY 15:48707763 15:48707743,48707783 FBN1
 Reference Sequence:	tgcggaagtaaccaggtggaCagccacacaggtaaccgccc
 Sanger Sequence:	tgcggaagtaaccaggtggaC/Tagccacacaggtaaccgccc

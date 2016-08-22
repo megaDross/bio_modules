@@ -112,6 +112,8 @@ class TestGetSeqPrint(unittest.TestCase):
             the correct seq file is automatically selected for comparing with the 
             reference sequence
         '''
+        self.maxDiff = None
+
         # ignore Resource Mangemenet error
         warnings.filterwarnings("ignore")
         ref_seq_bytes = subprocess.check_output(["python3", get_seq, file_path[:-5]+
@@ -123,11 +125,13 @@ class TestGetSeqPrint(unittest.TestCase):
 
 
     def test_seq_tab_file_creation(self):
-        ''' Make this test the same as test_input_file() except delete the .tab and .seq
+        ''' This test the same as test_input_file() except delete the .tab and .seq
             files associated with the query names in the test_in.txt. This will only pass
-            if the .seq and .tab files are created successfully.
+            if the .seq and .tab files are created successfully and checks whether the handle_seq_file method in CompareSeqs works as expected.
         '''
-        pass
+        subprocess.Popen("rm /home/david/scripts-x14.04/python/modules/GeneaPy/test/test_files/*CX1*AD*tab /home/david/scripts-x14.04/python/modules/GeneaPy/test/test_files/*24AS*15*tab /home/david/scripts-x14.04/python/modules/GeneaPy/test/test_files/*LX15*NY*tab /home/david/scripts-x14.04/python/modules/GeneaPy/test/test_files/*LX16*SB*tab /home/david/scripts-x14.04/python/modules/GeneaPy/test/test_files/*FUK27*MM*tab /home/david/scripts-x14.04/python/modules/GeneaPy/test/test_files/*LX18*SP*tab", shell=True)
+        TestGetSeqPrint.test_input_file(self)
+
 
 
     def test_ab1_conversion(self):
@@ -153,6 +157,7 @@ class GetSeqFileOut(unittest.TestCase):
     def test_output_file(self):
         '''  Test the written ouput from parsing an input file is as expected.
         '''
+        self.maxDiff = None
         # ignore Resource Management error
         warnings.filterwarnings("ignore")
         ref_seq_bytes = subprocess.check_output(["python3", get_seq, file_path[:-5]+
