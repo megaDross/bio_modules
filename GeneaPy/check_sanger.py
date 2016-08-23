@@ -1,5 +1,6 @@
 from Bio import SeqIO
 import os, re, subprocess
+import itertools
 import GeneaPy.useful as useful
 
 
@@ -24,12 +25,15 @@ class CompareSeqs(object):
 
     @staticmethod
     def handle_seq_file(seq_file, seq_dir):
-        ''' decide what to process seq_file
+        ''' Decide how to process seq_files
+        
+            -id is used instead of -if as the -if only works on a file containing paths to the ab1 files requiring processing; cannot directly select a file in ttuner.
         '''
         ttuner = "/home/david/bin/tracetuner_3.0.6beta/rel/Linux_64/ttuner"
 
         if seq_file.endswith(".seq"):
-            seq_file = open(seq_file).read().replace("\n","")
+            seq_file = "".join([x.strip("\n") for x in open(seq_file) 
+                                              if not x.startswith(">")])
 
         elif seq_file.endswith("ab1") and os.path.isfile(seq_file+".seq") \
             and os.path.isfile(seq_file+".tab"):
@@ -37,7 +41,6 @@ class CompareSeqs(object):
                                             if not x.startswith(">")]) 
  
         elif seq_file.endswith("ab1") and not os.path.isfile(seq_file+".tab"):
-            print("Creating .seq files and .tab files.....")
             subprocess.call([ttuner, "-tabd", seq_dir, "-id", 
                              seq_dir, "-mix"], stdout=open(os.devnull, 'wb'),
                              stderr=open(os.devnull, 'wb'))
@@ -54,15 +57,31 @@ class CompareSeqs(object):
         ''' Find a file name that best matches given query and return the
             sequence string in matched file
         '''
+        length = len(query)
+        split_query = query.replace("_","-").split("-")
+        reversed_query = "_".join((split_query[1],split_query[0])) if len(split_query) > 1 else query
+        #print(reversed_query)
+        
+
+        if length < 6:
+        #    print("nothing found for\t"+query)
+            return []
+
         # appending is required in case there is more than one match, returns first match
         store_matches = []
         for f in [x for x in os.listdir(directory) if x.endswith(".ab1")]:
-            if query.replace("-","_") in f or query.replace("_","-") in f:
+            if query.replace("-","_") in f or query.replace("_","-") in f or \
+               reversed_query in f:
                 file_match = directory+f
                 store_matches.append(file_match)
         
         # trying to find matches that have both _ and -
         sorted_matches = sorted(store_matches)
+
+        if not sorted_matches:
+        #    print(query+"         "+str(len(sorted_matches)))
+            return CompareSeqs.get_matching_seq_file(query[:-1], directory)
+
         return sorted_matches
 
     @staticmethod

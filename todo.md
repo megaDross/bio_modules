@@ -2,7 +2,7 @@
 
 - parse every single query from the TAAD spreadsheet to get_seq and check the results (base changes) are the same as those found in the spreadsheet. This is the only way to truly determine the accuracy of get_seq.py
 
-- write tests for the newly implemented features in this branch
+- write tests for the newly implemented features in this branch (every single method/function should be tested)
 
 - tidy up code
 
@@ -10,13 +10,13 @@
 
 - LONG TERM: detect InDels and not just SNVs
 
+- LONG TERM: parse the mutatnt allele seq ...somewhere.... to get the protein consequence
+
 
 
 ## TODO - MINOR
 
 - allow user to input there own transcript for scrapping exon information
-
-- Create a configuration file/dict which has things like path to genome and seq_dir i.e. use configparser
 
 - An option that allows you to use an annotated genome to get gene/transcript/exon info http://www.ensembl.org/info/data/ftp/index.html
 
@@ -43,6 +43,10 @@
 - a boolean option (--download) which will download human genome, ttuner etc.
 
 - ensure altered program works with existing testing and debug according to errors rasied
+
+- Create a configuration file/dict which has things like path to genome and seq_dir i.e. use configparser (--config)
+
+
 
 ## BUGS
 

@@ -1,5 +1,6 @@
 from __future__ import division
 import re, os, sys
+import itertools
 
 complement = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A',
               'Y': 'R', 'R': 'Y', 'W': 'W', 'S': 'S', 'K': 'M', 'M': 'K',
@@ -91,4 +92,13 @@ def reverse_complement(seq):
     return(reverse_complement)
 
 
+def all_combinations(l):
+    
 
+    answer = []
+    for num in range(0, len(l)+1):
+        for subset in itertools.combinations(l, 2):
+            subset = "-".join((subset[0],subset[1]))
+            answer.append(subset)
+
+    return answer

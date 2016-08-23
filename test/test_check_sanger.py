@@ -11,9 +11,9 @@ class TestCheckSanger(unittest.TestCase):
     def test_get_matching_seq_file(self):
         ''' Ensure the query matches the expected file in he selected dir
         '''
-        self.assertEqual(CompareSeqs.get_matching_seq_file("test2", 
+        self.assertEqual(CompareSeqs.get_matching_seq_file("24HC1541-WYN1", 
                          test_dir)[0], 
-                         "/home/david/scripts-x14.04/python/modules/GeneaPy/test/test_files/test2_R.ab1")
+                         test_dir + "F07_24HC1541_WYN1_011.ab1")
 
     def test_compare_nucleotides(self):
         ''' Test both conditional outputs of the compare_nucleotides method
