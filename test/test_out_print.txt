@@ -1,7 +1,7 @@
 
 > CX1_AD 15:48762884 15:48762864,48762904 FBN1
 Reference Sequence:	agcctatctcacactcacagCggaacaggccagggaggttg
-Sanger Sequence:	agcctatctcacactcacagC/Gggaacaggccagggaggttg
+Sanger Sequence:	agcctatctcacactcacagG/Cggaacaggccagggaggttg
 the nucleotides given are DIFFERENT
 
 
@@ -24,13 +24,13 @@ the nucleotides given are the SAME
 
 > LX15_NY 15:48707763 15:48707743,48707783 FBN1
 Reference Sequence:	tgcggaagtaaccaggtggaCagccacacaggtaaccgccc
-Sanger Sequence:	tgcggaagtaaccaggtggaC/Tagccacacaggtaaccgccc
+Sanger Sequence:	tgcggaagtaaccaggtggaT/Cagccacacaggtaaccgccc
 the nucleotides given are DIFFERENT
 
 
 > LX16_SB 15:48712915 15:48712895,48712935 FBN1
 Reference Sequence:	ttccactggtagtgctggagGtagccctgggggcagctgca
-Sanger Sequence:	ttccactggtagtgctggagT/Gtagccctgggggcagctgca
+Sanger Sequence:	ttccactggtagtgctggagG/Ttagccctgggggcagctgca
 the nucleotides given are DIFFERENT
 
 
@@ -42,7 +42,7 @@ the nucleotides given are the SAME
 
 > FUK26_SH 15:48812913 15:48812893,48812933 FBN1
 Reference Sequence:	gacccctggagaccagcatcGgccggcatcacagcagcact
-Sanger Sequence:	gacccctggagaccagcatcG/Agccggcatcacagcagcact
+Sanger Sequence:	gacccctggagaccagcatcA/Ggccggcatcacagcagcact
 the nucleotides given are DIFFERENT
 
 

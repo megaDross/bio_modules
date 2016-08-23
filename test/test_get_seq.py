@@ -102,7 +102,7 @@ class TestGetSeqPrint(unittest.TestCase):
                          '\nReference Sequence:\t'
                          'agcctatctcacactcacagCggaacaggccagggaggttg'                    
                          '\nSanger Sequence:\t'
-                         'agcctatctcacactcacagC/Gggaacaggccagggaggttg'
+                         'agcctatctcacactcacagG/Cggaacaggccagggaggttg'
                          '\nthe nucleotides given are '
                          'DIFFERENT\n\n\n')
 
@@ -146,7 +146,7 @@ class TestGetSeqPrint(unittest.TestCase):
                          '\nReference Sequence:\t'
                          'tgccctcaccttagcaccatCgttgccgggagcaccgttgg'                    
                          '\nSanger Sequence:\t'
-                         'tgccctcaccttagcaccatC/Tgttgccgggagcaccgttgg'
+                         'tgccctcaccttagcaccatT/Cgttgccgggagcaccgttgg'
                          '\nthe nucleotides given are DIFFERENT\n\n\n')
 
 

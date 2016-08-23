@@ -58,8 +58,8 @@ class CompareSeqs(object):
             sequence string in matched file
         '''
         length = len(query)
-        split_query = query.replace("_","-").split("-")
-        reversed_query = "_".join((split_query[1],split_query[0])) if len(split_query) > 1 else query
+        cut = query.replace("_","-").split("-")
+        reversed_query = "_".join((cut[1],cut[0])) if len(cut) > 1 else query
         #print(reversed_query)
         
 
@@ -205,8 +205,7 @@ class CompareSeqs(object):
                 all_matches.append((qual, het_base2))
 
         # sort matches by quality and return highest bases as het call if more than one call is found for the given position/index
-        sorted_matches = sorted(all_matches) 
-        
+        sorted_matches = sorted(all_matches, key=lambda x: int(x[0]), reverse=True)
         return sorted_matches
 
     
