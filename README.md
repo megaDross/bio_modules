@@ -3,6 +3,8 @@
 A set of python3 tools that allows one to manipulate sequences and PCR primers 
 
 ## get_seq
+Its primary function is to automate variant validation analysis from ab1 files.
+
 Basic usage will return a sequence from the human genome reference (default: hg19) from a given genomic position and given numbers upstream and downstream. A genomic range can be given instead, which renders the upstream and downstream options redundant. This reference sequence can then optionally be compared to a .seq sanger sequence file to determine whether a variant is within the given genomic position in said .seq file. Gene, transcript and exonic information can optionally be scrapped from ensembl for the said genomic position given.
 
 ### Example Usage
@@ -68,5 +70,20 @@ To perform testing execute the following command within the test directory:
 python3 -m unittest *.py
 ```
 
+## Why Not...
+### AutoCSA
+One has to provide an amplimer sequence for every trace within a given sequence
 
+### DiSNPIndel
+Windows only and there is very limited documentation
 
+### PolyPhred
+check it out
+
+### TTuner
+doesn't really automate the whole process
+
+### NovoSNP
+
+### MutationSurveyor
+Costs Money
