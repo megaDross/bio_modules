@@ -39,3 +39,6 @@ ERROR: No exon information found for query at 16:15812194 in hg38
 ERROR: No exon information found for query at 16:15812194 in hg38
 ERROR: No exon information found for query at 16:15812194 in hg38
 ERROR: No exon information found for query at 16:15812194 in hg38
+ERROR: No exon information found for query at 16:15812194 in hg38
+ERROR: No exon information found for query at 16:15812194 in hg38
+ERROR: No exon information found for query at 16:15812194 in hg38

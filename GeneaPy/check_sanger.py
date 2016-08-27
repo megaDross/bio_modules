@@ -120,10 +120,40 @@ class CompareSeqs(object):
             ref_seq = sequence[self.upstream].upper()
             postseq = sequence[self.upstream:].upper()[1:]
             
-            
+
             if re.search(preseq, self.seq_file):    
                 start, end, upstream_seq = CompareSeqs.get_start_end_indexes(preseq, 
                                                                             self.seq_file)
+                ## DELETION
+                #dictionary = {}
+
+                #non_singular_bases = ["Y", "R", "W", "S", "K", "M"]
+                #
+                #n = 0
+                #for index in range(end+1, end+self.upstream):
+                #    hets = self.get_het_call(index)
+                #    dictionary[index] = ''
+                #    if hets:
+                #        uip = CompareSeqs.UIPAC.get(hets[0][1])
+                #        if "/" in uip:
+                #            dictionary[index] = (uip.split("/")[0], uip.split("/")[1])
+                #            
+                #        elif hets[1][1] in non_singular_bases:
+                #            dictionary[index] = (postseq[n], hets[0][1])
+
+                #        else:
+                #            dictionary[index] = (hets[0][1], hets[1][1])
+
+                #    else:
+                #        dictionary[index] = tuple(postseq[n])
+                #    n += 1
+
+                #            
+                #print(dictionary)
+
+
+                # END OF DELETION #
+
                 # for Reverse sequence seq files, get the actual index
                 if num == 1:
                     end = len(self.seq_file) - end -1
@@ -162,6 +192,8 @@ class CompareSeqs(object):
 
         else:
             pass
+
+
 
     @staticmethod
     def get_start_end_indexes(seq, seq_file):

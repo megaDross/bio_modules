@@ -226,7 +226,7 @@ def get_seq(seq_name, var_pos, reference,  hg_version, pyensembl, genome, sanger
             print_out = "\n".join((header,"Reference Sequence:\t"+sequence,
                                    "Sanger Sequence:\t"+full_seq,
                                    statement,"\n"))
-        
+
         # if no matching seq file 
         elif not sanger_sequence:
             print_out = "\n".join((header,"Reference Sequence:\t"+sequence,
