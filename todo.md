@@ -2,7 +2,9 @@
 
 - parse every single query from the TAAD spreadsheet to get_seq and check the results (base changes) are the same as those found in the spreadsheet. This is the only way to truly determine the accuracy of get_seq.py
 
-- if a match from a reverse sequence ab1 file ("_R_" or "_R.")
+- if a match from a reverse sequence ab1 file ("_R_" or "_R.") then return the complement sequence for the var pos
+
+- return the seq_file name even if no preseq/postseq matches in the file
 
 - write tests for the newly implemented features in this branch (every single method/function should be tested)
 
