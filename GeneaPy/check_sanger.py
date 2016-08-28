@@ -243,21 +243,19 @@ class CompareSeqs(object):
                 compare every sequence[0] with items in 93, then the
                 sequence[1] with items in 94 etc.
         '''
-        end_index_seq = start_index_seq + self.upstream
         # entire index (from seq_file) range of a given sequence it starts from the first index plus num
+        end_index_seq = start_index_seq + self.upstream
         indexes_sequence = range(start_index_seq + num, end_index_seq)
         counts = range(0, self.upstream)
 
-        # matched_seq would work as intended if it was simply a counter
         len_indexes_sequence = 0
         matched_seq = []
+        
         for count, index in zip(counts, indexes_sequence):
             len_indexes_sequence += 1
             if sequence[count] in het_call_dict.get(index):
                 matched_seq.append(het_call_dict.get(index))
 
-        print("STR"+str(len_indexes_sequence))
-        print(count)
         return (matched_seq, len_indexes_sequence-1) 
 
 
