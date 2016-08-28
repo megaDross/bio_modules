@@ -189,11 +189,11 @@ class CompareSeqs(object):
 
         seq_het_calls = self.index_basecall_dictionary(postseq,
                                                        start_index_postseq, num)
-        beep = self.get_index_range(postseq, seq_het_calls, start_index_postseq, num)
+        matched_seq = self.get_index_range(postseq, seq_het_calls, start_index_postseq, num)
         
         # ensure the difference in length is greater than 80% then return the base range at which the insertion covers
-        print(len(beep)/self.downstream)
-        if len(beep)/self.downstream > 0.8:
+        print(len(matched_seq)/self.downstream)
+        if len(matched_seq)/self.downstream > 0.8:
             print("QUALIFIED")
             return (var_index, var_index+num, num-1)
         else:
