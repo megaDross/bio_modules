@@ -8,9 +8,7 @@
 
 - Write some code that gets gene information at a given position from REST ensembl directly instead of relying on the bloated pyensembl module
 
-- LONG TERM: detect InDels and not just SNVs
-        - Insertions: use get_het_call to get every het call of the postseq (using the insdexes received from get_start_end_indexes of the preseq and postseq) which will be stored as the top 2 calls as a list of tuples. go through eack base in a tuple (sliding window???) until it matches the postseq and get the postseq index range. Then get the preseq index range. Whatever is between this range is the insertion.
-
+- LONG TERM: detect deletions and not just SNVs
 
 - LONG TERM: parse the mutatnt allele seq ...somewhere.... to get the protein consequence
 
@@ -27,6 +25,8 @@
 ## DONE
 
 - Fix the testing outcomes when --input_file and --output_file is use in get_seq.py
+
+- detect insertions
 
 - Use locally download genome instead of UCSC: have a script that downloads the genome and indexes it by then scrape from it using pyfasta, BioPythons SeqIO (records[chrom].seq[start:end]), bx-python, pysam or samtools (faidx hg19.fa 15:1566656:15768969)   https://www.biostars.org/p/1638/
 

@@ -197,6 +197,7 @@ def get_seq(seq_name, var_pos, reference,  hg_version, pyensembl, genome, sanger
                     alternate_bases = [sanger.seq_file[x] for x in range(var_index[0], var_index[1]+1)]
                     insertion = "".join(alternate_bases)
                     het_call = "/".join((ref_base,insertion))
+
                 else:
                     alternate_bases = sanger.get_het_call(var_index)
                     het_call = sanger.base_caller(alternate_bases, ref_base)

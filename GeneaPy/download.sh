@@ -25,8 +25,8 @@ ttuner() {
 
 
 genome() {
-    
-    while [ "$GENOME" != "hg19" ] ||  ["$GENOME" != "hg38" ]; do
+    #  and is used instead of or.... actually nor sure why but it works
+    while [ "$GENOME" != "hg19" ] && [ "$GENOME" != "hg38" ]; do
 
         echo -e "\nWhich version of the human genome to you wish to download (hg19 or hg38)?"
         read GENOME
@@ -50,7 +50,5 @@ genome() {
 question "Do you want to download ttuner (y or n)?" ttuner
 
 question "\nDo you want to download the human genome (y or n)?" genome
-
-
 
 
