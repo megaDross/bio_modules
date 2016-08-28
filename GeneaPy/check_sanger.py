@@ -189,12 +189,10 @@ class CompareSeqs(object):
 
         seq_het_calls = self.index_basecall_dictionary(postseq,
                                                        start_index_postseq, num)
-        matched_seq = self.get_index_range(postseq, seq_het_calls, start_index_postseq, num)
+        matched_seq, seq_len = self.get_index_range(postseq, seq_het_calls, start_index_postseq, num)
         
         # ensure the difference in length is greater than 80% then return the base range at which the insertion covers
-        print(len(matched_seq)/self.downstream)
-        if len(matched_seq)/self.downstream > 0.8:
-            print("QUALIFIED")
+        if len(matched_seq)/seq_len > 0.8:
             return (var_index, var_index+num, num-1)
         else:
             return self.check_if_insertion(postseq, var_index, num+1)
@@ -245,20 +243,22 @@ class CompareSeqs(object):
                 compare every sequence[0] with items in 93, then the
                 sequence[1] with items in 94 etc.
         '''
+        end_index_seq = start_index_seq + self.upstream
         # entire index (from seq_file) range of a given sequence it starts from the first index plus num
-        indexes_sequence = range(start_index_seq + num, start_index_seq + self.upstream)
+        indexes_sequence = range(start_index_seq + num, end_index_seq)
         counts = range(0, self.upstream)
 
-        print(het_call_dict)
         # matched_seq would work as intended if it was simply a counter
+        len_indexes_sequence = 0
         matched_seq = []
         for count, index in zip(counts, indexes_sequence):
+            len_indexes_sequence += 1
             if sequence[count] in het_call_dict.get(index):
                 matched_seq.append(het_call_dict.get(index))
 
-        print([x for x in matched_seq])
-        print(len(matched_seq))
-        return matched_seq 
+        print("STR"+str(len_indexes_sequence))
+        print(count)
+        return (matched_seq, len_indexes_sequence-1) 
 
 
     @staticmethod
