@@ -83,6 +83,7 @@ class CompareSeqs(object):
         if not sorted_matches:
             return CompareSeqs.get_matching_seq_file(query[:-1], directory)
 
+        print(sorted_matches)
         return sorted_matches
 
     @staticmethod
@@ -137,6 +138,7 @@ class CompareSeqs(object):
                     downstream_seq = self.seq_file[end+1:end+self.downstream+1]
                     return (upstream_seq.lower(), downstream_seq.lower(),
                            ref_seq, "-", insertion)
+                
 
                 # else check if it's a point mutation
                 else:
@@ -155,7 +157,7 @@ class CompareSeqs(object):
                 # for Reverse sequence files, get the actual index
                 if num == 1:
                     start = len(self.seq_file) - start -1
-
+            
                 var_pos_seq = CompareSeqs.UIPAC.get(self.seq_file[start-1])
                 # below may not work great if it produces a negative number for indexing
                 # i.e if start index = 6, self.downstream = 20
@@ -189,9 +191,10 @@ class CompareSeqs(object):
 
         seq_het_calls = self.index_basecall_dictionary(postseq,
                                                        start_index_postseq, num)
-        matched_seq, seq_len = self.get_index_range(postseq, seq_het_calls, start_index_postseq, num)
+        matched_seq, seq_len = self.get_index_range(postseq, seq_het_calls,
+                                                    start_index_postseq, num)
         
-        # ensure the difference in length is greater than 80% then return the base range at which the insertion covers
+        # ensure the difference in length is greater than 80% then return the base range at which the insertion covers (seq_len will decrease as the number of recursions increases).
         if len(matched_seq)/seq_len > 0.8:
             return (var_index, var_index+num, num-1)
         else:
@@ -248,13 +251,14 @@ class CompareSeqs(object):
         indexes_sequence = range(start_index_seq + num, end_index_seq)
         counts = range(0, self.upstream)
 
+        # the more recursion, the smaller this will become, hence why you can't just use self.downstream to divide the len(master_seq)
         len_indexes_sequence = 0
         matched_seq = []
-        
+
         for count, index in zip(counts, indexes_sequence):
             len_indexes_sequence += 1
             if sequence[count] in het_call_dict.get(index):
-                matched_seq.append(het_call_dict.get(index))
+                matched_seq.append(sequence[count])
 
         return (matched_seq, len_indexes_sequence-1) 
 
@@ -302,6 +306,7 @@ class CompareSeqs(object):
 
         # sort matches by quality and return highest bases as het call if more than one call is found for the given position/index
         sorted_matches = sorted(all_matches, key=lambda x: int(x[0]), reverse=True)
+
         return sorted_matches
 
     
@@ -319,14 +324,25 @@ class CompareSeqs(object):
         elif len(sorted_matches) > 1:
             first_call, second_call = (sorted_matches[0][1], sorted_matches[1][1])
             
+            if first_call in CompareSeqs.non_singular_bases and \
+               second_call not in CompareSeqs.non_singular_bases and \
+               int(sorted_matches[0][0]) - int(sorted_matches[1][0]) > 10 and \
+               second_call in CompareSeqs.UIPAC.get(first_call):
+                het_call = CompareSeqs.UIPAC.get(first_call)
+
             # if more any calls have a non singular base within them
-            if [True for x in [first_call, second_call] if x in CompareSeqs.non_singular_bases]:
+            elif [True for x in [first_call, second_call] if x in CompareSeqs.non_singular_bases]:
                 
+                # get rid of any no singular bases
                 clean_calls = [x for x in [first_call, second_call] if x not in 
                                CompareSeqs.non_singular_bases]
                 
                 if len(clean_calls) == 1 and ref_base != clean_calls[0]:
                     het_call = "/".join((ref_base, clean_calls[0]))
+
+                elif not clean_calls and first_call in CompareSeqs.non_singular_bases:
+                    het_call = CompareSeqs.UIPAC.get(first_call)
+
                 else: 
                     het_call = ref_base
 

@@ -113,7 +113,7 @@ def parse_file(*args):
         sequence_info = [get_seq(seq_name, var_pos, reference,  
                                 hg_version, pyensembl, genome, x) for x in sanger]
         # filter out sequences where no seq file was found
-        filtered_answer = [x for x in sequence_info if "-" not in x[1].split("\t")[11]]
+        filtered_answer = [x for x in sequence_info if "-" != x[1].split("\t")[11]]
 
         # if a het call was found in some of the matching seq files, then print and return its values. Otherwise, return no seq_file matched values
         if filtered_answer:
