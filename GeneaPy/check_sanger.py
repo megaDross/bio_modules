@@ -65,7 +65,7 @@ class CompareSeqs(object):
         cut = query.replace("_","-").split("-")
         reversed_query = "_".join((cut[1],cut[0])) if len(cut) > 1 else query
         
-
+        # stop recursion
         if length < 6:
             return []
 
@@ -73,7 +73,7 @@ class CompareSeqs(object):
         store_matches = []
         for f in [x for x in os.listdir(directory) if x.endswith(".ab1")]:
             if query.replace("-","_") in f or query.replace("_","-") in f or \
-               reversed_query in f:
+               reversed_query in f or reversed_query.replace("_","-") in f:
                 file_match = directory+f
                 store_matches.append(file_match)
         
@@ -83,7 +83,6 @@ class CompareSeqs(object):
         if not sorted_matches:
             return CompareSeqs.get_matching_seq_file(query[:-1], directory)
 
-        print(sorted_matches)
         return sorted_matches
 
     @staticmethod
