@@ -112,7 +112,6 @@ def parse_file(*args):
         # parse it all into get_seq()
         sequence_info = [get_seq(seq_name, var_pos, reference,  
                                 hg_version, pyensembl, genome, x) for x in sanger]
-
         # filter out sequences where no seq file was found
         filtered_answer = [x for x in sequence_info if "-" not in x[1].split("\t")[11]]
 
@@ -193,9 +192,16 @@ def get_seq(seq_name, var_pos, reference,  hg_version, pyensembl, genome, sanger
                 upstream_seq, downstream_seq, ref_base, sanger_base, \
                         var_index = sanger_sequence
                 
-                alternate_bases = sanger.get_het_call(var_index)
-                het_call = sanger.base_caller(alternate_bases, ref_base)
+                # if var_index is a tuple then it is a deletion else process the position
+                if isinstance(var_index, tuple):
+                    alternate_bases = [sanger.seq_file[x] for x in range(var_index[0], var_index[1]+1)]
+                    insertion = "".join(alternate_bases)
+                    het_call = "/".join((ref_base,insertion))
+                else:
+                    alternate_bases = sanger.get_het_call(var_index)
+                    het_call = sanger.base_caller(alternate_bases, ref_base)
 
+                # if a het was found use it in the full sequence else use the ref base
                 if het_call:
                     sanger_base = het_call 
                     full_seq = "".join((upstream_seq,het_call,downstream_seq))
@@ -206,7 +212,6 @@ def get_seq(seq_name, var_pos, reference,  hg_version, pyensembl, genome, sanger
                 statement = compare[0]
                 compare_result = compare[1]
 
-         
         # get gene information for the variant position
         if pyensembl:
             all_info = get_gene_exon_info.gene_transcript_exon(var_pos, hg_version)

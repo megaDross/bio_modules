@@ -2,7 +2,7 @@ from Bio import SeqIO
 import os, re, subprocess
 import itertools
 import GeneaPy.useful as useful
-
+import collections
 
 file_path = useful.cwd_file_path(__file__)
 
@@ -10,9 +10,11 @@ class CompareSeqs(object):
     ''' A collection of methods used to compare a reference sequence 
         with a sanger sequence contained within a .seq file
     '''
-    def __init__(self, upstream, downstream, seq_file=None, seq_dir=None):
-        self.seq_file = CompareSeqs.handle_seq_file(seq_file, seq_dir)
-        self.seq_filename = seq_file
+    def __init__(self, upstream, downstream, path_to_seq_file=None, seq_dir=None,
+                 seq_filename = None):
+        self.seq_file = CompareSeqs.handle_seq_file(path_to_seq_file, seq_dir)
+        # if statement helps with the recursive function in match_with_seq_file(), otherwise the actual reverse complemented sequence is used as the seq_filename, which causes errors in get_het_calls when it tries to open a string instead of an actual file
+        self.seq_filename = path_to_seq_file if not seq_filename else seq_filename
         self.upstream = upstream
         self.downstream = downstream
         self.seq_dir = seq_dir
@@ -22,6 +24,8 @@ class CompareSeqs(object):
              "W":"A/T", "K":"G/T", "M":"A/C",
              "B":"C/G/T", "D":"A/G/T", "H":"A/C/T",
              "V":"A/C/G", "N":"N"}
+
+    non_singular_bases = ["Y", "R", "W", "S", "K", "M"]
 
     @staticmethod
     def handle_seq_file(seq_file, seq_dir):
@@ -60,11 +64,9 @@ class CompareSeqs(object):
         length = len(query)
         cut = query.replace("_","-").split("-")
         reversed_query = "_".join((cut[1],cut[0])) if len(cut) > 1 else query
-        #print(reversed_query)
         
 
         if length < 6:
-        #    print("nothing found for\t"+query)
             return []
 
         # appending is required in case there is more than one match, returns first match
@@ -79,7 +81,6 @@ class CompareSeqs(object):
         sorted_matches = sorted(store_matches)
 
         if not sorted_matches:
-        #    print(query+"         "+str(len(sorted_matches)))
             return CompareSeqs.get_matching_seq_file(query[:-1], directory)
 
         return sorted_matches
@@ -124,47 +125,29 @@ class CompareSeqs(object):
             if re.search(preseq, self.seq_file):    
                 start, end, upstream_seq = CompareSeqs.get_start_end_indexes(preseq, 
                                                                             self.seq_file)
-                ## DELETION
-                #dictionary = {}
-
-                #non_singular_bases = ["Y", "R", "W", "S", "K", "M"]
-                #
-                #n = 0
-                #for index in range(end+1, end+self.upstream):
-                #    hets = self.get_het_call(index)
-                #    dictionary[index] = ''
-                #    if hets:
-                #        uip = CompareSeqs.UIPAC.get(hets[0][1])
-                #        if "/" in uip:
-                #            dictionary[index] = (uip.split("/")[0], uip.split("/")[1])
-                #            
-                #        elif hets[1][1] in non_singular_bases:
-                #            dictionary[index] = (postseq[n], hets[0][1])
-
-                #        else:
-                #            dictionary[index] = (hets[0][1], hets[1][1])
-
-                #    else:
-                #        dictionary[index] = tuple(postseq[n])
-                #    n += 1
-
-                #            
-                #print(dictionary)
-
-
-                # END OF DELETION #
-
                 # for Reverse sequence seq files, get the actual index
                 if num == 1:
                     end = len(self.seq_file) - end -1
-
-                var_pos_seq = CompareSeqs.UIPAC.get(self.seq_file[end])
-                downstream_seq = self.seq_file[end+1:end+self.downstream+1]
-                full_seq = "".join((upstream_seq.lower(),var_pos_seq.upper(),
-                                     downstream_seq.lower()))
                 
-                return (upstream_seq.lower(), downstream_seq.lower(),
-                        ref_seq, var_pos_seq.upper(), end)
+                # check if there is an insertion
+                insertion = self.check_if_insertion(postseq, end)
+                if insertion:
+                    start_insert, end_insert, extra = insertion
+                    postseq = sequence[self.upstream:].upper()[1+extra:]
+                    downstream_seq = self.seq_file[end+1:end+self.downstream+1]
+                    return (upstream_seq.lower(), downstream_seq.lower(),
+                           ref_seq, "-", insertion)
+
+                # else treat it as a possible SNV
+                else:
+                    var_pos_seq = CompareSeqs.UIPAC.get(self.seq_file[end])
+                    downstream_seq = self.seq_file[end+1:end+self.downstream+1]
+                    full_seq = "".join((upstream_seq.lower(),var_pos_seq.upper(),
+                                         downstream_seq.lower()))
+                    
+                    
+                    return (upstream_seq.lower(), downstream_seq.lower(),
+                            ref_seq, var_pos_seq.upper(), end)
 
 
             elif re.search(postseq, self.seq_file):
@@ -187,11 +170,65 @@ class CompareSeqs(object):
             else:
                 update_object = CompareSeqs(self.upstream, self.downstream, 
                                             useful.reverse_complement(self.seq_file), 
-                                            self.seq_dir)
+                                            self.seq_dir, self.seq_filename)
+
                 return update_object.match_with_seq_file(sequence, num-1)
 
         else:
             pass
+
+
+
+    def check_if_insertion(self, postseq, var_index, num=1):
+
+        start_index_postseq = var_index + 1
+
+        # stops recursive function if the num gets too high
+        if float(num) > float(len(postseq)/4):
+            return None
+
+        postseq_het_calls = {}
+
+        
+        n = 0
+        # create a dictioney where the key is the index of the preseq and the item is a tuple containing every called base at said index
+        indexes_postseq = range(start_index_postseq, start_index_postseq+self.upstream)
+
+        for index in indexes_postseq:
+            hets = self.get_het_call(index)
+            postseq_het_calls[index] = ''
+
+            if hets:
+                uip = CompareSeqs.UIPAC.get(hets[0][1])
+                if "/" in uip:
+                    postseq_het_calls[index] = (uip.split("/")[0], uip.split("/")[1])
+                    
+                elif hets[1][1] in CompareSeqs.non_singular_bases:
+                    postseq_het_calls[index] = (postseq[n], hets[0][1])
+
+                else:
+                    postseq_het_calls[index] = (hets[0][1], hets[1][1])
+
+            else:
+                postseq_het_calls[index] = tuple(postseq[n])
+            n += 1
+
+        sorted_key_dict = collections.OrderedDict(sorted(postseq_het_calls.items()))
+
+        # check if the postseq is found in one position upstream from where it is expected, is so append to beep
+        beep = []
+        for n, index in zip(range(0, self.upstream), range(start_index_postseq+num, 
+                                                           start_index_postseq+self.upstream)):
+            if postseq[n] in postseq_het_calls.get(index):
+                beep.append(sorted_key_dict[index])
+                
+        # ensure there is a 80% match and return the base range at which the insertion covers
+        if len(beep)/n > 0.8:
+            return (var_index, var_index+num, num-1)
+        else:
+            return self.check_if_insertion(postseq, var_index, num+1)
+
+        # END OF DELETION #
 
 
 
@@ -244,10 +281,8 @@ class CompareSeqs(object):
     def base_caller(self, sorted_matches, ref_base):
         ''' use the sorted matches from get_het_call() to call the approiriate base
         '''
-        non_singular_bases = ["Y", "R", "W", "S", "K", "M"]
-        
         # if only one base, check if its a non singular base
-        if len(sorted_matches) ==  1 and sorted_matches[0] not in non_singular_bases:
+        if len(sorted_matches) ==  1 and sorted_matches[0] not in CompareSeqs.non_singular_bases:
             het_call = "/".join((ref_base, sorted_matches[0][1]))
         
         elif len(sorted_matches) == 1:
@@ -258,10 +293,10 @@ class CompareSeqs(object):
             first_call, second_call = (sorted_matches[0][1], sorted_matches[1][1])
             
             # if more any calls have a non singular base within them
-            if [True for x in [first_call, second_call] if x in non_singular_bases]:
+            if [True for x in [first_call, second_call] if x in CompareSeqs.non_singular_bases]:
                 
                 clean_calls = [x for x in [first_call, second_call] if x not in 
-                               non_singular_bases]
+                               CompareSeqs.non_singular_bases]
                 
                 if len(clean_calls) == 1 and ref_base != clean_calls[0]:
                     het_call = "/".join((ref_base, clean_calls[0]))
