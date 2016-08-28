@@ -2,7 +2,7 @@ from Bio import SeqIO
 import os, re, subprocess
 import itertools
 import GeneaPy.useful as useful
-import collections
+
 
 file_path = useful.cwd_file_path(__file__)
 
@@ -138,13 +138,12 @@ class CompareSeqs(object):
                     return (upstream_seq.lower(), downstream_seq.lower(),
                            ref_seq, "-", insertion)
 
-                # else treat it as a possible SNV
+                # else check if it's a point mutation
                 else:
                     var_pos_seq = CompareSeqs.UIPAC.get(self.seq_file[end])
                     downstream_seq = self.seq_file[end+1:end+self.downstream+1]
                     full_seq = "".join((upstream_seq.lower(),var_pos_seq.upper(),
                                          downstream_seq.lower()))
-                    
                     
                     return (upstream_seq.lower(), downstream_seq.lower(),
                             ref_seq, var_pos_seq.upper(), end)
@@ -180,56 +179,86 @@ class CompareSeqs(object):
 
 
     def check_if_insertion(self, postseq, var_index, num=1):
-
+        ''' Determine whether an insertion occurs within a given variant position
+        '''
         start_index_postseq = var_index + 1
 
         # stops recursive function if the num gets too high
         if float(num) > float(len(postseq)/4):
             return None
 
-        postseq_het_calls = {}
-
+        seq_het_calls = self.index_basecall_dictionary(postseq,
+                                                       start_index_postseq, num)
+        beep = self.get_index_range(postseq, seq_het_calls, start_index_postseq, num)
         
-        n = 0
-        # create a dictioney where the key is the index of the preseq and the item is a tuple containing every called base at said index
-        indexes_postseq = range(start_index_postseq, start_index_postseq+self.upstream)
-
-        for index in indexes_postseq:
-            hets = self.get_het_call(index)
-            postseq_het_calls[index] = ''
-
-            if hets:
-                uip = CompareSeqs.UIPAC.get(hets[0][1])
-                if "/" in uip:
-                    postseq_het_calls[index] = (uip.split("/")[0], uip.split("/")[1])
-                    
-                elif hets[1][1] in CompareSeqs.non_singular_bases:
-                    postseq_het_calls[index] = (postseq[n], hets[0][1])
-
-                else:
-                    postseq_het_calls[index] = (hets[0][1], hets[1][1])
-
-            else:
-                postseq_het_calls[index] = tuple(postseq[n])
-            n += 1
-
-        sorted_key_dict = collections.OrderedDict(sorted(postseq_het_calls.items()))
-
-        # check if the postseq is found in one position upstream from where it is expected, is so append to beep
-        beep = []
-        for n, index in zip(range(0, self.upstream), range(start_index_postseq+num, 
-                                                           start_index_postseq+self.upstream)):
-            if postseq[n] in postseq_het_calls.get(index):
-                beep.append(sorted_key_dict[index])
-                
-        # ensure there is a 80% match and return the base range at which the insertion covers
-        if len(beep)/n > 0.8:
+        # ensure the difference in length is greater than 80% then return the base range at which the insertion covers
+        if len(beep)/self.downstream > 0.8:
+            print(len(beep)/self.downstream)
             return (var_index, var_index+num, num-1)
         else:
             return self.check_if_insertion(postseq, var_index, num+1)
 
-        # END OF DELETION #
 
+
+    def index_basecall_dictionary(self, sequence, start_index_seq, num):
+        ''' Create a dictioney where the key is the seq_file index of the 
+            given sequence and the item is a tuple containing every called 
+            base at said index
+        '''
+        seq_het_calls = {}
+
+        # entire index (index from seq_file) range of the given sequence
+        indexes_sequence = range(start_index_seq, start_index_seq+self.upstream)
+        count = 0
+
+        # get all base calls for every index in the given sequence & place in dict
+        for index in indexes_sequence:
+            hets = self.get_het_call(index)
+            seq_het_calls[index] = ''
+
+            if hets:
+                convert = CompareSeqs.UIPAC.get(hets[0][1])
+                if "/" in convert:
+                    seq_het_calls[index] = (convert.split("/")[0], convert.split("/")[1])
+                    
+                elif hets[1][1] in CompareSeqs.non_singular_bases:
+                    seq_het_calls[index] = (sequence[count], hets[0][1])
+
+                else:
+                    seq_het_calls[index] = (hets[0][1], hets[1][1])
+
+            else:
+                seq_het_calls[index] = tuple(sequence[count])
+                
+            count += 1
+
+        return seq_het_calls
+
+    
+    def get_index_range(self, sequence, het_call_dict, start_index_seq, num):
+        ''' Compare every base in a given sequence with the calls in the 
+            dictionary generated by index_basecall_dictionary() starting 
+            from the first index key in the dict plus the given num
+
+            i.e. keys range from 91, 111 and num = 2 then:
+                compare every sequence[0] with items in 93, then the
+                sequence[1] with items in 94 etc.
+        '''
+        # entire index (from seq_file) range of a given sequence it starts from the first index plus num
+        indexes_sequence = range(start_index_seq + num, start_index_seq + self.upstream)
+        counts = range(0, self.upstream)
+
+        print(het_call_dict)
+        
+        # matched_seq would work as intended if it was simply a counter
+        matched_seq = []
+        for count, index in zip(counts, indexes_sequence):
+            if sequence[count] in het_call_dict.get(index):
+                matched_seq.append(het_call_dict[index])
+                print(index)
+                print(het_call_dict[index])
+                
+        return matched_seq 
 
 
     @staticmethod

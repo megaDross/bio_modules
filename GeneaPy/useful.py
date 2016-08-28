@@ -102,3 +102,13 @@ def all_combinations(l):
             answer.append(subset)
 
     return answer
+
+
+
+
+
+# sort dict by key
+#sorted_key_dict = collections.OrderedDict(sorted(het_call_dict.items())) 
+
+
+

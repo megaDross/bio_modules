@@ -1,0 +1,49 @@
+
+> LX14-AI_2 15:48703298 15:48703278,48703318 -
+Reference Sequence:	agttctttctttttataaagTggagtactactgatttgtaa
+Sanger Sequence:	agttctttctttttataaagT/TGggaattacaatggatttgta
+the nucleotides given are DIFFERENT
+
+
+> LUK8-KH 9:137644441 9:137644421,137644461 -
+Reference Sequence:	actttcctttgcagttggcaCtgaggggaccagctggcccg
+Sanger Sequence:	actttcctttgcagttggcaC/CTttaagggacccacttggccc
+the nucleotides given are DIFFERENT
+
+
+> LUK8-MH 9:137644441 9:137644421,137644461 -
+Reference Sequence:	actttcctttgcagttggcaCtgaggggaccagctggcccg
+Sanger Sequence:	actttcctttgcagttggcaC/CTttaagggaaccacctggccc
+the nucleotides given are DIFFERENT
+
+
+> HUK8-LM-UKB2 15:48729251 15:48729231,48729271 -
+Reference Sequence:	ctgtccatgtttacagacatCgggttctttgcattcgtcca
+Sanger Sequence:	ctgtccatgtttacagacatC/CGggggtcctttgctttcttcc
+the nucleotides given are DIFFERENT
+
+
+> FUK22-RP-UKB2 15:48787441 15:48787421,48787461 -
+Reference Sequence:	tcaatgacagtctgccagcaAgtgcccttgatggtttctgc
+Sanger Sequence:	tcaatgacagtctgccagcaA/AGTgtgtgcttgagagggtctgc
+the nucleotides given are DIFFERENT
+
+
+> LX18-SP-UKB2 15:48730093 15:48730073,48730113 -
+Reference Sequence:	ttcctccttcaaacttcgcaTaacagtagctcattcgcaaa
+Sanger Sequence:	ttcctccttcaaacttcgcaT/TAaaccataaccccatccccaa
+the nucleotides given are DIFFERENT
+
+
+> FUK16-JS-UKB2 15:48752502 15:48752482,48752522 -
+Reference Sequence:	gcctttgacttccacagagtGtagcaaactcatctgcaatg
+Sanger Sequence:	gcctttgacttccacagagtG/GTAtatcacacactcctccgctg
+the nucleotides given are DIFFERENT
+
+
+> WYN9-24HS1554 15:48755450 15:48755430,48755470 -
+Reference Sequence:	tctcatatctagaagggaggTaaaaaaaaggattggagggt
+Sanger Sequence:	tctcatatctagaagggaggT/TAaaaaaaaaagaatggagggt
+the nucleotides given are DIFFERENT
+
+
