@@ -192,8 +192,9 @@ class CompareSeqs(object):
         beep = self.get_index_range(postseq, seq_het_calls, start_index_postseq, num)
         
         # ensure the difference in length is greater than 80% then return the base range at which the insertion covers
+        print(len(beep)/self.downstream)
         if len(beep)/self.downstream > 0.8:
-            print(len(beep)/self.downstream)
+            print("QUALIFIED")
             return (var_index, var_index+num, num-1)
         else:
             return self.check_if_insertion(postseq, var_index, num+1)
@@ -248,16 +249,13 @@ class CompareSeqs(object):
         indexes_sequence = range(start_index_seq + num, start_index_seq + self.upstream)
         counts = range(0, self.upstream)
 
-        print(het_call_dict)
         
         # matched_seq would work as intended if it was simply a counter
         matched_seq = []
         for count, index in zip(counts, indexes_sequence):
             if sequence[count] in het_call_dict.get(index):
                 matched_seq.append(het_call_dict[index])
-                print(index)
-                print(het_call_dict[index])
-                
+        print(counts)        
         return matched_seq 
 
 
