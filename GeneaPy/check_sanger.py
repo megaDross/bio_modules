@@ -255,7 +255,7 @@ class CompareSeqs(object):
         for count, index in zip(counts, indexes_sequence):
             if sequence[count] in het_call_dict.get(index):
                 matched_seq.append(het_call_dict[index])
-        print(counts)        
+        print(len(matched_seq))
         return matched_seq 
 
 
