@@ -249,13 +249,14 @@ class CompareSeqs(object):
         indexes_sequence = range(start_index_seq + num, start_index_seq + self.upstream)
         counts = range(0, self.upstream)
 
-        
+        print(het_call_dict)
         # matched_seq would work as intended if it was simply a counter
         matched_seq = []
         for count, index in zip(counts, indexes_sequence):
             if sequence[count] in het_call_dict.get(index):
-                matched_seq.append(het_call_dict[index])
-        print([x for x in indexes_sequence])
+                matched_seq.append(het_call_dict.get(index))
+
+        print([x for x in matched_seq])
         print(len(matched_seq))
         return matched_seq 
 
