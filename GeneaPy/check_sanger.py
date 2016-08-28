@@ -180,7 +180,13 @@ class CompareSeqs(object):
 
 
     def check_if_insertion(self, postseq, var_index, num=1):
+        ''' check for insertions near the given var_index
 
+            Dont mess aroung with the code!!! I forgot how it works
+            due to late night coding and messing around with it breaks
+            it! DONT FUCK AROUND WITH THIS UNTIL TESTING HAS BEEN 
+            CONSTRUCTED!
+        '''
         start_index_postseq = var_index + 1
 
         # stops recursive function if the num gets too high
@@ -220,9 +226,12 @@ class CompareSeqs(object):
         for n, index in zip(range(0, self.upstream), range(start_index_postseq+num, 
                                                            start_index_postseq+self.upstream)):
             if postseq[n] in postseq_het_calls.get(index):
+                print(n)
                 beep.append(sorted_key_dict[index])
                 
         # ensure there is a 80% match and return the base range at which the insertion covers
+        # n = the n in the loop directly above this and not the n being formed by n+=1. What the below if statement therefore means is, the number of bases that match divided by the the number of times the loop has been completed (AKA the total counts of the range(start_index_posseq+num, start_index_postseq + self.upstream
+        print((len(beep)/n, (len(beep),n,)))
         if len(beep)/n > 0.8:
             return (var_index, var_index+num, num-1)
         else:
