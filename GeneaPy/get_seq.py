@@ -192,7 +192,7 @@ def get_seq(seq_name, var_pos, reference,  hg_version, pyensembl, genome, sanger
                 upstream_seq, downstream_seq, ref_base, sanger_base, \
                         var_index = sanger_sequence
                 
-                # if var_index is a tuple then it is a deletion else process the position
+                # if var_index is a tuple then it is an insertion else process the position
                 if isinstance(var_index, tuple):
                     alternate_bases = [sanger.seq_file[x] for x in range(var_index[0], var_index[1]+1)]
                     insertion = "".join(alternate_bases)
