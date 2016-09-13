@@ -4,7 +4,7 @@
 
 - Alter so an input file also requires a third column which holds the mutation found by NGS sequencing i.e. "C/G". The program will then be able to determine whether its looking for a SNP, deletion or insertion (as described in the DO_NOT_DELETE.py dummy code). This will decrease the liklihood of accidently calling a SNP a deletion or an insertion a SNP etc. The  ALT bases can then be explicitly sought for in the ttuner alt calls, which would increase accuracy substantially. The column can be optional and autodetection of mutation type should be carried out, albeit with a warning communicated to the user concerning accuracy.  
 
-
+- _R_ file properly called for deletions too
 
 
 ## TODO - TOP
