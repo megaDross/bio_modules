@@ -8,6 +8,7 @@ from output import write_to_output
 from UCSC import ScrapeSeq
 import subprocess
 import config
+import get_AB1_file
 
 
 # get the absolute path to this file
@@ -105,8 +106,8 @@ def parse_file(*args):
         # intialise the class in Ensembl.py
         pyensembl = ScrapeEnsembl(var_pos, hg_version) if ensembl else None
         # find a list of files with seq_name in its title, if ab1 matched then convert it to a .seq and .tab file
-        seq_file = CompareSeqs.get_matching_seq_file(seq_name, seq_dir)
-        convert = [CompareSeqs.handle_seq_file(x, seq_dir) for x in seq_file if seq_file]
+        seq_file = get_AB1_file.get_matching_seq_file(seq_name, seq_dir)
+        convert = [get_AB1_file.handle_seq_file(x, seq_dir) for x in seq_file if seq_file]
         # intialise the check_sanger class for every found seq_file
         sanger = [CompareSeqs(upstream, downstream, x, seq_dir) for x in seq_file]
         # parse it all into get_seq()
@@ -209,7 +210,8 @@ def get_seq(seq_name, var_pos, reference,  hg_version, pyensembl, genome, sanger
                 else:
                     full_seq = "".join((upstream_seq,sanger_base,downstream_seq))
 
-                compare = CompareSeqs.compare_nucleotides(ref_base,sanger_base) 
+                compare = get_AB1_file.compare_nucleotides(ref_base,sanger_base) 
+
                 statement = compare[0]
                 compare_result = compare[1]
 
