@@ -6,13 +6,19 @@ import get_AB1_file
 
 # Perhaps have a function within this file which takes much of the actual basecalling out of the get_seq script (lines 187-214). life_saver()
 
-# DEALING WITH SEQ_FILE: handle_seq_file(), get_matching_seq_file(), convert_ab1_to_seq(), compare_nucleotides() 
-
 # PLAYING WITH ACTUAL STRING: match_with_seq_file(), check_if_insertion(), check_if_deletion()
 
 # HET CALLS: the rest
 
 file_path = useful.cwd_file_path(__file__)
+
+UIPAC = {"A":"A", "C":"C", "G":"G", "T":"T",
+         "R":"A/G", "Y":"C/T", "S":"G/C",
+         "W":"A/T", "K":"G/T", "M":"A/C",
+         "B":"C/G/T", "D":"A/G/T", "H":"A/C/T",
+         "V":"A/C/G", "N":"N"}
+
+non_singular_bases = ["Y", "R", "W", "S", "K", "M"]
 
 
 
@@ -20,26 +26,19 @@ class CompareSeqs(object):
     ''' A collection of methods used to compare a reference sequence 
         with a sanger sequence contained within a .seq file
     '''
-    def __init__(self, upstream, downstream, path_to_seq_file=None, seq_dir=None,
-                 seq_filename = None):
+    def __init__(self, upstream, downstream, alt_answer=None, mut_type=None,
+                 path_to_seq_file=None, seq_dir=None, seq_filename = None):
         self.seq_file = get_AB1_file.handle_seq_file(path_to_seq_file, seq_dir)
         # if statement helps with the recursive function in match_with_seq_file(), otherwise the actual reverse complemented sequence is used as the seq_filename, which causes errors in get_het_calls when it tries to open a string instead of an actual file
         self.seq_filename = path_to_seq_file if not seq_filename else seq_filename
         self.upstream = upstream
         self.downstream = downstream
         self.seq_dir = seq_dir
-    
-    UIPAC = {"A":"A", "C":"C", "G":"G", "T":"T",
-             "R":"A/G", "Y":"C/T", "S":"G/C",
-             "W":"A/T", "K":"G/T", "M":"A/C",
-             "B":"C/G/T", "D":"A/G/T", "H":"A/C/T",
-             "V":"A/C/G", "N":"N"}
-
-    non_singular_bases = ["Y", "R", "W", "S", "K", "M"]
+        self.mut_type = mut_type
+        self.alt_answer = alt_answer 
 
 
-
-    def match_with_seq_file(self,sequence, num=2):
+    def match_with_seq_file(self, sequence, num=2):
         ''' Find part of a given sequence in a given seq_file and return the equivalent 
 
             returns a tuple containing the matched sanger sequence and the variant 
@@ -64,12 +63,21 @@ class CompareSeqs(object):
                     end = len(self.seq_file) - end -1
                 
                 # check if there is an insertion or deletion 
-                insertion = self.check_if_insertion(postseq, end)
-                deletion = self.check_if_deletion(postseq, end)
+                if self.mut_type not in ("snp", "d"):
+                    print("looking for insertion\n")
+                    insertion = self.check_if_insertion(postseq, end) 
+                else:
+                    insertion = None
+                if self.mut_type not in ("snp", "i"):
+                    print("looking for deletion\n")
+                    deletion = self.check_if_deletion(postseq, end) 
+                else:
+                    deletion = None
                 #print(deletion)
                 indel = insertion if insertion else deletion
 
                 if indel:
+                    print("Indel\n")
                     start_insert, end_insert, extra = indel
                     postseq = sequence[self.upstream:].upper()[1+extra:]
                     downstream_seq = self.seq_file[end+1:end+self.downstream+1]
@@ -79,7 +87,8 @@ class CompareSeqs(object):
 
                 # else check if it's a point mutation
                 else:
-                    var_pos_seq = CompareSeqs.UIPAC.get(self.seq_file[end])
+                    print("looking for SNP\n")
+                    var_pos_seq = UIPAC.get(self.seq_file[end])
                     downstream_seq = self.seq_file[end+1:end+self.downstream+1]
                     full_seq = "".join((upstream_seq.lower(),var_pos_seq.upper(),
                                          downstream_seq.lower()))
@@ -98,7 +107,7 @@ class CompareSeqs(object):
                     start = len(self.seq_file) - start -1
                  
 
-                var_pos_seq = CompareSeqs.UIPAC.get(self.seq_file[start-1])
+                var_pos_seq = UIPAC.get(self.seq_file[start-1])
                 # below may not work great if it produces a negative number for indexing
                 # i.e if start index = 6, self.downstream = 20
                 upstream_seq = self.seq_file[(start-1)-self.downstream:start-1]
@@ -110,6 +119,7 @@ class CompareSeqs(object):
              
             else:
                 update_object = CompareSeqs(self.upstream, self.downstream, 
+                                            self.alt_answer, self.mut_type, 
                                             useful.reverse_complement(self.seq_file), 
                                             self.seq_dir, self.seq_filename)
 
@@ -216,7 +226,7 @@ class CompareSeqs(object):
         ''' use the sorted matches from get_het_call() to call the approiriate base
         '''
         # if only one base, check if its a non singular base
-        if len(sorted_matches) ==  1 and sorted_matches[0] not in CompareSeqs.non_singular_bases:
+        if len(sorted_matches) ==  1 and sorted_matches[0] not in non_singular_bases:
             het_call = "/".join((ref_base, sorted_matches[0][1]))
         
         elif len(sorted_matches) == 1:
@@ -226,24 +236,24 @@ class CompareSeqs(object):
         elif len(sorted_matches) > 1:
             first_call, second_call = (sorted_matches[0][1], sorted_matches[1][1])
             
-            if first_call in CompareSeqs.non_singular_bases and \
-               second_call not in CompareSeqs.non_singular_bases and \
+            if first_call in non_singular_bases and \
+               second_call not in non_singular_bases and \
                int(sorted_matches[0][0]) - int(sorted_matches[1][0]) > 10 and \
-               second_call in CompareSeqs.UIPAC.get(first_call):
-                het_call = CompareSeqs.UIPAC.get(first_call)
+               second_call in UIPAC.get(first_call):
+                het_call = UIPAC.get(first_call)
 
             # if more any calls have a non singular base within them
-            elif [True for x in [first_call, second_call] if x in CompareSeqs.non_singular_bases]:
+            elif [True for x in [first_call, second_call] if x in non_singular_bases]:
                 
                 # get rid of any no singular bases
                 clean_calls = [x for x in [first_call, second_call] if x not in 
-                               CompareSeqs.non_singular_bases]
+                               non_singular_bases]
                 
                 if len(clean_calls) == 1 and ref_base != clean_calls[0]:
                     het_call = "/".join((ref_base, clean_calls[0]))
 
-                elif not clean_calls and first_call in CompareSeqs.non_singular_bases:
-                    het_call = CompareSeqs.UIPAC.get(first_call)
+                elif not clean_calls and first_call in non_singular_bases:
+                    het_call = UIPAC.get(first_call)
 
                 else: 
                     het_call = ref_base
@@ -274,11 +284,11 @@ class CompareSeqs(object):
             seq_het_calls[index] = ''
 
             if hets:
-                convert = CompareSeqs.UIPAC.get(hets[0][1])
+                convert = UIPAC.get(hets[0][1])
                 if "/" in convert:
                     seq_het_calls[index] = (convert.split("/")[0], convert.split("/")[1])
                     
-                elif hets[1][1] in CompareSeqs.non_singular_bases:
+                elif hets[1][1] in non_singular_bases:
                     seq_het_calls[index] = (sequence[count], hets[0][1])
 
                 else:
