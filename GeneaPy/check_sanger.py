@@ -68,17 +68,19 @@ class CompareSeqs(object):
                     insertion = self.check_if_insertion(postseq, end) 
                 else:
                     insertion = None
+
                 if self.mut_type not in ("snp", "i"):
                     print("looking for deletion\n")
                     deletion = self.check_if_deletion(postseq, end) 
                 else:
                     deletion = None
+
                 #print(deletion)
                 indel = insertion if insertion else deletion
 
                 if indel:
                     print("Indel\n")
-                    start_insert, end_insert, extra = indel
+                    start_insert, end_insert, extra, indel_type = indel
                     postseq = sequence[self.upstream:].upper()[1+extra:]
                     downstream_seq = self.seq_file[end+1:end+self.downstream+1]
                     return (upstream_seq.lower(), downstream_seq.lower(),
@@ -161,7 +163,7 @@ class CompareSeqs(object):
           if float(num) > float(len(postseq)/2)-1:  
               #print(get_min)
               num = get_min[1]
-              return (var_index, var_index+num, num-1)
+              return (var_index, var_index+num, num-1, "d")
           else:
               return self.check_if_deletion(postseq, var_index, num+1, matched_seq_list )
 
@@ -182,7 +184,7 @@ class CompareSeqs(object):
         
         # ensure the the number of bases that match is at least 80% of the actual sequence used to compare with the hets, then return the base range at which the insertion covers (seq_len will decrease as the number of recursions increases).
         if len(matched_seq)/seq_len > 0.8:
-            return (var_index, var_index+num, num-1)
+            return (var_index, var_index+num, num-1, "i")
         else:
             return self.check_if_insertion(postseq, var_index, num+1)
 
@@ -224,45 +226,52 @@ class CompareSeqs(object):
 
     def base_caller(self, sorted_matches, ref_base):
         ''' use the sorted matches from get_het_call() to call the approiriate base
-        '''
-        # if only one base, check if its a non singular base
-        if len(sorted_matches) ==  1 and sorted_matches[0] not in non_singular_bases:
-            het_call = "/".join((ref_base, sorted_matches[0][1]))
-        
-        elif len(sorted_matches) == 1:
-            het_call = sorted_matches[0]
-        
-        # if more than one base 
-        elif len(sorted_matches) > 1:
-            first_call, second_call = (sorted_matches[0][1], sorted_matches[1][1])
+        ''' 
+        if self.alt_answer:
+            ppp = [UIPAC.get(x[1]) for x in sorted_matches]
+            if self.alt_answer in ppp or self.alt_answer+"/"+ref_base in ppp\
+               or ref_base+"/"+self.alt_answer in ppp:
+                het_call =  ref_base+"/"+self.alt_answer
+            else:
+                het_call = None
+
+        if not het_call:
+            # if only one base, check if its a non singular base
+            if len(sorted_matches) ==  1 and sorted_matches[0] not in non_singular_bases:
+                het_call = "/".join((ref_base, sorted_matches[0][1]))
             
-            if first_call in non_singular_bases and \
-               second_call not in non_singular_bases and \
-               int(sorted_matches[0][0]) - int(sorted_matches[1][0]) > 10 and \
-               second_call in UIPAC.get(first_call):
-                het_call = UIPAC.get(first_call)
-
-            # if more any calls have a non singular base within them
-            elif [True for x in [first_call, second_call] if x in non_singular_bases]:
+            elif len(sorted_matches) == 1:
+                het_call = sorted_matches[0]
+            
+            # if more than one base 
+            elif len(sorted_matches) > 1:
+                first_call, second_call = (sorted_matches[0][1], sorted_matches[1][1])
                 
-                # get rid of any no singular bases
-                clean_calls = [x for x in [first_call, second_call] if x not in 
-                               non_singular_bases]
-                
-                if len(clean_calls) == 1 and ref_base != clean_calls[0]:
-                    het_call = "/".join((ref_base, clean_calls[0]))
-
-                elif not clean_calls and first_call in non_singular_bases:
+                if first_call in non_singular_bases and \
+                   second_call not in non_singular_bases and \
+                   int(sorted_matches[0][0]) - int(sorted_matches[1][0]) > 10 and \
+                   second_call in UIPAC.get(first_call):
                     het_call = UIPAC.get(first_call)
 
-                else: 
-                    het_call = ref_base
+                # if more any calls have a non singular base within them
+                elif [True for x in [first_call, second_call] if x in non_singular_bases]:
+                    
+                    # get rid of any no singular bases
+                    clean_calls = [x for x in [first_call, second_call] if x not in 
+                                   non_singular_bases]
+                    
+                    if len(clean_calls) == 1 and ref_base != clean_calls[0]:
+                        het_call = "/".join((ref_base, clean_calls[0]))
 
-            else:
-                het_call = "/".join((first_call,second_call))
+                    elif not clean_calls and first_call in non_singular_bases:
+                        het_call = UIPAC.get(first_call)
 
-        else:
-            het_call = None
+                    else: 
+                        het_call = ref_base
+
+                else:
+                    het_call = "/".join((first_call,second_call))
+
 
         return het_call
 

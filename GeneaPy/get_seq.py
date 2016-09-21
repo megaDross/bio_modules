@@ -240,11 +240,15 @@ def get_seq(seq_name, var_pos, reference,  hg_version, pyensembl, genome, sanger
                 if isinstance(var_index, tuple):
                     alternate_bases = [sanger.seq_file[x] for x in range(var_index[0], var_index[1]+1)]
                     insertion = "".join(alternate_bases)
-                    het_call = "/".join((ref_base,insertion))
+                    if var_index[-1] == "i":
+                        het_call = "/".join((ref_base,insertion))
+                    if var_index[-1] == "d":
+                        het_call = "/".join((insertion, ref_base))
 
                 else:
                     alternate_bases = sanger.get_het_call(var_index)
                     het_call = sanger.base_caller(alternate_bases, ref_base)
+                    
 
                 # if a het was found use it in the full sequence else use the ref base
                 if het_call:
