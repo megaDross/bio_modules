@@ -1,5 +1,5 @@
 from Bio import SeqIO
-import os, re, subprocess
+import os, re, subprocess, sys
 import itertools
 import GeneaPy.useful as useful
 
@@ -33,7 +33,10 @@ class CompareSeqs(object):
         
             -id is used instead of -if as the -if only works on a file containing paths to the ab1 files requiring processing; cannot directly select a file in ttuner.
         '''
-        ttuner = "/home/david/bin/tracetuner_3.0.6beta/rel/Linux_64/ttuner"
+        if sys.platform == "cygwin":
+            ttuner = "/home/dross11/bin/tracetuner_3.0.6beta/rel/Linux/ttuner.exe"
+        else:
+            ttuner = "/home/david/bin/tracetuner_3.0.6beta/rel/Linux_64/ttuner"
 
         if seq_file.endswith(".seq"):
             seq_file = "".join([x.strip("\n") for x in open(seq_file) 

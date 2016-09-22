@@ -1,5 +1,5 @@
 import requests, bs4, re 
-import pysam
+#import pysam
 
 class WrongHGversion(Exception):
     pass
