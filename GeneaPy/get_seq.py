@@ -8,7 +8,8 @@ from output import write_to_output
 from UCSC import ScrapeSeq
 import subprocess
 import config
-
+import get_AB1_file
+import vcf2input
 
 # get the absolute path to this file
 file_path = useful.cwd_file_path(__file__)
@@ -34,11 +35,12 @@ else:
 @click.option('--ensembl/--ne', default='n', help="scrape gene & exon information")
 @click.option('--download/--donot', default='n', help="download ttuner and/or human genome fasta files")
 @click.option('--configure/--noconfig', default='n', help="configure get_seq")
+@click.option('--vcf', default=None, help='convert vcf to input file')
 
 def main(input_file, output_file=None, upstream=20, downstream=20,
          hg_version=default_hg_version, header="n", seq_file=None, download='n', 
          configure='n',seq_dir=file_path[:-8]+"test/test_files/", ensembl="n", 
-         genome=genome_path):
+         genome=genome_path, vcf=None):
     '''
     From a genomic postion, genomic range or tab-deliminated file produce a
     reference sequence that can be compared with a sanger trace along with 
@@ -54,7 +56,12 @@ def main(input_file, output_file=None, upstream=20, downstream=20,
     if configure:
         config.config()
         sys.exit()
-       
+   
+    # convert vcf to input file
+    if vcf:
+        vcf2input.vcf2input(vcf, "temp.tsv", 4)
+        input_file = "temp.tsv"
+
     # ensures the wrong human genome isnt used
     if hg_version not in genome:
         genome = None
@@ -73,6 +80,10 @@ def main(input_file, output_file=None, upstream=20, downstream=20,
         parse_string(input_file, output_file, upstream, downstream, hg_version, header,
                      seq_file, seq_dir, reference, ensembl, genome)
     
+    # delete the converted tsv file after usage
+    if vcf:
+        os.remove("temp.tsv")
+
     # write the header and each element per line to the file
     if output_file:
         header = "\t".join(("Name", "Position", "Seq_Range", "Gene_Name", 
@@ -100,15 +111,26 @@ def parse_file(*args):
     for line in [line.rstrip("\n").split("\t") for line in open(input_file)]:
         seq_name = line[0]
         var_pos = line[1]
+        
+        # Determine the type of mutation
+        if len(line) > 2:
+            mutation = line[2]
+            alt_answer, mut_type = determine_mutation(mutation)
+        else:
+            mut_type = None
+            alt_answer = None
+
         # check each individual line of the file for CUSTOM ERRORS
         error_check = reference.handle_argument_exception(var_pos)
         # intialise the class in Ensembl.py
         pyensembl = ScrapeEnsembl(var_pos, hg_version) if ensembl else None
         # find a list of files with seq_name in its title, if ab1 matched then convert it to a .seq and .tab file
-        seq_file = CompareSeqs.get_matching_seq_file(seq_name, seq_dir)
-        convert = [CompareSeqs.handle_seq_file(x, seq_dir) for x in seq_file if seq_file]
+        seq_file = get_AB1_file.get_matching_seq_file(seq_name, seq_dir)
+        convert = [get_AB1_file.handle_seq_file(x, seq_dir) 
+                   for x in seq_file if seq_file]
         # intialise the check_sanger class for every found seq_file
-        sanger = [CompareSeqs(upstream, downstream, x, seq_dir) for x in seq_file]
+        sanger = [CompareSeqs(upstream, downstream, alt_answer, mut_type, x, seq_dir) 
+                  for x in seq_file]
         # parse it all into get_seq()
         sequence_info = [get_seq(seq_name, var_pos, reference,  
                                 hg_version, pyensembl, genome, x) for x in sanger]
@@ -130,6 +152,28 @@ def parse_file(*args):
     
     # return all scrapped data
     return all_scrapped_info
+
+
+
+def determine_mutation(mutation):
+    ''' Determine which type of mutation is in each line of the
+        input file
+
+        This will eventually be utilised in the check_sangers het calls to find the correct mutation. 
+    '''
+    ref, alt = tuple(mutation.split("/"))
+
+    # determine whether mut is a SNP, deletion or insertion
+    if len(ref) == len(alt):
+        print("We are looking for a SNP in {}")#.format(name))
+        return (alt, "snp")
+    elif len(ref) > len(alt):
+        print("We are looking for a DELETION in {}")#.format(name))
+        return (alt, "d")
+    elif len(ref) < len(alt):
+        print("we are looking for an INSERTION in {}")#.format(name))
+        return (alt, "i")
+
 
 
 
@@ -192,15 +236,19 @@ def get_seq(seq_name, var_pos, reference,  hg_version, pyensembl, genome, sanger
                 upstream_seq, downstream_seq, ref_base, sanger_base, \
                         var_index = sanger_sequence
                 
-                # if var_index is a tuple then it is a deletion else process the position
+                # if var_index is a tuple then it is an insertion else process the position
                 if isinstance(var_index, tuple):
                     alternate_bases = [sanger.seq_file[x] for x in range(var_index[0], var_index[1]+1)]
                     insertion = "".join(alternate_bases)
-                    het_call = "/".join((ref_base,insertion))
+                    if var_index[-1] == "i":
+                        het_call = "/".join((ref_base,insertion))
+                    if var_index[-1] == "d":
+                        het_call = "/".join((insertion, ref_base))
 
                 else:
                     alternate_bases = sanger.get_het_call(var_index)
                     het_call = sanger.base_caller(alternate_bases, ref_base)
+                    
 
                 # if a het was found use it in the full sequence else use the ref base
                 if het_call:
@@ -209,7 +257,8 @@ def get_seq(seq_name, var_pos, reference,  hg_version, pyensembl, genome, sanger
                 else:
                     full_seq = "".join((upstream_seq,sanger_base,downstream_seq))
 
-                compare = CompareSeqs.compare_nucleotides(ref_base,sanger_base) 
+                compare = get_AB1_file.compare_nucleotides(ref_base,sanger_base) 
+
                 statement = compare[0]
                 compare_result = compare[1]
 
@@ -253,6 +302,7 @@ def get_seq(seq_name, var_pos, reference,  hg_version, pyensembl, genome, sanger
                         seq_name,"at",var_pos,"in",hg_version))
         ensembl_error(sam[1], msg)
         exon_id = intron = exon = "-"
+
 
 
 def ensembl_error(error, msg):
