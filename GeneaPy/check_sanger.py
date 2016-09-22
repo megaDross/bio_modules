@@ -1,10 +1,4 @@
-<<<<<<< HEAD
-from Bio import SeqIO
-import os, re, subprocess, sys
-import itertools
-=======
 import re
->>>>>>> dcf66d31d6ce2264f4febc1a94a9d04b1e46ac9d
 import GeneaPy.useful as useful
 import get_AB1_file
 
@@ -40,7 +34,8 @@ class CompareSeqs(object):
         self.upstream = upstream
         self.downstream = downstream
         self.seq_dir = seq_dir
-
+        self.alt_answer = alt_answer
+        self.mut_type = mut_type
 
     def match_with_seq_file(self, sequence, num=2):
         ''' Find part of a given sequence in a given seq_file and return the equivalent 
@@ -224,7 +219,7 @@ class CompareSeqs(object):
 
         # sort matches by quality and return highest bases as het call if more than one call is found for the given position/index
         sorted_matches = sorted(all_matches, key=lambda x: int(x[0]), reverse=True)
-
+        print(sorted_matches)
         return sorted_matches
 
 
@@ -232,14 +227,16 @@ class CompareSeqs(object):
         ''' use the sorted matches from get_het_call() to call the approiriate base
         ''' 
         if self.alt_answer:
+            print("Alt answer:\t "+self.alt_answer)
             ppp = [UIPAC.get(x[1]) for x in sorted_matches]
             if self.alt_answer in ppp or self.alt_answer+"/"+ref_base in ppp\
                or ref_base+"/"+self.alt_answer in ppp:
                 het_call =  ref_base+"/"+self.alt_answer
+                print("Het Call:\t"+het_call)
             else:
                 het_call = None
 
-        if not het_call:
+        elif not het_call:
             # if only one base, check if its a non singular base
             if len(sorted_matches) ==  1 and sorted_matches[0] not in non_singular_bases:
                 het_call = "/".join((ref_base, sorted_matches[0][1]))
