@@ -1,5 +1,11 @@
-import requests, bs4, re 
-#import pysam
+import sys, requests, bs4, re 
+
+# pysam doesnt work with cygwin
+if sys.platform == "cygwin":
+    pass
+else:
+    import pysam
+
 
 class WrongHGversion(Exception):
     pass

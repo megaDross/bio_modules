@@ -131,40 +131,40 @@ class CompareSeqs(object):
 
 
     def check_if_deletion(self, postseq, var_index, num=1, matched_seq_list=[]):
-          ''' Determine whether an insertion occurs within a given variant position
-          '''
-          start_index_postseq = var_index + 1
-  
-          # stops recursive function if the number of bases is more than the postseq len
-          if int(num) == self.upstream or \
-             re.search(postseq, self.seq_file):
-              return None
+        ''' Determine whether a deletion occurs within a given variant position
+        '''
+        start_index_postseq = var_index + 1
 
-          # get het calls for all within the indexs that cover the postseq 
-          seq_het_calls = self.index_basecall_dictionary(postseq,
-                                                         start_index_postseq, num)
+        # stops recursive function if the number of bases is more than the postseq len
+        if int(num) == self.upstream or \
+         re.search(postseq, self.seq_file):
+            return None
+
+        # get het calls for all within the indexs that cover the postseq 
+        seq_het_calls = self.index_basecall_dictionary(postseq,
+                                                       start_index_postseq, num)
+          
+        matched_seq, seq_len = self.compare_ref_het_calls(postseq, seq_het_calls,
+                                                          start_index_postseq, num, "deletion")
+
+        # a means by which to get all matche_seqs despite the number of recursions
+        matched_seq_list.append((len(matched_seq)/seq_len, num))
+        
+        # get tuple that has a matched_seq len closest to 1.0
+        get_min = min(matched_seq_list, key=lambda x:abs(x[0]-1))
+                                                       
+        
+        # TEMP
+        # print("\nSEQ_FILE:\t"+ str(self.seq_file[start_index_postseq + 1:            start_index_postseq+self.upstream]))
+        # print("-"*40+"\nLENGTH DIFF:\t"+str(len(matched_seq)/seq_len)+"\n"+"-"*40)
               
-          matched_seq, seq_len = self.compare_ref_het_calls(postseq, seq_het_calls,
-                                                      start_index_postseq, num, "deletion")
-
-          # a means by which to get all matche_seqs despite the number of recursions
-          matched_seq_list.append((len(matched_seq)/seq_len, num))
-          
-          # get tuple that has a matched_seq len closest to 1.0
-          get_min = min(matched_seq_list, key=lambda x:abs(x[0]-1))
-                                                           
-          
-          # TEMP
-          #print("\nSEQ_FILE:\t"+ str(self.seq_file[start_index_postseq + 1:            start_index_postseq+self.upstream]))
-          #print("-"*40+"\nLENGTH DIFF:\t"+str(len(matched_seq)/seq_len)+"\n"+"-"*40)
-                  
-          # if number of recursions is more than half
-          if float(num) > float(len(postseq)/2)-1:  
-              #print(get_min)
-              num = get_min[1]
-              return (var_index, var_index+num, num-1, "d")
-          else:
-              return self.check_if_deletion(postseq, var_index, num+1, matched_seq_list )
+        # if number of recursions is more than half
+        if float(num) > float(len(postseq)/2)-1:  
+            # print(get_min)
+            num = get_min[1]
+            return (var_index, var_index+num, num-1, "d")
+        else:
+            return self.check_if_deletion(postseq, var_index, num+1, matched_seq_list)
 
            
     def check_if_insertion(self, postseq, var_index, num=1):
@@ -219,7 +219,7 @@ class CompareSeqs(object):
 
         # sort matches by quality and return highest bases as het call if more than one call is found for the given position/index
         sorted_matches = sorted(all_matches, key=lambda x: int(x[0]), reverse=True)
-
+        print(sorted_matches)
         return sorted_matches
 
 
@@ -227,14 +227,16 @@ class CompareSeqs(object):
         ''' use the sorted matches from get_het_call() to call the approiriate base
         ''' 
         if self.alt_answer:
+            print("Alt answer:\t "+self.alt_answer)
             ppp = [UIPAC.get(x[1]) for x in sorted_matches]
             if self.alt_answer in ppp or self.alt_answer+"/"+ref_base in ppp\
                or ref_base+"/"+self.alt_answer in ppp:
-                het_call =  ref_base+"/"+self.alt_answer
+                het_call = ref_base + "/" + self.alt_answer
+                print("Het Call:\t"+het_call)
             else:
                 het_call = None
 
-        if not het_call:
+        elif not het_call:
             # if only one base, check if its a non singular base
             if len(sorted_matches) ==  1 and sorted_matches[0] not in non_singular_bases:
                 het_call = "/".join((ref_base, sorted_matches[0][1]))
@@ -330,8 +332,8 @@ class CompareSeqs(object):
             indexes_sequence = range(start_index_seq + 1, end_index_seq)
             counts = range(0 + num - 1, self.upstream)
         
-        #print("\n\nNUM:\t"+str(num))
-        #print("\nREF_SEQ:\t"+str(sequence[0+num-1:self.upstream]))
+        # print("\n\nNUM:\t"+str(num))
+        # print("\nREF_SEQ:\t"+str(sequence[0+num-1:self.upstream]))
 
 
         # the more recursion, the smaller this will become, hence why you can't just use self.downstream to divide the len(master_seq)

@@ -115,6 +115,8 @@ def parse_file(*args):
         # Determine the type of mutation
         if len(line) > 2:
             mutation = line[2]
+            ref_base = line[2].split("/")[0]
+            print(line[2].split("/"))
             alt_answer, mut_type = determine_mutation(mutation)
         else:
             mut_type = None
@@ -136,9 +138,28 @@ def parse_file(*args):
                                 hg_version, pyensembl, genome, x) for x in sanger]
         # filter out sequences where no seq file was found
         filtered_answer = [x for x in sequence_info if "-" != x[1].split("\t")[11]]
+       
+        print(filtered_answer)
+        print("REF_BASE:\t"+ref_base)
+        
+        # find the index in filtered_answer which contains the mutation detected by NGS and store in a var called found_answer
+        index = 0
+        for i in filtered_answer:
+            filtered_call = i[1].split("\t")[13]
+            print("FILTERED CALL:\t"+filtered_call)     
+            if ref_base+"/"+alt_answer == filtered_call:
+                found_answer = filtered_answer[index]  
+            else:
+                found_answer = None
+            index += 1
 
         # if a het call was found in some of the matching seq files, then print and return its values. Otherwise, return no seq_file matched values
-        if filtered_answer:
+        if found_answer:
+            print_out, answer = found_answer
+            print(print_out)
+            all_scrapped_info.append(answer)
+
+        elif filtered_answer:
             print_out, answer = filtered_answer[0]
             print(print_out)
             # append each lines returned data to an emty list
@@ -149,7 +170,9 @@ def parse_file(*args):
             print(print_out)
             all_scrapped_info.append(answer)
 
-    
+        # reset variable for next line
+        found_answer = None
+
     # return all scrapped data
     return all_scrapped_info
 
