@@ -1,10 +1,4 @@
-<<<<<<< HEAD
-from Bio import SeqIO
-import os, re, subprocess, sys
-import itertools
-=======
 import re
->>>>>>> dcf66d31d6ce2264f4febc1a94a9d04b1e46ac9d
 import GeneaPy.useful as useful
 import get_AB1_file
 
@@ -40,7 +34,8 @@ class CompareSeqs(object):
         self.upstream = upstream
         self.downstream = downstream
         self.seq_dir = seq_dir
-
+        self.mut_type = mut_type
+        self.alt_answer = alt_answer
 
     def match_with_seq_file(self, sequence, num=2):
         ''' Find part of a given sequence in a given seq_file and return the equivalent 
