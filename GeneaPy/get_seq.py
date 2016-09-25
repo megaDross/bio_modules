@@ -131,7 +131,8 @@ def parse_file(*args):
         convert = [get_AB1_file.handle_seq_file(x, seq_dir) 
                    for x in seq_file if seq_file]
         # intialise the check_sanger class for every found seq_file
-        sanger = [CompareSeqs(upstream, downstream, alt_answer, mut_type, x, seq_dir) 
+        sanger = [CompareSeqs(upstream, downstream, ref_base, alt_answer, 
+                              mut_type, x, seq_dir) 
                   for x in seq_file]
         # parse it all into get_seq()
         sequence_info = [get_seq(seq_name, var_pos, reference,  
@@ -259,14 +260,14 @@ def get_seq(seq_name, var_pos, reference,  hg_version, pyensembl, genome, sanger
                 upstream_seq, downstream_seq, ref_base, sanger_base, \
                         var_index = sanger_sequence
                 
-                # if var_index is a tuple then it is an insertion else process the position
+                # if var_index is a tuple then it is an indel else process the position
                 if isinstance(var_index, tuple):
                     alternate_bases = [sanger.seq_file[x] for x in range(var_index[0], var_index[1]+1)]
-                    insertion = "".join(alternate_bases)
+                    indel = "".join(alternate_bases)
                     if var_index[-1] == "i":
-                        het_call = "/".join((ref_base,insertion))
+                        het_call = "/".join((ref_base,indel))
                     if var_index[-1] == "d":
-                        het_call = "/".join((insertion, ref_base))
+                        het_call = "/".join((indel, ref_base))
 
                 else:
                     alternate_bases = sanger.get_het_call(var_index)

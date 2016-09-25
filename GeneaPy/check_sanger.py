@@ -26,8 +26,9 @@ class CompareSeqs(object):
     ''' A collection of methods used to compare a reference sequence 
         with a sanger sequence contained within a .seq file
     '''
-    def __init__(self, upstream, downstream, alt_answer=None, mut_type=None,
-                 path_to_seq_file=None, seq_dir=None, seq_filename = None):
+    def __init__(self, upstream, downstream, ref_base=None,  alt_answer=None,
+                 mut_type=None, path_to_seq_file=None, seq_dir=None, 
+                 seq_filename = None):
         self.seq_file = get_AB1_file.handle_seq_file(path_to_seq_file, seq_dir)
         # if statement helps with the recursive function in match_with_seq_file(), otherwise the actual reverse complemented sequence is used as the seq_filename, which causes errors in get_het_calls when it tries to open a string instead of an actual file
         self.seq_filename = path_to_seq_file if not seq_filename else seq_filename
@@ -36,6 +37,7 @@ class CompareSeqs(object):
         self.seq_dir = seq_dir
         self.mut_type = mut_type
         self.alt_answer = alt_answer
+        self.ref_base = ref_base
 
     def match_with_seq_file(self, sequence, num=2):
         ''' Find part of a given sequence in a given seq_file and return the equivalent 
@@ -67,13 +69,16 @@ class CompareSeqs(object):
                     insertion = self.check_if_insertion(postseq, end) 
                 else:
                     insertion = None
-
+                
                 if self.mut_type not in ("snp", "i"):
                     print("looking for deletion\n")
                     deletion = self.check_if_deletion(postseq, end) 
+                    print("PRINT")
+                    print(deletion)
                 else:
                     deletion = None
-
+                
+                
                 #print(deletion)
                 indel = insertion if insertion else deletion
 
@@ -143,7 +148,24 @@ class CompareSeqs(object):
         # get het calls for all within the indexs that cover the postseq 
         seq_het_calls = self.index_basecall_dictionary(postseq,
                                                        start_index_postseq, num)
-          
+        
+        ##### Testing ####
+        #num_bases = len(self.ref_base) - 1
+        #alt_answer_deletion = self.alt_answer + postseq[num_bases:num_bases+num_bases]
+        #
+        #score = 0
+        #for answer, key_item  in zip(alt_answer_deletion[1:], 
+        #                             sorted(seq_het_calls.items())[:num_bases]):
+        #    pos, calls = key_item
+        #    print((pos, calls, answer))
+        #    if answer in calls:
+        #        score += 1
+
+        #if score == len(self.ref_base) - 1:
+        #    return
+
+        
+       ###### 
         matched_seq, seq_len = self.compare_ref_het_calls(postseq, seq_het_calls,
                                                           start_index_postseq, num, "deletion")
 
