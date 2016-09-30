@@ -45,6 +45,7 @@ class CompareSeqs(object):
             returns a tuple containing the matched sanger sequence and the variant 
             position base and the index of the var_pos_seq
         '''
+        print(num)
         if int(num) < 1:
             return None
         
@@ -79,17 +80,22 @@ class CompareSeqs(object):
                     deletion = None
                 
                 
-                #print(deletion)
                 indel = insertion if insertion else deletion
 
                 if indel:
                     print("Indel\n")
-                    start_insert, end_insert, extra, indel_type = indel
-                    postseq = sequence[self.upstream:].upper()[1+extra:]
-                    downstream_seq = self.seq_file[end+1:end+self.downstream+1]
-                    return (upstream_seq.lower(), downstream_seq.lower(),
-                           ref_seq, "-", indel)
-                
+                    if isinstance(indel, tuple):
+                        start_insert, end_insert, extra, indel_type = indel
+                        postseq = sequence[self.upstream:].upper()[1+extra:]
+                        downstream_seq = self.seq_file[end+1:end+self.downstream+1]
+                        return (upstream_seq.lower(), downstream_seq.lower(),
+                                ref_seq, "-", indel)
+                    
+                    elif isinstance(indel, str):
+                        downstream_seq = postseq[len(self.ref_base)-1:]
+                        return (upstream_seq.lower(), downstream_seq.lower(),
+                                self.ref_base, "-", indel)
+                           
 
                 # else check if it's a point mutation
                 else:
@@ -119,6 +125,7 @@ class CompareSeqs(object):
                 upstream_seq = self.seq_file[(start-1)-self.downstream:start-1]
                 full_seq = "".join((upstream_seq.lower(),var_pos_seq.upper(),
                                     downstream_seq.lower()))
+                
                 return (upstream_seq.lower(), downstream_seq.lower(), 
                         ref_seq,var_pos_seq.upper(), start-1)
 
@@ -145,27 +152,31 @@ class CompareSeqs(object):
          re.search(postseq, self.seq_file):
             return None
 
-        # get het calls for all within the indexs that cover the postseq 
+        # get every het call for each position within the postseq 
         seq_het_calls = self.index_basecall_dictionary(postseq,
                                                        start_index_postseq, num)
         
-        ##### Testing ####
-        #num_bases = len(self.ref_base) - 1
-        #alt_answer_deletion = self.alt_answer + postseq[num_bases:num_bases+num_bases]
-        #
-        #score = 0
-        #for answer, key_item  in zip(alt_answer_deletion[1:], 
-        #                             sorted(seq_het_calls.items())[:num_bases]):
-        #    pos, calls = key_item
-        #    print((pos, calls, answer))
-        #    if answer in calls:
-        #        score += 1
+        #### Testing ####
+        # use the number of bases to construct a sequence that depicts the resulting string produced from the deletion (al_answer_deletion)
+        num_bases = len(self.ref_base) - 1
+        alt_answer_deletion = self.alt_answer + postseq[num_bases:num_bases+num_bases]
+        
+        # check that the deleted base is within the positions het calls dict, if so add 1 to score and return the het call if all are found in the dict
+        score = 0
+        for answer, key_item  in zip(alt_answer_deletion[1:], 
+                                     sorted(seq_het_calls.items())[:num_bases]):
+            pos, calls = key_item
+            print((pos, calls, answer))
+            if answer in calls:
+                score += 1
 
-        #if score == len(self.ref_base) - 1:
-        #    return
+        if score == len(self.ref_base) - 1:
+            return self.ref_base+"/"+self.alt_answer
 
         
        ###### 
+
+        # compare very postseq base with every het call at said bases poistion
         matched_seq, seq_len = self.compare_ref_het_calls(postseq, seq_het_calls,
                                                           start_index_postseq, num, "deletion")
 

@@ -254,6 +254,7 @@ def get_seq(seq_name, var_pos, reference,  hg_version, pyensembl, genome, sanger
         # if CompareSeqs class has been intiated try and find a matching .seq file
         if sanger:
             sanger_sequence = sanger.match_with_seq_file(sequence)
+            print(sanger_sequence)
             # if .seq file found compare the ref var_pos base and the sanger var_pos base
             if sanger_sequence:
                 seq_file_used = sanger.seq_filename.split("/")[-1]
@@ -268,8 +269,15 @@ def get_seq(seq_name, var_pos, reference,  hg_version, pyensembl, genome, sanger
                         het_call = "/".join((ref_base,indel))
                     if var_index[-1] == "d":
                         het_call = "/".join((indel, ref_base))
+                
+                # string means it is a deletion which was found in the het call dict
+                elif isinstance(var_index, str):
+                    het_call = var_index
 
+                # an int means SNP
                 else:
+                    print("SNP VAR INDEX:\t"+str(var_index))
+                    print(type(var_index))
                     alternate_bases = sanger.get_het_call(var_index)
                     het_call = sanger.base_caller(alternate_bases, ref_base)
                     
