@@ -147,9 +147,9 @@ def parse_file(*args):
         index = 0
         for i in filtered_answer:
             filtered_call = i[1].split("\t")[13]
-            print("FILTERED CALL:\t"+filtered_call)     
             if ref_base+"/"+alt_answer == filtered_call:
                 found_answer = filtered_answer[index]  
+                break
             else:
                 found_answer = None
             index += 1
