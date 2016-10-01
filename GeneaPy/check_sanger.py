@@ -126,16 +126,52 @@ class CompareSeqs(object):
                 if num == 1:
                     start = len(self.seq_file) - start -1
                  
-
-                var_pos_seq = UIPAC.get(self.seq_file[start-1])
-                # below may not work great if it produces a negative number for indexing
-                # i.e if start index = 6, self.downstream = 20
-                upstream_seq = self.seq_file[(start-1)-self.downstream:start-1]
-                full_seq = "".join((upstream_seq.lower(),var_pos_seq.upper(),
-                                    downstream_seq.lower()))
+                # check if there is an insertion or deletion 
+                if self.mut_type not in ("snp", "d"):
+                    print("looking for insertion\n")
+                    insertion = self.check_if_insertion(postseq, end) 
+                else:
+                    insertion = None
                 
-                return (upstream_seq.lower(), downstream_seq.lower(), 
-                        ref_seq,var_pos_seq.upper(), start-1)
+                if self.mut_type not in ("snp", "i"):
+                    print("looking for deletion\n")
+                    deletion = self.check_if_deletion(postseq, end) 
+                    print("PRINT")
+                    print(deletion)
+                else:
+                    deletion = None
+                
+                
+                indel = insertion if insertion else deletion
+
+                if indel:
+                    print("Indel\n")
+                    if isinstance(indel, tuple):
+                        start_insert, end_insert, extra, indel_type = indel
+                        postseq = sequence[self.upstream:].upper()[1+extra:]
+                        upstream_seq = self.seq_file[(start-1)-self.downstream:start-1]
+                        return (upstream_seq.lower(), downstream_seq.lower(),
+                                ref_seq, "-", indel)
+                    
+                    elif isinstance(indel, str):
+                        downstream_seq = postseq[len(self.ref_base)-1:]
+                        return (upstream_seq.lower(), downstream_seq.lower(),
+                                self.ref_base, "-", indel)
+                           
+
+                # else check if it's a point mutation
+                else:
+                    print("looking for SNP\n")
+                     
+                    var_pos_seq = UIPAC.get(self.seq_file[start-1])
+                    # below may not work great if it produces a negative number for indexing
+                    # i.e if start index = 6, self.downstream = 20
+                    upstream_seq = self.seq_file[(start-1)-self.downstream:start-1]
+                    full_seq = "".join((upstream_seq.lower(),var_pos_seq.upper(),
+                                        downstream_seq.lower()))
+                    
+                    return (upstream_seq.lower(), downstream_seq.lower(), 
+                            ref_seq,var_pos_seq.upper(), start-1)
 
              
             else:
@@ -269,13 +305,28 @@ class CompareSeqs(object):
     def base_caller(self, sorted_matches, ref_base):
         ''' use the sorted matches from get_het_call() to call the approiriate base
         ''' 
+
         if self.alt_answer:
             print("Alt answer:\t "+self.alt_answer)
+            
+            # complement bases
+            comp_alt_answer = "".join([useful.complement.get(x) for x in self.alt_answer])
+            comp_ref_base = useful.complement.get(ref_base)
+            
+            # get all het calls in a list
             ppp = [UIPAC.get(x[1]) for x in sorted_matches]
+
             if self.alt_answer in ppp or self.alt_answer+"/"+ref_base in ppp\
                or ref_base+"/"+self.alt_answer in ppp:
                 het_call = ref_base + "/" + self.alt_answer
                 print("Het Call:\t"+het_call)
+
+            # check complements in case seq_file is reverse complemented
+            elif comp_alt_answer in ppp or comp_alt_answer+"/"+comp_ref_base in ppp \
+               or comp_ref_base+"/"+comp_alt_answer in ppp:
+                het_call = ref_base + "/" + self.alt_answer
+                print("Comp Het Call:\t"+het_call)
+
             else:
                 het_call = None
 
