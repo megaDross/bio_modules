@@ -47,7 +47,6 @@ class CompareSeqs(object):
         '''
         print(num)
 
-        print(self.seq_file)
         if int(num) < 1:
             return None
         
@@ -57,6 +56,11 @@ class CompareSeqs(object):
             ref_seq = sequence[self.upstream].upper()
             postseq = sequence[self.upstream:].upper()[1:]
 
+            print(preseq)
+            print(postseq)
+            print(self.seq_filename) 
+            
+            print(self.seq_file)
             #if re.search(preseq, self.seq_file):    
             if regex.search(r'(?:'+preseq+'){s<=1}', self.seq_file):    
 
@@ -136,6 +140,7 @@ class CompareSeqs(object):
              
             else:
                 update_object = CompareSeqs(self.upstream, self.downstream, 
+                                            self.ref_base, 
                                             self.alt_answer, self.mut_type, 
                                             useful.reverse_complement(self.seq_file), 
                                             self.seq_dir, self.seq_filename)
