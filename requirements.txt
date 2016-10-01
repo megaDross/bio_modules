@@ -10,3 +10,4 @@ pandas==0.18.0
 pyensembl==0.8.11
 requests==2.9.1
 six==1.10.0
+regex==

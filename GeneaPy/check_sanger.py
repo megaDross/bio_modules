@@ -1,4 +1,4 @@
-import re
+import re, regex
 import GeneaPy.useful as useful
 import get_AB1_file
 
@@ -46,6 +46,8 @@ class CompareSeqs(object):
             position base and the index of the var_pos_seq
         '''
         print(num)
+
+        print(self.seq_file)
         if int(num) < 1:
             return None
         
@@ -54,9 +56,10 @@ class CompareSeqs(object):
             preseq = sequence[:self.upstream].upper()
             ref_seq = sequence[self.upstream].upper()
             postseq = sequence[self.upstream:].upper()[1:]
-            
 
-            if re.search(preseq, self.seq_file):    
+            #if re.search(preseq, self.seq_file):    
+            if regex.search(r'(?:'+preseq+'){s<=1}', self.seq_file):    
+
                 start, end, upstream_seq = CompareSeqs.get_start_end_indexes(preseq, 
                                                                             self.seq_file)
 
@@ -109,7 +112,8 @@ class CompareSeqs(object):
                             ref_seq, var_pos_seq.upper(), end)
 
 
-            elif re.search(postseq, self.seq_file):
+            # elif re.search(postseq, self.seq_file):
+            elif regex.search(r'(?:'+postseq+'){s<=1}', self.seq_file):
                 start, end, downstream_seq = CompareSeqs.get_start_end_indexes(postseq, 
                                                                             self.seq_file)
                 #deletion = self.check_if_deletion(sequence, preseq, postseq, start, end, "postseq")
@@ -226,7 +230,8 @@ class CompareSeqs(object):
         ''' Find a given string in a given file and get the indexes of said
             string in the file
         '''
-        find = [(m.start(0), m.end(0)) for m in re.finditer(seq, seq_file)][0]
+        find = [(m.start(0), m.end(0)) for m in regex.finditer(r'(?:'+seq+'){s<=2}'
+                                                               , seq_file)][0]
         start = find[0]
         end = find[1]
         matched_seq = seq_file[start:end]
