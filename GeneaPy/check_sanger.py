@@ -62,7 +62,8 @@ class CompareSeqs(object):
             
             print(self.seq_file)
             #if re.search(preseq, self.seq_file):    
-            if regex.search(r'(?:'+preseq+'){s<=1}', self.seq_file):    
+            if regex.search(r'(?:'+preseq+'){s<=2}', self.seq_file):    
+                print("\nPRESEQ MATCH\n")
 
                 start, end, upstream_seq = CompareSeqs.get_start_end_indexes(preseq, 
                                                                             self.seq_file)
@@ -105,7 +106,7 @@ class CompareSeqs(object):
                            
 
                 # else check if it's a point mutation
-                else:
+                if self.mut_type not in ("d", "i"):
                     print("looking for SNP\n")
                     var_pos_seq = UIPAC.get(self.seq_file[end])
                     downstream_seq = self.seq_file[end+1:end+self.downstream+1]
@@ -117,7 +118,9 @@ class CompareSeqs(object):
 
 
             # elif re.search(postseq, self.seq_file):
-            elif regex.search(r'(?:'+postseq+'){s<=1}', self.seq_file):
+            elif regex.search(r'(?:'+postseq+'){s<=2}', self.seq_file):
+                print("\nPOSTSEQ MATCH\n")
+
                 start, end, downstream_seq = CompareSeqs.get_start_end_indexes(postseq, 
                                                                             self.seq_file)
                 #deletion = self.check_if_deletion(sequence, preseq, postseq, start, end, "postseq")
@@ -154,13 +157,14 @@ class CompareSeqs(object):
                                 ref_seq, "-", indel)
                     
                     elif isinstance(indel, str):
-                        downstream_seq = postseq[len(self.ref_base)-1:]
+                        upstream_seq = postseq[:len(self.ref_base)-1]
+
                         return (upstream_seq.lower(), downstream_seq.lower(),
                                 self.ref_base, "-", indel)
                            
 
                 # else check if it's a point mutation
-                else:
+                if self.mut_type not in ("d", "i"):
                     print("looking for SNP\n")
                      
                     var_pos_seq = UIPAC.get(self.seq_file[start-1])
@@ -175,6 +179,7 @@ class CompareSeqs(object):
 
              
             else:
+                print("\nREVERSE\n")
                 update_object = CompareSeqs(self.upstream, self.downstream, 
                                             self.ref_base, 
                                             self.alt_answer, self.mut_type, 
@@ -190,59 +195,61 @@ class CompareSeqs(object):
     def check_if_deletion(self, postseq, var_index, num=1, matched_seq_list=[]):
         ''' Determine whether a deletion occurs within a given variant position
         '''
-        start_index_postseq = var_index + 1
+        if self.ref_base and self.alt_answer:
+            start_index_postseq = var_index + 1
 
-        # stops recursive function if the number of bases is more than the postseq len
-        if int(num) == self.upstream or \
-         re.search(postseq, self.seq_file):
-            return None
+            # stops recursive function if the number of bases is more than the postseq len
+            if int(num) == self.upstream or \
+             re.search(postseq, self.seq_file):
+                return None
 
-        # get every het call for each position within the postseq 
-        seq_het_calls = self.index_basecall_dictionary(postseq,
-                                                       start_index_postseq, num)
-        
-        #### Testing ####
-        # use the number of bases to construct a sequence that depicts the resulting string produced from the deletion (al_answer_deletion)
-        num_bases = len(self.ref_base) - 1
-        alt_answer_deletion = self.alt_answer + postseq[num_bases:num_bases+num_bases]
-        
-        # check that the deleted base is within the positions het calls dict, if so add 1 to score and return the het call if all are found in the dict
-        score = 0
-        for answer, key_item  in zip(alt_answer_deletion[1:], 
-                                     sorted(seq_het_calls.items())[:num_bases]):
-            pos, calls = key_item
-            print((pos, calls, answer))
-            if answer in calls:
-                score += 1
+            # get every het call for each position within the postseq 
+            seq_het_calls = self.index_basecall_dictionary(postseq,
+                                                           start_index_postseq, num)
+            
+            #### Testing ####
+            # use the number of bases to construct a sequence that depicts the resulting string produced from the deletion (al_answer_deletion)
+            num_bases = len(self.ref_base) - 1
+            alt_answer_deletion = self.alt_answer + postseq[num_bases:num_bases+num_bases]
+            
+            # check that the deleted base is within the positions het calls dict, if so add 1 to score and return the het call if all are found in the dict
+            score = 0
+            for answer, key_item  in zip(alt_answer_deletion[1:], 
+                                         sorted(seq_het_calls.items())[:num_bases]):
+                pos, calls = key_item
+                print((pos, calls, answer))
+                if answer in calls:
+                    score += 1
 
-        if score == len(self.ref_base) - 1:
-            return self.ref_base+"/"+self.alt_answer
+            if score == len(self.ref_base) - 1:
+                return self.ref_base+"/"+self.alt_answer
 
         
        ###### 
-
-        # compare very postseq base with every het call at said bases poistion
-        matched_seq, seq_len = self.compare_ref_het_calls(postseq, seq_het_calls,
-                                                          start_index_postseq, num, "deletion")
-
-        # a means by which to get all matche_seqs despite the number of recursions
-        matched_seq_list.append((len(matched_seq)/seq_len, num))
-        
-        # get tuple that has a matched_seq len closest to 1.0
-        get_min = min(matched_seq_list, key=lambda x:abs(x[0]-1))
-                                                       
-        
-        # TEMP
-        # print("\nSEQ_FILE:\t"+ str(self.seq_file[start_index_postseq + 1:            start_index_postseq+self.upstream]))
-        # print("-"*40+"\nLENGTH DIFF:\t"+str(len(matched_seq)/seq_len)+"\n"+"-"*40)
-              
-        # if number of recursions is more than half
-        if float(num) > float(len(postseq)/2)-1:  
-            # print(get_min)
-            num = get_min[1]
-            return (var_index, var_index+num, num-1, "d")
         else:
-            return self.check_if_deletion(postseq, var_index, num+1, matched_seq_list)
+            print("GUESS DELETION")
+            # compare very postseq base with every het call at said bases poistion
+            matched_seq, seq_len = self.compare_ref_het_calls(postseq, seq_het_calls,
+                                                              start_index_postseq, num, "deletion")
+
+            # a means by which to get all matche_seqs despite the number of recursions
+            matched_seq_list.append((len(matched_seq)/seq_len, num))
+            
+            # get tuple that has a matched_seq len closest to 1.0
+            get_min = min(matched_seq_list, key=lambda x:abs(x[0]-1))
+                                                           
+            
+            # TEMP
+            # print("\nSEQ_FILE:\t"+ str(self.seq_file[start_index_postseq + 1:            start_index_postseq+self.upstream]))
+            # print("-"*40+"\nLENGTH DIFF:\t"+str(len(matched_seq)/seq_len)+"\n"+"-"*40)
+            
+            # if number of recursions is more than half
+            if float(num) > float(len(postseq)/2)-1:  
+                # print(get_min)
+                num = get_min[1]
+                return (var_index, var_index+num, num-1, "d")
+            else:
+                return self.check_if_deletion(postseq, var_index, num+1, matched_seq_list)
 
            
     def check_if_insertion(self, postseq, var_index, num=1):
@@ -298,7 +305,7 @@ class CompareSeqs(object):
 
         # sort matches by quality and return highest bases as het call if more than one call is found for the given position/index
         sorted_matches = sorted(all_matches, key=lambda x: int(x[0]), reverse=True)
-        print(sorted_matches)
+        print("SORTED "+str(sorted_matches))
         return sorted_matches
 
 
@@ -403,6 +410,7 @@ class CompareSeqs(object):
                 
             count += 1
 
+        print("HET CALL DICT\t"+str(seq_het_calls))
         return seq_het_calls
 
     
@@ -422,6 +430,7 @@ class CompareSeqs(object):
             indexes_sequence = range(start_index_seq + num, end_index_seq)
             counts = range(0, self.upstream)
 
+        # NO LONGER IN USE FOR DELETIONS
         elif indel == "deletion":
             indexes_sequence = range(start_index_seq + 1, end_index_seq)
             counts = range(0 + num - 1, self.upstream)
