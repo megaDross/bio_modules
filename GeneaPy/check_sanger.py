@@ -73,36 +73,17 @@ class CompareSeqs(object):
                     end = len(self.seq_file) - end -1
                 
                 # check if there is an insertion or deletion 
-                if self.mut_type not in ("snp", "d"):
-                    print("looking for insertion\n")
-                    insertion = self.check_if_insertion(postseq, end) 
+                if self.mut_type != "snp":
+                    print("looking for indel\n")
+                    indel = self.check_if_indel(postseq, end) 
                 else:
-                    insertion = None
-                
-                if self.mut_type not in ("snp", "i"):
-                    print("looking for deletion\n")
-                    deletion = self.check_if_deletion(postseq, end) 
-                    print("PRINT")
-                    print(deletion)
-                else:
-                    deletion = None
-                
-                
-                indel = insertion if insertion else deletion
+                    indel = None
+                               
 
                 if indel:
-                    print("Indel\n")
-                    if isinstance(indel, tuple):
-                        start_insert, end_insert, extra, indel_type = indel
-                        postseq = sequence[self.upstream:].upper()[1+extra:]
-                        downstream_seq = self.seq_file[end+1:end+self.downstream+1]
-                        return (upstream_seq.lower(), downstream_seq.lower(),
-                                ref_seq, "-", indel)
-                    
-                    elif isinstance(indel, str):
-                        downstream_seq = postseq[len(self.ref_base)-1:]
-                        return (upstream_seq.lower(), downstream_seq.lower(),
-                                self.ref_base, "-", indel)
+                    downstream_seq = postseq[len(self.ref_base)-1:]
+                    return (upstream_seq.lower(), downstream_seq.lower(),
+                            self.ref_base, "-", indel)
                            
 
                 # else check if it's a point mutation
@@ -123,44 +104,23 @@ class CompareSeqs(object):
 
                 start, end, downstream_seq = CompareSeqs.get_start_end_indexes(postseq, 
                                                                             self.seq_file)
-                #deletion = self.check_if_deletion(sequence, preseq, postseq, start, end, "postseq")
 
                 # for Reverse sequence files, get the actual index
                 if num == 1:
                     start = len(self.seq_file) - start -1
-                 
+               
                 # check if there is an insertion or deletion 
-                if self.mut_type not in ("snp", "d"):
-                    print("looking for insertion\n")
-                    insertion = self.check_if_insertion(postseq, end) 
+                if self.mut_type != "snp":
+                    print("looking for indel\n")
+                    indel = self.check_if_indel(postseq, end) 
                 else:
-                    insertion = None
-                
-                if self.mut_type not in ("snp", "i"):
-                    print("looking for deletion\n")
-                    deletion = self.check_if_deletion(postseq, end) 
-                    print("PRINT")
-                    print(deletion)
-                else:
-                    deletion = None
-                
-                
-                indel = insertion if insertion else deletion
+                    indel = None
+  
 
                 if indel:
-                    print("Indel\n")
-                    if isinstance(indel, tuple):
-                        start_insert, end_insert, extra, indel_type = indel
-                        postseq = sequence[self.upstream:].upper()[1+extra:]
-                        upstream_seq = self.seq_file[(start-1)-self.downstream:start-1]
-                        return (upstream_seq.lower(), downstream_seq.lower(),
-                                ref_seq, "-", indel)
-                    
-                    elif isinstance(indel, str):
-                        upstream_seq = postseq[:len(self.ref_base)-1]
-
-                        return (upstream_seq.lower(), downstream_seq.lower(),
-                                self.ref_base, "-", indel)
+                    upstream_seq = postseq[:len(self.ref_base)-1]
+                    return (upstream_seq.lower(), downstream_seq.lower(),
+                            self.ref_base, "-", indel)
                            
 
                 # else check if it's a point mutation
@@ -179,6 +139,7 @@ class CompareSeqs(object):
 
              
             else:
+                # reverse complement the sequence and use as input recursively
                 print("\nREVERSE\n")
                 update_object = CompareSeqs(self.upstream, self.downstream, 
                                             self.ref_base, 
@@ -192,7 +153,7 @@ class CompareSeqs(object):
             pass
 
 
-    def check_if_deletion(self, postseq, var_index, num=1, matched_seq_list=[]):
+    def check_if_indel(self, postseq, var_index, num=1, matched_seq_list=[]):
         ''' Determine whether a deletion occurs within a given variant position
         '''
         if self.ref_base and self.alt_answer:
@@ -207,7 +168,6 @@ class CompareSeqs(object):
             seq_het_calls = self.index_basecall_dictionary(postseq,
                                                            start_index_postseq, num)
             
-            #### Testing ####
             # use the number of bases to construct a sequence that depicts the resulting string produced from the deletion (al_answer_deletion)
             num_bases = len(self.ref_base) - 1
             alt_answer_deletion = self.alt_answer + postseq[num_bases:num_bases+num_bases]
@@ -225,54 +185,8 @@ class CompareSeqs(object):
                 return self.ref_base+"/"+self.alt_answer
 
         
-       ###### 
-        else:
-            print("GUESS DELETION")
-            # compare very postseq base with every het call at said bases poistion
-            matched_seq, seq_len = self.compare_ref_het_calls(postseq, seq_het_calls,
-                                                              start_index_postseq, num, "deletion")
-
-            # a means by which to get all matche_seqs despite the number of recursions
-            matched_seq_list.append((len(matched_seq)/seq_len, num))
-            
-            # get tuple that has a matched_seq len closest to 1.0
-            get_min = min(matched_seq_list, key=lambda x:abs(x[0]-1))
-                                                           
-            
-            # TEMP
-            # print("\nSEQ_FILE:\t"+ str(self.seq_file[start_index_postseq + 1:            start_index_postseq+self.upstream]))
-            # print("-"*40+"\nLENGTH DIFF:\t"+str(len(matched_seq)/seq_len)+"\n"+"-"*40)
-            
-            # if number of recursions is more than half
-            if float(num) > float(len(postseq)/2)-1:  
-                # print(get_min)
-                num = get_min[1]
-                return (var_index, var_index+num, num-1, "d")
-            else:
-                return self.check_if_deletion(postseq, var_index, num+1, matched_seq_list)
-
-           
-    def check_if_insertion(self, postseq, var_index, num=1):
-        ''' Determine whether an insertion occurs within a given variant position
-        '''
-        start_index_postseq = var_index + 1
-
-        # stops recursive function if the num gets too high
-        if float(num) > float(len(postseq)/4):
-            return None
-
-        seq_het_calls = self.index_basecall_dictionary(postseq,
-                                                       start_index_postseq, num)
-        matched_seq, seq_len = self.compare_ref_het_calls(postseq, seq_het_calls,
-                                                    start_index_postseq, num, "insertion")
-        
-        # ensure the the number of bases that match is at least 80% of the actual sequence used to compare with the hets, then return the base range at which the insertion covers (seq_len will decrease as the number of recursions increases).
-        if len(matched_seq)/seq_len > 0.8:
-            return (var_index, var_index+num, num-1, "i")
-        else:
-            return self.check_if_insertion(postseq, var_index, num+1)
-
-
+                 
+    
     @staticmethod
     def get_start_end_indexes(seq, seq_file):
         ''' Find a given string in a given file and get the indexes of said
@@ -380,7 +294,7 @@ class CompareSeqs(object):
 
     def index_basecall_dictionary(self, sequence, start_index_seq, num):
         ''' Create a dictioney where the key is the seq_file index of the 
-            given sequence and the item is a tuple containing every called 
+            given base in the sequence and the item is a tuple containing every called 
             base at said index
         '''
         seq_het_calls = {}
@@ -414,41 +328,4 @@ class CompareSeqs(object):
         return seq_het_calls
 
     
-    def compare_ref_het_calls(self, sequence, het_call_dict, start_index_seq, num, indel):
-        ''' Compare every base in a given sequence with the calls in the 
-            dictionary generated by index_basecall_dictionary() starting 
-            from the first index key in the dict plus the given num
-
-            i.e. keys range from 91, 111 and num = 2 then:
-                compare every sequence[0] with items in 93, then the
-                sequence[1] with items in 94 etc.
-        '''
-        # entire index (from seq_file) range of a given sequence it starts from the first index plus num
-        end_index_seq = start_index_seq + self.upstream
-
-        if indel == "insertion":
-            indexes_sequence = range(start_index_seq + num, end_index_seq)
-            counts = range(0, self.upstream)
-
-        # NO LONGER IN USE FOR DELETIONS
-        elif indel == "deletion":
-            indexes_sequence = range(start_index_seq + 1, end_index_seq)
-            counts = range(0 + num - 1, self.upstream)
-        
-        # print("\n\nNUM:\t"+str(num))
-        # print("\nREF_SEQ:\t"+str(sequence[0+num-1:self.upstream]))
-
-
-        # the more recursion, the smaller this will become, hence why you can't just use self.downstream to divide the len(master_seq)
-        len_indexes_sequence = 0
-        matched_seq = []
-
-        for count, index in zip(counts, indexes_sequence):
-            len_indexes_sequence += 1
-            if sequence[count] in het_call_dict.get(index):
-                matched_seq.append(sequence[count])
-
-        return (matched_seq, len_indexes_sequence-1) 
-
-    
-
+   
