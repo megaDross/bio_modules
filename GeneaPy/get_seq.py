@@ -121,7 +121,8 @@ def parse_file(*args):
         else:
             mut_type = None
             alt_answer = None
-
+        
+        print("MUT_TYPE: "+str(mut_type)+"\nALT_ANSWER: "+str(alt_answer))
         # check each individual line of the file for CUSTOM ERRORS
         error_check = reference.handle_argument_exception(var_pos)
         # intialise the class in Ensembl.py
@@ -134,15 +135,20 @@ def parse_file(*args):
         sanger = [CompareSeqs(upstream, downstream, ref_base, alt_answer, 
                               mut_type, x, seq_dir) 
                   for x in seq_file]
+        print("SANGER\t"+str(sanger))
         # parse it all into get_seq()
         sequence_info = [get_seq(seq_name, var_pos, reference,  
                                 hg_version, pyensembl, genome, x) for x in sanger]
+        print("SEQ_INFO\t"+str(sequence_info))
         # filter out sequences where no seq file was found
         filtered_answer = [x for x in sequence_info if "-" != x[1].split("\t")[11]]
        
-        print(filtered_answer)
+        print("FILTERED_ANSWER\t"+str(filtered_answer))
         print("REF_BASE:\t"+ref_base)
-        
+       
+        # if filtered_answer is an empty list then the found_answer variable will not exist, hence why if needs to be assigned None here
+        found_answer = None
+
         # find the index in filtered_answer which contains the mutation detected by NGS and store in a var called found_answer
         index = 0
         for i in filtered_answer:
