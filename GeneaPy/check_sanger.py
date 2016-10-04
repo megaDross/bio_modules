@@ -59,9 +59,8 @@ class CompareSeqs(object):
             print(preseq)
             print(postseq)
             print(self.seq_filename) 
-            
             print(self.seq_file)
-            #if re.search(preseq, self.seq_file):    
+            
             if regex.search(r'(?:'+preseq+'){s<=2}', self.seq_file):    
                 print("\nPRESEQ MATCH\n")
 

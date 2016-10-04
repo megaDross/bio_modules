@@ -129,6 +129,8 @@ def parse_file(*args):
         pyensembl = ScrapeEnsembl(var_pos, hg_version) if ensembl else None
         # find a list of files with seq_name in its title, if ab1 matched then convert it to a .seq and .tab file
         seq_file = get_AB1_file.get_matching_seq_file(seq_name, seq_dir)
+        if not seq_file:
+            all_scrapped_info.append("\t".join((seq_name, var_pos, "-","-","-","-","-","-","-","-","-", "-", "-", "-", "0")))    
         convert = [get_AB1_file.handle_seq_file(x, seq_dir) 
                    for x in seq_file if seq_file]
         # intialise the check_sanger class for every found seq_file
@@ -251,7 +253,10 @@ def get_seq(seq_name, var_pos, reference,  hg_version, pyensembl, genome, sanger
         gene_name = gene_id = gene_type = gene_range = transcript = exon_id = \
             exon_id = intron = exon = ref_base = sanger_base = seq_file_used = "-"
         compare_result = "0"
-
+        
+        # get the seq file used for the analysis
+        seq_file_used = sanger.seq_filename.split("/")[-1]
+        
         # check if var_pos is a GENOMIC REGION, else construct one from var_pos
         seq_range = reference.create_region(var_pos)
         
@@ -267,7 +272,6 @@ def get_seq(seq_name, var_pos, reference,  hg_version, pyensembl, genome, sanger
             print(sanger_sequence)
             # if .seq file found compare the ref var_pos base and the sanger var_pos base
             if sanger_sequence:
-                seq_file_used = sanger.seq_filename.split("/")[-1]
                 upstream_seq, downstream_seq, ref_base, sanger_base, \
                         var_index = sanger_sequence
                 
