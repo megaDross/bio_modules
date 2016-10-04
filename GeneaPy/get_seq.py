@@ -60,7 +60,7 @@ def main(input_file, output_file=None, upstream=20, downstream=20,
     # convert vcf to input file
     if vcf:
         vcf2input.vcf2input(vcf, "temp.tsv", 4)
-        input_file = "temp.tsv"
+        sys.exit(0)
 
     # ensures the wrong human genome isnt used
     if hg_version not in genome:
