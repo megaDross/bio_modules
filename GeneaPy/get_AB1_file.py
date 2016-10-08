@@ -23,11 +23,15 @@ def handle_seq_file(seq_file, seq_dir):
                                         if not x.startswith(">")]) 
 
     elif seq_file.endswith("ab1") and not os.path.isfile(seq_file+".tab"):
+        # generate tab, seq and poly files
         subprocess.call([ttuner, "-tabd", seq_dir, "-id", 
                          seq_dir, "-mix"], stdout=open(os.devnull, 'wb'),
                          stderr=open(os.devnull, 'wb'))
         subprocess.call([ttuner, "-sd", seq_dir, "-id", seq_dir], 
                         stdout=open(os.devnull, 'wb'), stderr=open(os.devnull, 'wb'))
+        subprocess.call([ttuner, "-dd", seq_dir, "-id", seq_dir], 
+                        stdout=open(os.devnull, 'wb'), stderr=open(os.devnull, 'wb'))
+
 
     else:
         seq_file = seq_file

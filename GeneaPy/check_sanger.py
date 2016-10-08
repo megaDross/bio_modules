@@ -92,9 +92,16 @@ class CompareSeqs(object):
                     downstream_seq = self.seq_file[end+1:end+self.downstream+1]
                     full_seq = "".join((upstream_seq.lower(),var_pos_seq.upper(),
                                          downstream_seq.lower()))
-                    
+                  
+                    # get the het call from the poly file
+                    poly_het = self.get_poly_file(end+1, num)
+
                     return (upstream_seq.lower(), downstream_seq.lower(),
-                            ref_seq, var_pos_seq.upper(), end)
+                            ref_seq, var_pos_seq.upper(), poly_het)
+
+
+                    #return (upstream_seq.lower(), downstream_seq.lower(),
+                    #        ref_seq, var_pos_seq.upper(), end)
 
 
             # elif re.search(postseq, self.seq_file):
@@ -133,8 +140,14 @@ class CompareSeqs(object):
                     full_seq = "".join((upstream_seq.lower(),var_pos_seq.upper(),
                                         downstream_seq.lower()))
                     
-                    return (upstream_seq.lower(), downstream_seq.lower(), 
-                            ref_seq,var_pos_seq.upper(), start-1)
+                    # get the het call from the poly file
+                    poly_het = self.get_poly_file(end+1, num)
+
+                    return (upstream_seq.lower(), downstream_seq.lower(),
+                            ref_seq, var_pos_seq.upper(), poly_het)
+
+                    #return (upstream_seq.lower(), downstream_seq.lower(), 
+                    #        ref_seq,var_pos_seq.upper(), start-1)
 
              
             else:
@@ -199,6 +212,30 @@ class CompareSeqs(object):
         
         return (start, end, matched_seq)
 
+
+    def get_poly_file(self, var_pos, num):
+        ''' Get the het calls from the poly file 
+            for SNPs
+        '''
+        poly = open(self.seq_filename+".poly")
+        stuff = [x.strip("\n") for x in poly]        
+        with open("poly_test.csv", "a") as f:
+            line = " ".join((str(stuff[0].split(" ")[0]),str(stuff[var_pos]),"\n"))
+
+            # remove all white space and replace with a comma
+            line = line.split()
+            ref_base_poly, ref_prop, alt_base_poly, alt_prop = (line[1], line[4],
+                                                                line[5], line[8])
+            # complement if reverse
+            if num == 1:
+                ref_base_poly = useful.complement.get(ref_base_poly)
+                alt_base_poly = useful.complement.get(alt_base_poly)
+
+            prop_divide =  float(ref_prop)/float(alt_prop)
+            if 0.01 <= round(prop_divide,2) <= 2.50: 
+                f.write("\t".join((line[0], line[1], line[3], line[4], line[5], line[7], line[8], str(prop_divide), "\n"))) 
+                if self.ref_base == ref_base_poly and self.alt_answer == alt_base_poly:
+                    return "/".join((ref_base_poly,alt_base_poly))
 
     def get_het_call(self, var_index):
         ''' Get the two bases being called at a given variant position

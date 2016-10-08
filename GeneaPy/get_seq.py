@@ -288,14 +288,16 @@ def get_seq(seq_name, var_pos, reference,  hg_version, pyensembl, genome, sanger
                 elif isinstance(var_index, str):
                     het_call = var_index
 
-                # an int means SNP
                 else:
-                    print("SNP VAR INDEX:\t"+str(var_index))
-                    print(type(var_index))
-                    alternate_bases = sanger.get_het_call(var_index)
-                    print("ALT.ANS\t"+str(alternate_bases))
-                    het_call = sanger.base_caller(alternate_bases, ref_base)
-                    print("HET\t"+str(het_call))
+                    het_call = None
+                # an int means SNP
+                #else:
+                #    print("SNP VAR INDEX:\t"+str(var_index))
+                #    print(type(var_index))
+                #    alternate_bases = sanger.get_het_call(var_index)
+                #    print("ALT.ANS\t"+str(alternate_bases))
+                #    het_call = sanger.base_caller(alternate_bases, ref_base)
+                #    print("HET\t"+str(het_call))
                     
 
                 # if a het was found use it in the full sequence else use the ref base
