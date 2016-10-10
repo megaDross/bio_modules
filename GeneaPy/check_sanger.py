@@ -231,9 +231,10 @@ class CompareSeqs(object):
                 ref_base_poly = useful.complement.get(ref_base_poly)
                 alt_base_poly = useful.complement.get(alt_base_poly)
 
+            # prop_divide is the reference base light emmision being detected vs the alternate base light being detcted divded over one another
             prop_divide =  float(ref_prop)/float(alt_prop)
             if 0.01 <= round(prop_divide,2) <= 2.50: 
-                f.write("\t".join((line[0], line[1], line[3], line[4], line[5], line[7], line[8], str(prop_divide), "\n"))) 
+                f.write("\t".join((line[0], ref_base_poly, line[3], line[4], alt_base_poly, line[7], line[8], str(prop_divide), "\n"))) 
                 if self.ref_base == ref_base_poly and self.alt_answer == alt_base_poly:
                     return "/".join((ref_base_poly,alt_base_poly))
 

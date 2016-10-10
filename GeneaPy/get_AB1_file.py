@@ -64,7 +64,8 @@ def get_matching_seq_file(query, directory):
     # trying to find matches that have both _ and -
     sorted_matches = sorted(store_matches)
 
-    if not sorted_matches:
+    # only shortened and perform recursion if the second part of the query equal o or more than two characters
+    if not sorted_matches and len(query.split("-")[-1]) > 1:
         return get_matching_seq_file(query[:-1], directory)
 
     return sorted_matches
