@@ -53,11 +53,12 @@ def get_matching_seq_file(query, directory):
     if length < 6:
         return []
 
-    # appending is required in case there is more than one match, returns first match
+    # appending is required in case there is more than one match
     store_matches = []
     for f in [x for x in os.listdir(directory) if x.endswith(".ab1")]:
         if query.replace("-","_") in f or query.replace("_","-") in f or \
-           reversed_query in f or reversed_query.replace("_","-") in f:
+           reversed_query in f or reversed_query.replace("_","-") in f or \
+           query in f:
             file_match = directory+f
             store_matches.append(file_match)
     
@@ -65,7 +66,7 @@ def get_matching_seq_file(query, directory):
     sorted_matches = sorted(store_matches)
 
     # only shortened and perform recursion if the second part of the query equal o or more than two characters
-    if not sorted_matches and len(query.split("-")[-1]) > 1:
+    if not sorted_matches and len(query.split("-")[-1]) > 2:
         return get_matching_seq_file(query[:-1], directory)
 
     return sorted_matches
