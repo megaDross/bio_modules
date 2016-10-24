@@ -45,12 +45,26 @@ class CompareSeqs(object):
             returns a tuple containing the matched sanger sequence and the variant 
             position base and the index of the var_pos_seq
         '''
-        print(num)
 
-        if int(num) < 1:
-            return None
+
+        # check whether to reverse complement or not
+        if re.search(r"_F_|-F-|_F\.|-F\.", self.seq_filename):
+            num = 2
+
+        elif re.search(r"_R_|-R-|_R\.|-R\.", self.seq_filename):
+            print("\nREVERSE COMPLEMENT\n")
+            num = 1
+            self.seq_file = useful.reverse_complement(self.seq_file) 
+
+        else:
+            # assume it is a forward sequence
+            print("\nDEFAULT\n")
+            #num = 2
+
         
-        elif self.seq_file:
+
+
+        if self.seq_file:
             
             preseq = sequence[:self.upstream].upper()
             ref_seq = sequence[self.upstream].upper()
@@ -100,9 +114,6 @@ class CompareSeqs(object):
                             ref_seq, var_pos_seq.upper(), poly_het)
 
 
-                    #return (upstream_seq.lower(), downstream_seq.lower(),
-                    #        ref_seq, var_pos_seq.upper(), end)
-
 
             # elif re.search(postseq, self.seq_file):
             elif regex.search(r'(?:'+postseq+'){s<=2}', self.seq_file):
@@ -146,13 +157,12 @@ class CompareSeqs(object):
                     return (upstream_seq.lower(), downstream_seq.lower(),
                             ref_seq, var_pos_seq.upper(), poly_het)
 
-                    #return (upstream_seq.lower(), downstream_seq.lower(), 
-                    #        ref_seq,var_pos_seq.upper(), start-1)
-
-             
-            else:
-                # reverse complement the sequence and use as input recursively
-                print("\nREVERSE\n")
+           
+            # reverse complement the sequence and use as input recursively. Only relevenant for seq_files that have no direction in its name
+            elif not re.search(r"_R_|-R-|_R\.|-R\.|_F_|-F-|_F\.|-F\.", 
+                               self.seq_filename) and num == 2:
+                
+                print("\nREVERSE DEFAULT\n")
                 update_object = CompareSeqs(self.upstream, self.downstream, 
                                             self.ref_base, 
                                             self.alt_answer, self.mut_type, 
@@ -161,6 +171,10 @@ class CompareSeqs(object):
 
                 return update_object.match_with_seq_file(sequence, num-1)
 
+
+
+            else:
+                return None
         else:
             pass
 
