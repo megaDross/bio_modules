@@ -36,9 +36,7 @@ else:
 
 
 def main(input_file, output_file=None, upstream=20, downstream=20,
-         hg_version=default_hg_version,  download='n', 
-         configure='n',seq_dir=file_path[:-8]+"test/test_files/",
-         genome=genome_path, vcf=None):
+         hg_version=default_hg_version,  download='n', configure='n',seq_dir=file_path[:-8]+"test/test_files/", genome=genome_path, vcf=None):
     '''
     From a genomic postion, genomic range or tab-deliminated file produce a
     reference sequence that can be compared with a sanger trace along with 
@@ -64,8 +62,6 @@ def main(input_file, output_file=None, upstream=20, downstream=20,
     if hg_version not in genome:
         genome = None
 
-    # allows one to pipe in an argument at the cmd
-    input_file = input() if not input_file else input_file
 
     # intiate the classes in UCSC 
     reference = ScrapeSeq(input_file, upstream, downstream, hg_version)
@@ -74,9 +70,6 @@ def main(input_file, output_file=None, upstream=20, downstream=20,
     all_scrapped_info = parse_file(input_file, output_file, upstream, downstream,
                                    hg_version, seq_dir, reference, genome)
     
-    # delete the converted tsv file after usage
-    if vcf:
-        os.remove("temp.tsv")
 
     # write the header and each element per line to the file
     if output_file:

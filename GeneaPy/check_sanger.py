@@ -1,4 +1,5 @@
 import re, regex
+import logging
 import GeneaPy.useful as useful
 import get_AB1_file
 
@@ -45,21 +46,18 @@ class CompareSeqs(object):
             returns a tuple containing the matched sanger sequence and the variant 
             position base and the index of the var_pos_seq
         '''
-
-
-        # check whether to reverse complement or not
+        # decide whether to reverse complement or not
         if re.search(r"_F_|-F-|_F\.|-F\.", self.seq_filename):
             num = 2
 
         elif re.search(r"_R_|-R-|_R\.|-R\.", self.seq_filename):
-            print("\nREVERSE COMPLEMENT\n")
+            logging.info("REVERSE COMPLEMENT")
             num = 1
             self.seq_file = useful.reverse_complement(self.seq_file) 
 
         else:
             # assume it is a forward sequence
-            print("\nDEFAULT\n")
-            #num = 2
+            logging.warning("Assuming {} is a forward sequence".format(self.seq_filename))
 
         
 
@@ -69,14 +67,15 @@ class CompareSeqs(object):
             preseq = sequence[:self.upstream].upper()
             ref_seq = sequence[self.upstream].upper()
             postseq = sequence[self.upstream:].upper()[1:]
-
-            print(preseq)
-            print(postseq)
-            print(self.seq_filename) 
-            print(self.seq_file)
+            
+            # debugging info 
+            logging.debug("PRESEQ: {}".format(preseq))
+            logging.debug("POSTSEQ: {}".format(postseq))
+            logging.debug("Analysing AB1 file: {}".format(self.seq_filename)) 
+            logging.debug("AB1 Sequence:\n {}".format(self.seq_file))
             
             if regex.search(r'(?:'+preseq+'){s<=2}', self.seq_file):    
-                print("\nPRESEQ MATCH\n")
+                logging.info("PRESEQ MATCH")
 
                 start, end, upstream_seq = CompareSeqs.get_start_end_indexes(preseq, 
                                                                             self.seq_file)
@@ -87,7 +86,7 @@ class CompareSeqs(object):
                 
                 # check if there is an insertion or deletion 
                 if self.mut_type != "snp":
-                    print("looking for indel\n")
+                    logging.info("Looking for indel")
                     indel = self.check_if_indel(postseq, end) 
                 else:
                     indel = None
@@ -101,7 +100,7 @@ class CompareSeqs(object):
 
                 # else check if it's a point mutation
                 if self.mut_type not in ("d", "i"):
-                    print("looking for SNP\n")
+                    logging.info("looking for SNP")
                     var_pos_seq = UIPAC.get(self.seq_file[end])
                     downstream_seq = self.seq_file[end+1:end+self.downstream+1]
                     full_seq = "".join((upstream_seq.lower(),var_pos_seq.upper(),
@@ -117,7 +116,7 @@ class CompareSeqs(object):
 
             # elif re.search(postseq, self.seq_file):
             elif regex.search(r'(?:'+postseq+'){s<=2}', self.seq_file):
-                print("\nPOSTSEQ MATCH\n")
+                logging.info("POSTSEQ MATCH")
 
                 start, end, downstream_seq = CompareSeqs.get_start_end_indexes(postseq, 
                                                                             self.seq_file)
@@ -128,7 +127,7 @@ class CompareSeqs(object):
                
                 # check if there is an insertion or deletion 
                 if self.mut_type != "snp":
-                    print("looking for indel\n")
+                    logging.info("looking for indel")
                     indel = self.check_if_indel(postseq, end) 
                 else:
                     indel = None
@@ -142,7 +141,7 @@ class CompareSeqs(object):
 
                 # else check if it's a point mutation
                 if self.mut_type not in ("d", "i"):
-                    print("looking for SNP\n")
+                    logging.info("looking for SNP")
                      
                     var_pos_seq = UIPAC.get(self.seq_file[start-1])
                     # below may not work great if it produces a negative number for indexing
@@ -162,7 +161,7 @@ class CompareSeqs(object):
             elif not re.search(r"_R_|-R-|_R\.|-R\.|_F_|-F-|_F\.|-F\.", 
                                self.seq_filename) and num == 2:
                 
-                print("\nREVERSE DEFAULT\n")
+                logging.warning("Reverse Complementing {}".format(self.seq_filename))
                 update_object = CompareSeqs(self.upstream, self.downstream, 
                                             self.ref_base, 
                                             self.alt_answer, self.mut_type, 
@@ -203,7 +202,11 @@ class CompareSeqs(object):
             for answer, key_item  in zip(alt_answer_deletion[1:], 
                                          sorted(seq_het_calls.items())[:num_bases]):
                 pos, calls = key_item
-                print((pos, calls, answer))
+
+                logging.info("Indel Position: {}".format(pos))
+                logging.info("Indel Calls: {}".format(calls))
+                logging.info("Indel Answer: {}".format(answer))
+
                 if answer in calls:
                     score += 1
 
@@ -233,24 +236,26 @@ class CompareSeqs(object):
         '''
         poly = open(self.seq_filename+".poly")
         stuff = [x.strip("\n") for x in poly]        
-        with open("poly_test.csv", "a") as f:
-            line = " ".join((str(stuff[0].split(" ")[0]),str(stuff[var_pos]),"\n"))
+        line = " ".join((str(stuff[0].split(" ")[0]),str(stuff[var_pos]),"\n"))
 
-            # remove all white space and replace with a comma
-            line = line.split()
-            ref_base_poly, ref_prop, alt_base_poly, alt_prop = (line[1], line[4],
-                                                                line[5], line[8])
-            # complement if reverse
-            if num == 1:
-                ref_base_poly = useful.complement.get(ref_base_poly)
-                alt_base_poly = useful.complement.get(alt_base_poly)
+        # remove all white space and replace with a comma
+        line = line.split()
+        ref_base_poly, ref_prop, alt_base_poly, alt_prop = (line[1], line[4],
+                                                            line[5], line[8])
+        # complement if reverse
+        if num == 1:
+            ref_base_poly = useful.complement.get(ref_base_poly)
+            alt_base_poly = useful.complement.get(alt_base_poly)
 
-            # prop_divide is the reference base light emmision being detected vs the alternate base light being detcted divded over one another
-            prop_divide =  float(ref_prop)/float(alt_prop)
-            if 0.01 <= round(prop_divide,2) <= 2.50: 
-                f.write("\t".join((line[0], ref_base_poly, line[3], line[4], alt_base_poly, line[7], line[8], str(prop_divide), "\n"))) 
-                if self.ref_base == ref_base_poly and self.alt_answer == alt_base_poly:
-                    return "/".join((ref_base_poly,alt_base_poly))
+        # prop_divide is the reference base light emmision being detected vs the alternate base light being detcted divded over one another
+        prop_divide =  float(ref_prop)/float(alt_prop)
+        if 0.01 <= round(prop_divide,2) <= 2.50: 
+
+            # log the poly file info 
+            logging.info("Poly File Info: {}".format("\t".join((line[0], ref_base_poly, line[3], line[4], alt_base_poly, line[7], line[8], str(prop_divide), "\n")))) 
+            
+            if self.ref_base == ref_base_poly and self.alt_answer == alt_base_poly:
+                return "/".join((ref_base_poly,alt_base_poly))
 
     def get_het_call(self, var_index):
         ''' Get the two bases being called at a given variant position
@@ -270,16 +275,17 @@ class CompareSeqs(object):
 
         # sort matches by quality and return highest bases as het call if more than one call is found for the given position/index
         sorted_matches = sorted(all_matches, key=lambda x: int(x[0]), reverse=True)
-        print("SORTED "+str(sorted_matches))
+        logging.debug("Sorted Matches: ".format(sorted_matches))
         return sorted_matches
 
 
     def base_caller(self, sorted_matches, ref_base):
         ''' use the sorted matches from get_het_call() to call the approiriate base
         ''' 
+        logging.info("BASE CALLING BEGINS")
 
         if self.alt_answer:
-            print("Alt answer:\t "+self.alt_answer)
+            logging.info("Looking for the alternative {} within sorted matches".format(self.alt_answer))
             
             # complement bases
             comp_alt_answer = "".join([useful.complement.get(x) for x in self.alt_answer])
@@ -291,53 +297,72 @@ class CompareSeqs(object):
             if self.alt_answer in ppp or self.alt_answer+"/"+ref_base in ppp\
                or ref_base+"/"+self.alt_answer in ppp:
                 het_call = ref_base + "/" + self.alt_answer
-                print("Het Call:\t"+het_call)
+                logging.info("Found alternative in sorted matches...")
+                logging.debug("Het Call: {}".format(het_call))
 
             # check complements in case seq_file is reverse complemented
             elif comp_alt_answer in ppp or comp_alt_answer+"/"+comp_ref_base in ppp \
                or comp_ref_base+"/"+comp_alt_answer in ppp:
                 het_call = ref_base + "/" + self.alt_answer
-                print("Comp Het Call:\t"+het_call)
+                logging.info("Found reverse complemented alternative within sorted matches....")
+                logging.debug("Comp Het Call: {}".format(het_call))
 
             else:
                 het_call = None
+                logging.info("Could not find alternative {} in sorted matches".format(self.alt_answer))
 
+        # I AM SO SURE THIS SHOULD BE IF NOT ELIF
         elif not het_call:
             # if only one base, check if its a non singular base
             if len(sorted_matches) ==  1 and sorted_matches[0] not in non_singular_bases:
                 het_call = "/".join((ref_base, sorted_matches[0][1]))
+
+                logging.debug("Only one sorted match found and it contained the non-singular base {} which has been converted to {}".format(sorted_matches[0], het_call))
             
             elif len(sorted_matches) == 1:
                 het_call = sorted_matches[0]
+
+                logging.debug("returning the only sorted matches alternative {}".format(het_call))
             
             # if more than one base 
+            # ONLY ANALYSES MAX OF TWO SORTED MATCHES
             elif len(sorted_matches) > 1:
+                log.info("Looking for non singular base presence within sorted matches")
+                log.warning("Only analyses first two sorted matches. Needs fixed")
+
                 first_call, second_call = (sorted_matches[0][1], sorted_matches[1][1])
                 
+                # checking first sorte match has a non-singular base
                 if first_call in non_singular_bases and \
                    second_call not in non_singular_bases and \
                    int(sorted_matches[0][0]) - int(sorted_matches[1][0]) > 10 and \
                    second_call in UIPAC.get(first_call):
                     het_call = UIPAC.get(first_call)
 
+                    logging.debug("First sorted match quality score is larger than the second and first was a non singular base. First sorted match approved and alternative {} found within".format(het_call))
+
                 # if more any calls have a non singular base within them
                 elif [True for x in [first_call, second_call] if x in non_singular_bases]:
-                    
+
                     # get rid of any no singular bases
                     clean_calls = [x for x in [first_call, second_call] if x not in 
                                    non_singular_bases]
                     
                     if len(clean_calls) == 1 and ref_base != clean_calls[0]:
                         het_call = "/".join((ref_base, clean_calls[0]))
+                        logging.debug("only one non-singular base found and convereted {}".format(het_call))
 
                     elif not clean_calls and first_call in non_singular_bases:
                         het_call = UIPAC.get(first_call)
+                        logging.debug("returning first sorted match call {}".format(het_call))
 
                     else: 
                         het_call = ref_base
+                        logging.info("Can't find alternative within sorted matches, returning reference")
 
                 else:
                     het_call = "/".join((first_call,second_call))
+                    loggining.debug("returning first and second sortd matches calls".format(het_call))
 
 
         return het_call
@@ -348,6 +373,8 @@ class CompareSeqs(object):
             given base in the sequence and the item is a tuple containing every called 
             base at said index
         '''
+        logging.info("Constructing index basecall dictionary")
+        
         seq_het_calls = {}
 
         # get the entire index (index from seq_file) range of the given sequence
@@ -375,7 +402,7 @@ class CompareSeqs(object):
                 
             count += 1
 
-        print("HET CALL DICT\t"+str(seq_het_calls))
+        logging.debug("Index Basecall Dict: ".format(seq_het_calls))
         return seq_het_calls
 
     

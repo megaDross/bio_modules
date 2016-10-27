@@ -4,6 +4,8 @@ import os, sys, io
 def write_to_output(seq_list, output_name, header=None):
     ''' creates an output file containing all scrapped data
     '''
+    print("Writing all findings to {} ....".format(output_name))
+
     # create a list comprehension of all input and open output file
     seq_list = [x for x in seq_list]
     output = io.open(output_name,"w", encoding='utf-8')

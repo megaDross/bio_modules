@@ -4,7 +4,7 @@ import GeneaPy.useful
 
 # use and manipulate file_apth to get path to get_seq.py
 file_path = GeneaPy.useful.cwd_file_path(__file__)
-get_seq = file_path[:-5]+"GeneaPy/get_seq.py"
+get_seq = file_path[:-5]+"GeneaPy/sanger.py"
 
 
 #class TestGetSeqPrint(unittest.TestCase):

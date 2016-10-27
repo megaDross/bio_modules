@@ -1,5 +1,5 @@
 from Bio import SeqIO
-import os, sys
+import os, sys, logging
 import  subprocess
 
 
@@ -23,6 +23,7 @@ def handle_seq_file(seq_file, seq_dir):
                                         if not x.startswith(">")]) 
 
     elif seq_file.endswith("ab1") and not os.path.isfile(seq_file+".tab"):
+        print("Generating tab, seq and poly files.......")
         # generate tab, seq and poly files
         subprocess.call([ttuner, "-tabd", seq_dir, "-id", 
                          seq_dir, "-mix"], stdout=open(os.devnull, 'wb'),
@@ -31,7 +32,6 @@ def handle_seq_file(seq_file, seq_dir):
                         stdout=open(os.devnull, 'wb'), stderr=open(os.devnull, 'wb'))
         subprocess.call([ttuner, "-dd", seq_dir, "-id", seq_dir], 
                         stdout=open(os.devnull, 'wb'), stderr=open(os.devnull, 'wb'))
-
 
     else:
         seq_file = seq_file
@@ -45,6 +45,8 @@ def get_matching_seq_file(query, directory):
     ''' Find a file name that best matches given query and return the
         sequence string in matched file
     '''
+    logging.info("Searching for a matching seq or AB1 file")
+
     length = len(query)
     cut = query.replace("_","-").split("-")
     reversed_query = "_".join((cut[1],cut[0])) if len(cut) > 1 else query
@@ -67,6 +69,7 @@ def get_matching_seq_file(query, directory):
 
     # only shortened and perform recursion if the second part of the query equal o or more than two characters
     if not sorted_matches and len(query.split("-")[-1]) > 2:
+        logging.warning("No matches found. Now searching for {}".format(query[:-1]))
         return get_matching_seq_file(query[:-1], directory)
 
     return sorted_matches
