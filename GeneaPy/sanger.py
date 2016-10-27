@@ -1,5 +1,5 @@
 from __future__ import division, print_function
-import os, click, sys, traceback
+import os, click, sys, traceback, logging
 import get_gene_exon_info
 import useful
 from Ensembl import ScrapeEnsembl
@@ -21,6 +21,8 @@ if os.path.isfile(home+"/.config/GeneaPy.config") is True:
 else:
     ttuner_path, default_hg_version, genome_path = (None, None, None)
 
+# create a basic logging file
+logging.basicConfig(filename=file_path+"get_seq.log", level=logging.DEBUG)
 
 @click.command('main')
 @click.argument('input_file',nargs=1, required=False)
@@ -92,13 +94,14 @@ def parse_file(*args):
         seq_name = line[0]
         var_pos = line[1]
         
+        logging.info("\n\n\t We are looking for {} in sample {}\n\n".format( var_pos, seq_name))
+
         # Determine the type of mutation
         mutation = line[2]
         ref_base = line[2].split("/")[0]
-        print(line[2].split("/"))
         alt_answer, mut_type = determine_mutation(mutation)
-        
-        print("MUT_TYPE: "+str(mut_type)+"\nALT_ANSWER: "+str(alt_answer))
+        logging.debug(" We are looking for a {}\n".format(mutation))
+
         # check each individual line of the file for CUSTOM ERRORS
         error_check = reference.handle_argument_exception(var_pos)
         # find a list of files with seq_name in its title, if ab1 matched then convert it to a .seq and .tab file
@@ -111,16 +114,14 @@ def parse_file(*args):
         sanger = [CompareSeqs(upstream, downstream, ref_base, alt_answer, 
                               mut_type, x, seq_dir) 
                   for x in seq_file]
-        print("SANGER\t"+str(sanger))
         # parse it all into get_seq()
         sequence_info = [get_seq(seq_name, var_pos, mutation, reference,  
                                 hg_version, genome, x) for x in sanger]
-        print("SEQ_INFO\t"+str(sequence_info))
+        logging.debug("Sequence Info: ".format(sequence_info))
         # filter out sequences where no seq file was found
         filtered_answer = [x for x in sequence_info if "-" != x[1].split("\t")[4]]
        
-        print("FILTERED_ANSWER\t"+str(filtered_answer))
-        print("REF_BASE:\t"+ref_base)
+        logging.debug("FILTERED_ANSWER: ".format(filtered_answer))
        
         # if filtered_answer is an empty list then the found_answer variable will not exist, hence why if needs to be assigned None here
         found_answer = None
@@ -129,10 +130,8 @@ def parse_file(*args):
         index = 0
         for i in filtered_answer:
             filtered_call = i[1].split("\t")[6]
-            print("FILTERED CALL:\t"+filtered_call)     
-            print("RA:\t"+ ref_base+"/"+alt_answer)
-
-            print(ref_base+"/"+alt_answer+" "+filtered_call)
+            logging.debug("Filtered Call: {}, RA: {}".format(filtered_call, 
+                                                              ref_base+"/"+alt_answer))
             if ref_base+"/"+alt_answer == filtered_call:
                 found_answer = filtered_answer[index]  
                 break
@@ -144,17 +143,20 @@ def parse_file(*args):
         if found_answer:
             print_out, answer = found_answer
             print(print_out)
+            logging.debug(print_out)
             all_scrapped_info.append(answer)
 
         elif filtered_answer:
             print_out, answer = filtered_answer[0]
             print(print_out)
+            logging.debug(print_out)
             # append each lines returned data to an emty list
             all_scrapped_info.append(answer)
 
         elif sequence_info:
             print_out, answer = sequence_info[0]
             print(print_out)
+            logging.debug(print_out)
             all_scrapped_info.append(answer)
 
         # reset variable for next line
@@ -175,13 +177,13 @@ def determine_mutation(mutation):
 
     # determine whether mut is a SNP, deletion or insertion
     if len(ref) == len(alt):
-        print("We are looking for a SNP in {}")#.format(name))
+        logging.info("We are looking for a SNP")#.format(name))
         return (alt, "snp")
     elif len(ref) > len(alt):
-        print("We are looking for a DELETION in {}")#.format(name))
+        logging.info("We are looking for a DELETION")#.format(name))
         return (alt, "d")
     elif len(ref) < len(alt):
-        print("we are looking for an INSERTION in {}")#.format(name))
+        logging.info("we are looking for an INSERTION")#.format(name))
         return (alt, "i")
 
 
@@ -212,7 +214,7 @@ def get_seq(seq_name, var_pos, mutation, reference,  hg_version,  genome, sanger
     # if CompareSeqs class has been intiated try and find a matching .seq file
     if sanger:
         sanger_sequence = sanger.match_with_seq_file(sequence)
-        print(sanger_sequence)
+        logging.debug("{}\n".format(sanger_sequence))
         # if .seq file found compare the ref var_pos base and the sanger var_pos base
         if sanger_sequence:
             upstream_seq, downstream_seq, ref_base, sanger_base, \

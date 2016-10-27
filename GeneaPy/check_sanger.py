@@ -49,11 +49,12 @@ class CompareSeqs(object):
         # decide whether to reverse complement or not
         if re.search(r"_F_|-F-|_F\.|-F\.", self.seq_filename):
             num = 2
+            logging.debug("Analysing AB1 file: {}".format(self.seq_filename.split("/")[-1])) 
 
         elif re.search(r"_R_|-R-|_R\.|-R\.", self.seq_filename):
-            logging.info("REVERSE COMPLEMENT")
             num = 1
             self.seq_file = useful.reverse_complement(self.seq_file) 
+            logging.debug("Reverse complementing and analysing AB1 file: {}".format(self.seq_filename.split("/")[-1])) 
 
         else:
             # assume it is a forward sequence
@@ -68,11 +69,8 @@ class CompareSeqs(object):
             ref_seq = sequence[self.upstream].upper()
             postseq = sequence[self.upstream:].upper()[1:]
             
-            # debugging info 
-            logging.debug("PRESEQ: {}".format(preseq))
-            logging.debug("POSTSEQ: {}".format(postseq))
-            logging.debug("Analysing AB1 file: {}".format(self.seq_filename)) 
-            logging.debug("AB1 Sequence:\n {}".format(self.seq_file))
+            logging.debug("preseq: {}".format(preseq))
+            logging.debug("postseq: {}".format(postseq))
             
             if regex.search(r'(?:'+preseq+'){s<=2}', self.seq_file):    
                 logging.info("PRESEQ MATCH")
