@@ -41,7 +41,9 @@ def write_config(ttuner_path=None, hg19_path=None, hg38_path=None, default=None)
     config['TTUNER'] = {'Path': ttuner_path}
     config['GENOME'] = {'DefaultGenome': default, 'PathHG19': hg19_path, 
                         'PathHG38': hg38_path}
-    with open(home + '/.config/GeneaPy.config', 'w') as configfile:
+    if not os.path.isdir(home +'/.config/GeneaPy/'):
+        os.makedirs(home + '/.config/GeneaPy/')
+    with open(home + '/.config/GeneaPy/GeneaPy.config', 'w') as configfile:
         config.write(configfile)
 
 
@@ -52,7 +54,7 @@ def read_config(default=None):
     '''
     # read the config file
     config = configparser.ConfigParser()
-    config.read(home + "/.config/GeneaPy.config")
+    config.read(home + "/.config/GeneaPy/GeneaPy.config")
     
     # get the variables from the config file and return them
     ttuner = config["TTUNER"]["Path"]
