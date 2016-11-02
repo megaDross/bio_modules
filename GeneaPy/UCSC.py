@@ -1,5 +1,11 @@
-import requests, bs4, re 
-import pysam
+import sys, requests, bs4, re 
+
+# pysam doesnt work with cygwin
+if sys.platform == "cygwin":
+    pass
+else:
+    import pysam
+
 
 class WrongHGversion(Exception):
     pass
@@ -17,13 +23,11 @@ class ScrapeSeq():
     ''' A collection of methods that are required for scrapping the reference
         sequence from UCSC
     '''
-    def __init__(self,input_file,upstream, downstream, hg_version, ensembl=None
-                 , header=None):
+    def __init__(self,input_file,upstream, downstream, hg_version, header="Y"):
         self.input_file = input_file
         self.upstream = upstream
         self.downstream = downstream
         self.hg_version = hg_version
-        self.ensembl = ensembl
         self.header = header
 
                  
