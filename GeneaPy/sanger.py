@@ -1,5 +1,5 @@
 from __future__ import division, print_function
-import os, click, sys, traceback, logging
+import os, click, sys, traceback, logging, datetime
 import get_gene_exon_info
 import useful
 from Ensembl import ScrapeEnsembl
@@ -16,13 +16,15 @@ file_path = useful.cwd_file_path(__file__)
 home = os.path.expanduser("~")
 
 # read the config file
-if os.path.isfile(home+"/.config/GeneaPy.config") is True:
+if os.path.isfile(home+"/.config/GeneaPy/GeneaPy.config") is True:
     ttuner_path, default_hg_version, genome_path = config.read_config("hg19")
 else:
     ttuner_path, default_hg_version, genome_path = (None, None, None)
 
 # create a basic logging file
-logging.basicConfig(filename=file_path+"get_seq.log", level=logging.DEBUG)
+logging.basicConfig(filename=os.path.expanduser('~')+"/.config/GeneaPy/GeneaPy.log", level=logging.DEBUG)
+
+logging.info("Itialisation at {}".format(datetime.datetime.now().strftime("%d/%m/%Y -  %I:%M%p")))
 
 @click.command('main')
 @click.argument('input_file',nargs=1, required=False)
@@ -35,7 +37,6 @@ logging.basicConfig(filename=file_path+"get_seq.log", level=logging.DEBUG)
 @click.option('--download/--donot', default='n', help="download ttuner and/or human genome fasta files")
 @click.option('--configure/--noconfig', default='n', help="configure get_seq")
 @click.option('--vcf', default=None, help='convert vcf to input file')
-
 
 def main(input_file, output_file=None, upstream=20, downstream=20,
          hg_version=default_hg_version,  download='n', configure='n',seq_dir=file_path[:-8]+"test/test_files/", genome=genome_path, vcf=None):
@@ -85,7 +86,7 @@ def parse_file(*args):
     ''' Parse a file line by line into the get_seq function
     '''
     input_file, output_file, upstream, downstream, hg_version, \
-            seq_dir, reference,  genome = args
+            seq_dir, reference, genome = args
     
     # append all returned data to this list
     all_scrapped_info = []
@@ -100,66 +101,61 @@ def parse_file(*args):
         mutation = line[2]
         ref_base = line[2].split("/")[0]
         alt_answer, mut_type = determine_mutation(mutation)
+
         logging.debug(" We are looking for a {}\n".format(mutation))
 
         # check each individual line of the file for CUSTOM ERRORS
         error_check = reference.handle_argument_exception(var_pos)
-        # find a list of files with seq_name in its title, if ab1 matched then convert it to a .seq and .tab file
+
+        # find a list of files with seq_name in its title.
         seq_file = get_AB1_file.get_matching_seq_file(seq_name, seq_dir)
-        if not seq_file:
+
+        # produce seq & tab files for each matched file, otherwise return blank line
+        if seq_file:
+            convert = [get_AB1_file.handle_seq_file(x, seq_dir) 
+                       for x in seq_file]
+        else:
             all_scrapped_info.append("\t".join((seq_name, var_pos, "-", "-", "-", "-", "-", "0")))    
-        convert = [get_AB1_file.handle_seq_file(x, seq_dir) 
-                   for x in seq_file if seq_file]
-        # intialise the check_sanger class for every found seq_file
+        
+        # intialise the check_sanger CompareSeq class for every found seq_file
         sanger = [CompareSeqs(upstream, downstream, ref_base, alt_answer, 
                               mut_type, x, seq_dir) 
                   for x in seq_file]
+
         # parse it all into get_seq()
         sequence_info = [get_seq(seq_name, var_pos, mutation, reference,  
                                 hg_version, genome, x) for x in sanger]
+        
         logging.debug("Sequence Info: ".format(sequence_info))
-        # filter out sequences where no seq file was found
-        filtered_answer = [x for x in sequence_info if "-" != x[1].split("\t")[4]]
-       
-        logging.debug("FILTERED_ANSWER: ".format(filtered_answer))
-       
-        # if filtered_answer is an empty list then the found_answer variable will not exist, hence why if needs to be assigned None here
-        found_answer = None
 
-        # find the index in filtered_answer which contains the mutation detected by NGS and store in a var called found_answer
-        index = 0
-        for i in filtered_answer:
-            filtered_call = i[1].split("\t")[6]
-            logging.debug("Filtered Call: {}, RA: {}".format(filtered_call, 
-                                                              ref_base+"/"+alt_answer))
-            if ref_base+"/"+alt_answer == filtered_call:
-                found_answer = filtered_answer[index]  
-                break
-            else:
-                found_answer = None
-            index += 1
+        # filter out sequences where no seq file was found
+        filtered_answers = [x for x in sequence_info if "-" != x[1].split("\t")[4]]
+        logging.debug("Filtered Answer: {}".format(filtered_answers))
+       
+        # check if any of the filtered_answer list contains the het call of interest
+        found_answer = find_variant(filtered_answers, ref_base, alt_answer)
 
         # if a het call was found in some of the matching seq files, then print and return its values. Otherwise, return no seq_file matched values
         if found_answer:
             print_out, answer = found_answer
             print(print_out)
-            logging.debug(print_out)
+            logging.debug("printing: {}".format(print_out))
             all_scrapped_info.append(answer)
 
-        elif filtered_answer:
-            print_out, answer = filtered_answer[0]
+        elif filtered_answers:
+            print_out, answer = filtered_answers[0]
             print(print_out)
-            logging.debug(print_out)
+            logging.debug("printing: {}".format(print_out)) 
             # append each lines returned data to an emty list
             all_scrapped_info.append(answer)
 
         elif sequence_info:
             print_out, answer = sequence_info[0]
             print(print_out)
-            logging.debug(print_out)
+            logging.debug("printing: {}".format(print_out)) 
             all_scrapped_info.append(answer)
 
-        # reset variable for next line
+        # reset variable for next line/iteration
         found_answer = None
 
     # return all scrapped data
@@ -169,7 +165,7 @@ def parse_file(*args):
 
 def determine_mutation(mutation):
     ''' Determine which type of mutation is in each line of the
-        input file
+        input file. Assumes the mutation is a het.
 
         This will eventually be utilised in the check_sangers het calls to find the correct mutation. 
     '''
@@ -187,6 +183,31 @@ def determine_mutation(mutation):
         return (alt, "i")
 
 
+
+def find_variant(filtered_answers, ref_base, alt_answer):
+    ''' From a list of get_seq() outputs, check that a given
+        het variant called vai NGS is within one of the lists 
+        elements and, if found, return said element.
+    '''
+    # required in case filtered_answers is an empty list
+    found_answer = None
+
+    index = 0
+    for answer in filtered_answers:
+        filtered_call = answer[1].split("\t")[6]
+        logging.debug("Filtered Call: {}, NGS Call: {}".format(filtered_call, 
+                                                          ref_base+"/"+alt_answer))
+        if ref_base+"/"+alt_answer == filtered_call:
+            found_answer = filtered_answers[index]  
+            break
+        else:
+            found_answer = None
+        index += 1
+
+    return found_answer
+
+
+
 def get_seq(seq_name, var_pos, mutation, reference,  hg_version,  genome, sanger=None):
     ''' Get the reference sequence from a given position, possibly compare
         to a sanger squence and get gene/exon information. 
@@ -194,7 +215,6 @@ def get_seq(seq_name, var_pos, mutation, reference,  hg_version,  genome, sanger
         sanger and gene/exon information is dependent upon whether the sanger 
         and pyensembl is or is not None
     '''
-    
     # default variables to - incase the below conditions are not met
     ref_base = sanger_base = seq_file_used = "-"
     compare_result = "0"
@@ -213,29 +233,18 @@ def get_seq(seq_name, var_pos, mutation, reference,  hg_version,  genome, sanger
     
     # if CompareSeqs class has been intiated try and find a matching .seq file
     if sanger:
+        
         sanger_sequence = sanger.match_with_seq_file(sequence)
         logging.debug("{}\n".format(sanger_sequence))
+
         # if .seq file found compare the ref var_pos base and the sanger var_pos base
         if sanger_sequence:
             upstream_seq, downstream_seq, ref_base, sanger_base, \
-                    var_index = sanger_sequence
-            
-            # if var_index is a tuple then it is an indel else process the position
-            if isinstance(var_index, tuple):
-                alternate_bases = [sanger.seq_file[x] for x in range(var_index[0], var_index[1]+1)]
-                indel = "".join(alternate_bases)
-                if var_index[-1] == "i":
-                    het_call = "/".join((ref_base,indel))
-                if var_index[-1] == "d":
-                    het_call = "/".join((indel, ref_base))
-            
-            # string means it is a deletion which was found in the het call dict
-            elif isinstance(var_index, str):
-                het_call = var_index
+                poly_het = sanger_sequence
 
-            else:
-                het_call = None
-                
+            # decipher het call
+            het_call = determine_het_call(sanger_sequence) 
+               
             # if a het was found use it in the full sequence else use the ref base
             if het_call:
                 sanger_base = het_call 
@@ -243,16 +252,14 @@ def get_seq(seq_name, var_pos, mutation, reference,  hg_version,  genome, sanger
             else:
                 full_seq = "".join((upstream_seq,sanger_base,downstream_seq))
 
-            compare = get_AB1_file.compare_nucleotides(ref_base,sanger_base) 
+            statement, compare_result = get_AB1_file.compare_nucleotides(ref_base,sanger_base) 
 
-            statement = compare[0]
-            compare_result = compare[1]
 
     # construct a header
     header = reference.header_option(seq_name,var_pos,seq_range,sequence)
 
-    # print reference sequence (no options)
-    if 'sanger_sequence' not in locals():
+    # print reference sequence
+    if not sanger:
         print_out ="\n".join((header, sequence,"\n"))
 
     # print reference and sanger sequence
@@ -274,11 +281,35 @@ def get_seq(seq_name, var_pos, mutation, reference,  hg_version,  genome, sanger
     return (print_out, answer)
    
 
-    
 
+def determine_het_call(sanger_sequence):
+    ''' Determine het call from the output of
+        the CompareSeqs.match_with_seq_file()
+    '''
+    upstream_seq, downstream_seq, ref_base, sanger_base, \
+                    poly_het = sanger_sequence
+
+    # if poly_het is a tuple then it is an indel else process the position
+    if isinstance(poly_het, tuple):
+        alternate_bases = [sanger.seq_file[x] 
+                           for x in range(poly_het[0], poly_het[1]+1)]
+        indel = "".join(alternate_bases)
+        if poly_het[-1] == "i":
+            het_call = "/".join((ref_base,indel))
+        if poly_het[-1] == "d":
+            het_call = "/".join((indel, ref_base))
+    
+    # string means it is a deletion which was found in the het call dict
+    elif isinstance(poly_het, str):
+        het_call = poly_het
+
+    else:
+        het_call = None
+              
+    return het_call
                
+
 if __name__ == '__main__':
     main()         
 
-# main("in.txt","b", 2, 20,"hg19","\t","y")
 

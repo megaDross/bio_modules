@@ -58,7 +58,7 @@ class CompareSeqs(object):
 
         else:
             # assume it is a forward sequence
-            logging.warning("Assuming {} is a forward sequence".format(self.seq_filename))
+            logging.warning("Assuming {} is a forward sequence".format(self.seq_filename.split("/")[-1]))
 
         
 
@@ -273,7 +273,7 @@ class CompareSeqs(object):
 
         # sort matches by quality and return highest bases as het call if more than one call is found for the given position/index
         sorted_matches = sorted(all_matches, key=lambda x: int(x[0]), reverse=True)
-        logging.debug("Sorted Matches: ".format(sorted_matches))
+        logging.debug("Sorted Matches: {}".format(sorted_matches))
         return sorted_matches
 
 
