@@ -309,6 +309,7 @@ def determine_het_call(sanger_sequence):
     return het_call
                
 
+
 if __name__ == '__main__':
     main()         
 
