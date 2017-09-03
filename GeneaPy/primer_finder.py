@@ -1,173 +1,114 @@
-import re, os.path, click
-import useful
-from output import write_to_output
+import pandas as pd
+import warnings
 
-# gives the dir/PATH of this program, will be used to find the defaulted primer_database
-# which are hg19 primers only.
-file_path = useful.cwd_file_path(__file__) 
-
-
-@click.command('primer_finder') 
-@click.argument('input_file',nargs=1, required=False)
-@click.option('--output_file',default=None,help="output; defaulted as matching_primers_output.txt")
-@click.option('--primer_database',default=file_path[:-8]+"test/primer_database.txt", help="defaulted to TAAD primer DB")  
-@click.option('--distance', type=int, help="number of bp a primer must be from the position")
-@click.option('--size', type=int, help="maximum desired amplicon size")
-@click.option('--gc', type=int, help="maximum desired GC content of amplicon")
-def main(input_file, distance, size, gc, output_file=None,
-         primer_database=file_path[:-8]+"test/primer_database.txt"):           
-    ''' Takes variant postion(s) as input and matches it with an appropriate primer
-        pair in a given primer database. 
-    '''
-    # allows one to pipe in an argument at the cmd, requires required=False in 
-    # @click.argument()
-    if not input_file:
-        input_file = input()
+def main(db, i, size=None, distance=None, gc=None):
+    ''' Find primers for a set of given variants.
     
-    # get all genomic locations within primer pairs, from all primers in the database
-    all_primer_pos = get_all_primer_pos(primer_database)        
-    header = "\t".join(("Variant","Primer", "Position", "Gene_Name", 
-                        "Amplicon_Size", "GC%", "Amplicon_Number", 
-                        "Dist_from_F","Dist_from_R","\n"))
-    print(header[:-1])
-
-    # determine input type and process accordingly
-    if os.path.isfile(input_file) is True:
-        all_matched_primers = []
-        for line in [line.rstrip("\n").split("\t") for line in open(input_file)]:
-            var_name = line[0]
-            var_pos = line[1].replace("chr","")
-            filtered_primer_pos = filter_positions(distance, size, gc,
-                                                   all_primer_pos)
-            matched_primers = match(var_pos,filtered_primer_pos,var_name)
-            all_matched_primers.append(matched_primers)
-            print(matched_primers)
-
-    else:
-        output_file = None
-        position = input_file.replace("chr","")
-        filtered_primer_pos = filter_positions(distance, size, gc, all_primer_pos)
-        matched_primers = match(position, filtered_primer_pos,"query")
-        print(matched_primers)
-
+    Args:
+        db: a primer database (tsv format)
+        i: variants to find primers for (tsv format)
+        size: maximum product size of the resulting amplicon
+        distance: minimum distance from F/R primers
+        gc: maximum GC% of resulting amplicon
     
-    if output_file:
-        write_to_output(all_matched_primers, output_file, header)
-
-
-
-
-
-
-def get_all_primer_pos(primer_database):
-    ''' Generate a list of every genomic position witin each primer pair given 
-        in the primer database.
-
-        for every line in the primer database, split the genomic range up into
-        chrom, start and stop. Iterate through the start and stop positions to 
-        generate a list of every position in the primer and append to an empty
-        list. A list of lists of every genomic position in every primer pair
-        in a primer database is generated which is subsequently unpacked into
-        a single list of tuples. Each tuple of said list contains: 
-            ('name', 'position in primer', 'distance from F', 'distance from R')
-    '''
-    
-    primer_file = open(primer_database)
-    header = next(primer_file)    # skip database header
-    
-    # list of lists containing every position in every primer pair
-    all_primer_pos = []
-
-    # generates all_primer_pos
-    for i in [i.rstrip("\n").split("\t") for i in primer_file]:
-        primer_name = i[0]
-        gene_name = i[3]
-        product_size = i[4]
-        GC = i[6]
-        num_amplicons = i[7]
-        primer_range = re.split(r'[:-]',i[5])   # split into three components
-        chrom = re.sub(r'[^0-9]','',primer_range[0])  # remove any non-integers
-        start = int(primer_range[1])
-        stop = int(primer_range[2])      
-
-        # generate every position for current primer pair and append to empty list
-        all_pos_in_primer = ["\t".join((primer_name, chrom+":"+str(i), gene_name, 
-                                        product_size, GC, num_amplicons,
-                                        str(i-start), str(stop-i))) 
-                                        for i in range(start,stop)]
+    Returns:
+        A tsv file containing variants and their matching 
+        primers. 
         
-        all_primer_pos.append(all_pos_in_primer)
-        
-    # unpacks list of lists into a single list of tuples
-    all_primers_pos_unpacked = [tuple(x.split("\t")) for i in all_primer_pos 
-                                for x in i]
-    return all_primers_pos_unpacked
-        
-
-
-       
-def filter_positions(distance, size, gc, primer_info):
-    ''' filter out primer positions that do not meet the limitations
-        set by the user
-
-        Each tuple in the primer_info list should look like:
-            (primer name, primer position, product size, gene_name
-             GC% of amplicon, number amplicons generated,
-             distance of position from F primer, distance from R)
+    Notes:
+        primer database should look like pd_example.tsv
+        i should look like:
+            variant_name    15:48765543
     '''
-    # filter out primers that do not generate unique amplicons
-    primer_info = [x for x in primer_info
-                   if int(x[5]) == 1]
+    # Only way to get rid of the SettingWithCopyWarning
+    warnings.filterwarnings('ignore')
 
-    if distance:
-        primer_info = [x for x in primer_info 
-                      if int(x[6]) > distance 
-                      and int(x[7]) > distance]
+    # change to DataFrame, find matching primers and apply filters
+    db_df, var_df = files2df(db, i)
+    primers = get_primers(db_df, var_df)
+    primers = extra_filters(primers, size, distance, gc)
+    
+    # list of variants with no primer match
+    no_match = var_df[~var_df['Variant'].isin(primers['Variant'])]['Variant'].tolist()
+    err = 'No primer pairs could be found for {}'.format(', '.join(no_match))
+    print(err)
+    
+    return primers
 
+
+def files2df(db, i):
+    ''' Transform primer database and variant files to DataFrames.
+    '''
+    # prepare primer database
+    db = pd.read_csv(db, delimiter='\t')
+    db['Chrom'], db['Start'], db['End'] = db.Primer_Range.str.split('[-:]').str
+    db = db.drop('Primer_Range', axis=1)
+
+    # prepare input file
+    i = pd.read_csv(i, delimiter='\t', header=None)
+    i.columns = ['Variant', 'Variant_Position']
+    i['Chrom'], i['Pos'] = i['Variant_Position'].str.split(':').str
+    i = i.drop('Variant_Position', axis=1)
+
+    return (db, i)
+
+
+def get_primers(db_df, var_df):
+    ''' Returns a DataFrame of variants and their matching primers.
+
+    Args:
+        db_df: primer database DataFrame
+        var_df: variants of interest DataFrame
+    '''
+    # merge input and database by Chrom
+    m = pd.merge(var_df, db_df)
+
+    # convert some columns to numeric type
+    m['GC%'] = m['GC%'].str.replace('%', '')
+    m['Product_Size'] = m['Product_Size'].str.replace('bp', '')
+    nums = ['Chrom', 'Pos', 'Start', 'End', 'Product_Size', 'GC%',
+            'Number_Amplicons']
+    m[nums].apply(pd.to_numeric, errors='coerce', axis=1)
+    for c in nums:
+        m[c] = pd.to_numeric(m[c], errors='coerce')
+
+    # filter for those within primers
+    within_primers = ((m['Start'] < m['Pos']) & (m['Pos'] < m['End']))
+    output = m[within_primers]
+
+    # variant distance from start and end of primer
+    output['Dist_F'] = output['Pos'] - output['Start']
+    output['Dist_R'] = output['End'] - output['Pos']
+    output = output.drop(['Start', 'End'], axis=1)
+    
+    return output
+
+
+def extra_filters(primer, size, distance, gc):
+    ''' Filter primers on product size, distance and
+        product GC%.
+
+    Args: 
+        primers:DataFrame containing variants and matching primers
+        size: maximum product size
+        distance: minimum distance from F/R primers
+        gc: maximum product GC%
+    '''
+    
     if size:
-        primer_info = [x for x in primer_info if 
-                       int(x[3].split("bp")[0]) < size]
-
+        primer = primer[primer.Product_Size < 500]
+    if distance:
+        primer = primer[((primer.Dist_F > distance) &
+                         (primer.Dist_R > distance))]
     if gc:
-        primer_info = [x for x in primer_info if
-                       int(x[4].split(".")[0]) < gc]
-    
-    return(primer_info)
-
-
-
-
-def match(var_pos, primer_info, var_name=None):
-    ''' Match a given variant position against every genomic position covered
-        in all the primer pairs in the primer database
-    '''
-    # used if a string given as input instead of a file
-    if var_name is None:
-        var_name = var_pos
-    
-    # stored matched primer information
-    answer = []
-
-    # searches and generates matched primer pair for the variant position given
-    for line in primer_info:  
-        primer_name, primer_pos, product_size, gene_name, GC, \
-            num_amplicons, variant_distance_f, variant_distance_r \
-            = line
+        primer = primer[primer['GC%'] < gc]
         
-        # append all matching primers to the list
-        if var_pos == primer_pos:
-            match = "\t".join(((var_name,) + line))
-            answer.append(match) 
+    return primer
 
-    # returns no match error if no primer pair is found, else return answer as string
-    if not answer:
-        return  "\t".join((var_name, "-", "-", "-", "-", "-", "-", "-"))
-    else:
-        return "\n".join(answer)
-                 
-    
-    
-# excute only from outside file
+
 if __name__ == '__main__':
-    main()
-    
+    i = '/home/david/projects/GeneaPy/test/primer_finder_in.txt'
+    db = '/home/david/projects/GeneaPy/test/primer_database.txt'
+    p = main(db, i, size=500, gc=50, distance=100)
+    print(p.shape)
+    print(p)
