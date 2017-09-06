@@ -6,6 +6,7 @@ if not sys.platform == 'cygwin':
     # pysam doesn't work with cygwin
     import pysam
 
+# Give header???
 
 def main(location, hg_version='hg19', genome=None, upstream=None, downstream=None):
     ''' Return a DNA sequence from a given genomic position or range. 
@@ -28,7 +29,8 @@ def main(location, hg_version='hg19', genome=None, upstream=None, downstream=Non
     '''
     # correct the hg version
     hg = {'grch37': 'hg19', 'grch38': 'hg38'}
-    hg_version = hg.get(hg_version.lower())
+    if hg_version.lower().startswith('g'):
+        hg_version = hg.get(hg_version.lower())
 
     # create a sequence range if required
     seq_range = create_region(location, upstream, downstream)
@@ -37,6 +39,7 @@ def main(location, hg_version='hg19', genome=None, upstream=None, downstream=Non
     if genome:
         seq = get_sequence_locally(seq_range, genome)
     else:
+        print(hg_version, seq_range)
         seq = get_sequence(seq_range, hg_version)
 
     # capatilise location base if it is a position
@@ -54,7 +57,7 @@ def create_region(location, upstream, downstream):
     # PySam doesnt like chr preceding position/range
     location = location.replace('chr', '')
 
-   # check location variable isn't holding a seq range
+    # check location variable isn't holding a seq range
     if all(x in location for x in [':', '-']):
         return location.replace('-',',')
 
