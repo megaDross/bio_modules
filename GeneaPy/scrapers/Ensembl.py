@@ -1,23 +1,41 @@
-import re, ensembl_exon
+import re
+import ensembl_exon
 from pyensembl import EnsemblRelease
+import UCSC
 
 
 class GeneMetaData(object):
     ''' Store gene, transcript and exon metadata of a given genomic position.
-    
+
+    Args:
+        query: genomic position
+        hg_version: human genome version
+        flank: desired number of bp to scrape from each side of the given genomic position (default=50)
+        genome: path to human genome FASTA file (optional)
+
     Attributes:
         self.query: genomic position
-        self.hg_version = human genome version
+        self.hg_version: human genome version
+        self.hg: Ensembl human genome release
+        self.gene: gene in which the query resides within
+        self.id: Ensembl gene ID
+        self.type: gene type
+        self.location: genomic co-ordinates of the gene
+        self.exon_id: Ensembl exon ID
+        self.exon: exon number in which the query resides within
+        self.intron: intron number in which the query resides within
+        self.seq: scrapped FASTA sequence of the query + and - the flank
     '''
-    genome = {"hg19": 75, "hg38": 83, 'GRCh37': 75, 'GRCh38': 83}
+    hg_dict = {"hg19": 75, "hg38": 83, 'grch37': 75, 'grch38': 83}
 
-    def __init__(self, query, hg_version):
-        self.query = query.replace("chr","")
+    def __init__(self, query, hg_version, flank=50, genome=None):
+        self.query = query.replace("chr", "")
         self.hg_version = hg_version 
-        self.hg = EnsemblRelease(self.genome.get(hg_version)) # convert to ensembl release object
+        self.hg = EnsemblRelease(self.hg_dict.get(hg_version.lower())) # convert to ensembl release object
         self.gene, self.id, self.type, self.location = self.get_gene_info()
         self.transcript = self.get_canonical_transcript()
         self.exon_id, self.intron, self.exon = self.get_exon_info()
+        self.seq = UCSC.main(query, hg_version, genome, flank, flank)
 
 
     def get_gene_info(self):
@@ -65,18 +83,26 @@ class GeneMetaData(object):
 
     def update_transcript(self, transcript):
         ''' Update transcript ID and Exon info.
-
-        NOTE: returns No Intron/Exon Matched error. 
         '''
         self.transcript = transcript
         self.exon_id, self.intron, self.exon = self.get_exon_info()
 
+    
+    def print_data(self):
+        ''' print all scraped data associated with the query
+        '''
+        pos = '{}\nchr{} in {}\n{}'.format('-'*50, self.query, self.hg_version, '-'*50)
+        gene_info = 'name: {}\nid: {}\nloc: {}\nType: {}'.format(self.gene, self.id, self. location, self.type)
+        trans = 'id: {}'.format(self.transcript)
+        exon_intron = 'id: {}\nexon: {}\nintron: {}'.format(self.exon_id, self.exon, self.intron)
+        m = (pos, '\nGene', gene_info, '\nTranscript', trans, '\nExon', exon_intron+"\n", '-'*50, 
+             "\n"+self.seq+"\n", '-'*50)
+        msg = "\n".join(m)
+        print(msg)
 
 
 
-
-
-
-
-
-
+if __name__ == '__main__':
+    fbn1 = GeneMetaData('chr15:48733918', 'hg19') 
+    fbn1.print_data()
+    
