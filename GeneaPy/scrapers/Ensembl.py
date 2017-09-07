@@ -73,10 +73,3 @@ class GeneMetaData(object):
 
 
 
-
-
-
-
-
-
-
