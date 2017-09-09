@@ -12,7 +12,6 @@ def main(transcript, hg_version, pos):
     Returns:
         (Ensembl Exon ID, Exon Number, Intron Number)
     '''
-
     exon_dics = request_ensembl(hg_version, transcript)
     exon_region = all_exon_regions(transcript, exon_dics)
     exon_id = get_exon_id(pos, exon_region) # filter for exon id in which variant is within
@@ -25,7 +24,7 @@ def main(transcript, hg_version, pos):
         if intron_num is None:
             return (pos, transcript,"NO INTRON/EXON MATCHED")
         else:
-            last_exon = total_exons(exon_dics)
+            last_exon = total_exons(transcript, exon_dics)
             last_intron = int(last_exon)-1
             return ("-",str(intron_num)+"/"+str(last_intron),"-")
     else:

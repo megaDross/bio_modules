@@ -2,12 +2,14 @@ import sys
 import requests
 import bs4
 import re
+import textwrap
 if not sys.platform == 'cygwin':
     # pysam doesn't work with cygwin
     import pysam
 
+# Give header???
 
-def main(location, hg_version='hg19', genome=None, upstream=None, downstream=None):
+def main(location, hg_version='hg19', genome=None, upstream=None, downstream=None, header=True):
     ''' Return a DNA sequence from a given genomic position or range. 
 
     Args:
@@ -16,6 +18,7 @@ def main(location, hg_version='hg19', genome=None, upstream=None, downstream=Non
         genome: path to genome FASTA file
         upstream: bases upstream from location
         downstream: bases downstream from location
+        header: give the sequence a FASTA header
     
     Returns:
         DNA sequence representative of the given genomic
@@ -28,7 +31,8 @@ def main(location, hg_version='hg19', genome=None, upstream=None, downstream=Non
     '''
     # correct the hg version
     hg = {'grch37': 'hg19', 'grch38': 'hg38'}
-    hg_version = hg.get(hg_version.lower())
+    if hg_version.lower().startswith('g'):
+        hg_version = hg.get(hg_version.lower())
 
     # create a sequence range if required
     seq_range = create_region(location, upstream, downstream)
@@ -38,10 +42,17 @@ def main(location, hg_version='hg19', genome=None, upstream=None, downstream=Non
         seq = get_sequence_locally(seq_range, genome)
     else:
         seq = get_sequence(seq_range, hg_version)
+    
 
     # capatilise location base if it is a position
     if '-' not in location:
         seq = upper_pos(seq, upstream, downstream)
+    
+    # wrap text
+    seq = textwrap.fill(seq, width=50)
+
+    if header:
+        seq = ">{} {}\n{}".format(seq_range, hg_version, seq)
 
     return seq
 
@@ -54,7 +65,7 @@ def create_region(location, upstream, downstream):
     # PySam doesnt like chr preceding position/range
     location = location.replace('chr', '')
 
-   # check location variable isn't holding a seq range
+    # check location variable isn't holding a seq range
     if all(x in location for x in [':', '-']):
         return location.replace('-',',')
 
@@ -112,6 +123,8 @@ def upper_pos(seq, upstream, downstream):
     after = seq[upstream+1:len(seq)]
     altered_seq = "".join((before.lower(), var.upper(), after.lower()))
     return altered_seq 
+
+
 
 
 if __name__ == '__main__':
