@@ -91,13 +91,18 @@ class GeneMetaData(object):
     def print_data(self):
         ''' print all scraped data associated with the query
         '''
-        pos = '{}\nchr{} in {}\n{}'.format('-'*50, self.query, self.hg_version, '-'*50)
-        gene_info = 'name: {}\nid: {}\nloc: {}\nType: {}'.format(self.gene, self.id, self. location, self.type)
-        trans = 'id: {}'.format(self.transcript)
-        exon_intron = 'id: {}\nexon: {}\nintron: {}'.format(self.exon_id, self.exon, self.intron)
-        m = (pos, '\nGene', gene_info, '\nTranscript', trans, '\nExon', exon_intron+"\n", '-'*50, 
-             "\n"+self.seq+"\n", '-'*50)
-        msg = "\n".join(m)
+        s = '-'*50
+        query = '{}\nchr{} in {}\n{}\n\n'.format(
+                 s, self.query, self.hg_version,  s)
+        gene = 'Gene\nname: {}\nid: {}\nloc: {}\ntype: {}\n\n'.format(
+                self.gene, self.id, self.location, self.type)
+        transcript = 'Transcript\nid: {}\n\n'.format(
+                      self.transcript)
+        exon = 'Exon\nid: {}\nexon: {}\nintron: {}\n\n'.format(
+                self.exon_id, self.exon, self.intron)
+        scrapped_seq = '{}\n\n{}\n\n{}'.format(
+                        s, self.seq, s)
+        msg = (query+gene+transcript+exon+scrapped_seq)        
         print(msg)
 
 
