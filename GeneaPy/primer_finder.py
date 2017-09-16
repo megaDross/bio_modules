@@ -30,8 +30,9 @@ def main(db, i, size=None, distance=None, gc=None):
     
     # list of variants with no primer match
     no_match = var_df[~var_df['Variant'].isin(primers['Variant'])]['Variant'].tolist()
-    err = 'No primer pairs could be found for {}'.format(', '.join(no_match))
-    print(err)
+    if no_match:
+        err = 'No primer pairs could be found for {}'.format(', '.join(no_match))
+        print(err)
     
     return primers
 

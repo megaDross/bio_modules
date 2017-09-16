@@ -2,6 +2,7 @@ import re
 import ensembl_exon
 from pyensembl import EnsemblRelease
 import UCSC
+import argparse
 
 
 class GeneMetaData(object):
@@ -32,13 +33,13 @@ class GeneMetaData(object):
         self.query = query.replace("chr", "")
         self.hg_version = hg_version 
         self.hg = EnsemblRelease(self.hg_dict.get(hg_version.lower())) # convert to ensembl release object
-        self.gene, self.id, self.type, self.location = self.get_gene_info()
-        self.transcript = self.get_canonical_transcript()
-        self.exon_id, self.intron, self.exon = self.get_exon_info()
+        self.gene, self.id, self.type, self.location = self._get_gene_info()
+        self.transcript = self._get_canonical_transcript()
+        self.exon_id, self.intron, self.exon = self._get_exon_info()
         self.seq = UCSC.main(query, hg_version, genome, flank, flank)
 
 
-    def get_gene_info(self):
+    def _get_gene_info(self):
         ''' Get the gene information at a given genomic position.
 
         Returns:
@@ -58,7 +59,7 @@ class GeneMetaData(object):
                 print("No gene found at {} for genome version {}".format(self.query, str(self.hg_version)))
 
 
-    def get_canonical_transcript(self):
+    def _get_canonical_transcript(self):
         ''' Determine and return the canonical transcript of the given gene.
         '''
         all_transcripts = self.hg.transcript_ids_of_gene_name(self.gene)
@@ -75,7 +76,7 @@ class GeneMetaData(object):
             return canonical_transcript
 
 
-    def get_exon_info(self):
+    def _get_exon_info(self):
         ''' Get the exon/intron numbers and IDs.
         '''
         return ensembl_exon.main(self.transcript, self.hg_version, self.query)    
@@ -106,7 +107,25 @@ class GeneMetaData(object):
         print(msg)
 
 
+
+def get_parser():
+    parser = argparse.ArgumentParser(description='Scrape a genomic positions meta-data from Ensembl')
+    parser.add_argument('query', type=str, help='genomic position')
+    parser.add_argument('-hg', '--genome_version', type=str, help='human genome verison (default=hg38)', default='hg38')
+    parser.add_argument('-f', '--flank', type=int, help='desired number of bp to scrape from each side of the given genomic position (default=50)', default=50)
+    parser.add_argument('-g', '--genome', type=str, help='path to genome FASTA file', default=None) 
+    return parser
+
+
+def cli():
+    parser = get_parser()
+    args = vars(parser.parse_args())
+    metadata = GeneMetaData(args['query'], args['genome_version'], 
+                            args['flank'], args['genome'])
+    metadata.print_data()
+
+
 if __name__ == '__main__':
-    fbn1 = GeneMetaData('chr15:48733918', 'hg19') 
-    fbn1.print_data()
-    
+    cli()
+
+    # 'chr15:48733918'

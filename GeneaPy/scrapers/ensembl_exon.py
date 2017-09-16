@@ -22,7 +22,7 @@ def main(transcript, hg_version, pos):
         intron_num = intron_number(pos, intron_region)
         
         if intron_num is None:
-            return (pos, transcript,"NO INTRON/EXON MATCHED")
+            return ('-', '-',"-")
         else:
             last_exon = total_exons(transcript, exon_dics)
             last_intron = int(last_exon)-1
