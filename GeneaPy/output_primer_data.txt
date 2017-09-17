@@ -1,2 +1,0 @@
-Primer	F_Primer	R_Primer	Genome	Gene	Exon	Intron	Product_Size	Primer_Range	GC%
-test2	GGGTGTGCAAAACTGTCAGT	AGTCCCTTAGTTCAGTGCCT	hg19	COL5A2	-	47/53	730bp	chr2:189910484-189911213	35.9
