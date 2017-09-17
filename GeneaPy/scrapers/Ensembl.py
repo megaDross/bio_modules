@@ -1,9 +1,9 @@
 import re
-import ensembl_exon
-from pyensembl import EnsemblRelease
-import UCSC
 import argparse
-
+from pyensembl import EnsemblRelease
+import ensembl_exon
+import UCSC
+import custom_exceptions as ex
 
 class GeneMetaData(object):
     ''' Store gene, transcript and exon metadata of a given genomic position.
@@ -62,24 +62,33 @@ class GeneMetaData(object):
     def _get_canonical_transcript(self):
         ''' Determine and return the canonical transcript of the given gene.
         '''
-        all_transcripts = self.hg.transcript_ids_of_gene_name(self.gene)
-        all_transcripts = [self.hg.transcript_by_id(x) for x in all_transcripts]
-        protein_coding_transcripts = []
+        try:
+            all_transcripts = self.hg.transcript_ids_of_gene_name(self.gene)
+            all_transcripts = [self.hg.transcript_by_id(x) for x in all_transcripts]
+            protein_coding_transcripts = []
 
-        for transcript in all_transcripts:
-            size = transcript.end - transcript.start
-            if transcript.biotype == "protein_coding":
-                protein_coding_transcripts.append((size, transcript.id, transcript.biotype)) 
-        # sort by size and return the largest protein coding transcript
-        if protein_coding_transcripts:    
-            canonical_transcript = sorted(protein_coding_transcripts)[-1][1]
-            return canonical_transcript
+            for transcript in all_transcripts:
+                size = transcript.end - transcript.start
+                if transcript.biotype == "protein_coding":
+                    protein_coding_transcripts.append((size, transcript.id, transcript.biotype)) 
+            # sort by size and return the largest protein coding transcript
+            if protein_coding_transcripts:    
+                canonical_transcript = sorted(protein_coding_transcripts)[-1][1]
+                return canonical_transcript
+            else:
+                raise ex.NoProteinCodingTranscript(self.query, self.gene)
+
+        except ex.NoProteinCodingTranscript as e:
+            return '-'
 
 
     def _get_exon_info(self):
         ''' Get the exon/intron numbers and IDs.
         '''
-        return ensembl_exon.main(self.transcript, self.hg_version, self.query)    
+        if self.transcript == '-':
+            return ('-', '-', '-')
+        else:
+            return ensembl_exon.main(self.transcript, self.hg_version, self.query)    
 
 
     def update_transcript(self, transcript):

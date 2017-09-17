@@ -46,7 +46,6 @@ def request_ensembl(hg_version, transcript):
         else:
             print("incompatible human genome version")
             sys.exit() 
-
         url = "".join(("http://",grch,"rest.ensembl.org/overlap/id/", transcript,
                        "?feature=exon;content-type=application/json;expand=1"))
         req = requests.get(url)
