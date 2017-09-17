@@ -9,6 +9,8 @@ logging.basicConfig(filename='primer_finder.error.log',
                     level=logging.ERROR,
                     format="%(asctime)s:%(levelname)s:%(message)s")
 
+# TODO: unit testing
+# TODO: sort out logging issues
 
 def primer_finder(db, variant=None, input_file=None, size=None, distance=None, gc=None, 
                   hg=None, gene=None, exon=None, intron=None, output=None):

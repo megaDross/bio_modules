@@ -5,6 +5,11 @@ import ensembl_exon
 import UCSC
 import custom_exceptions as ex
 
+# TODO: function which iterates through a file of pos that write all metadata to csv
+# TODO: unit testing
+# TODO: exception handeling
+# TODO: logging
+
 class GeneMetaData(object):
     ''' Store gene, transcript and exon metadata of a given genomic position.
 
