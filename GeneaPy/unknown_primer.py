@@ -5,6 +5,7 @@ import re
 import bs4
 import Ensembl
 import custom_exceptions as ex
+import common
 
 logging.basicConfig(filename='unknown_primer.error.log', 
                     level=logging.ERROR,
@@ -30,7 +31,7 @@ def unknown_primer(f_primer, r_primer, hg_version, primer_name,
     Returns:
         The in-silico generated amplicons metadata.
     ''' 
-    hg_version = correct_hg_version(hg_version)
+    hg_version = common.correct_hg_version(hg_version)
     check_input_errors(primer_name, f_primer, r_primer, hg_version)
     data = scrape_seq(primer_name, f_primer, r_primer, hg_version, 
                       max_size, min_perfect, min_good)
@@ -39,13 +40,6 @@ def unknown_primer(f_primer, r_primer, hg_version, primer_name,
     all_data = (primer_name, f_primer, r_primer, hg_version) + metadata
     return all_data
 
-
-def correct_hg_version(hg_version):
-    ''' Change genome build name'''
-    hg = {'grch37': 'hg19', 'grch38': 'hg38'}
-    if hg_version.lower().startswith('g'):
-        hg_version = hg.get(hg_version.lower())
-    return hg_version
 
 
 def check_input_errors(primer_name, f_primer, r_primer, hg_version):

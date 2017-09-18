@@ -4,7 +4,7 @@ import argparse
 import bs4
 import re
 import textwrap
-from unknown_primer import correct_hg_version
+from common import correct_hg_version
 if not sys.platform == 'cygwin':
     import pysam
 
@@ -128,20 +128,21 @@ def upper_pos(seq, upstream, downstream):
 
 def get_parser():
     parser = argparse.ArgumentParser(description='scrape DNA sequence covering a given genomicposition/range')
-    parser.add_argument('query', required=True, type=str, help='genomic position/range')
+    parser.add_argument('query', type=str, help='genomic position/range')
     parser.add_argument('-hg', '--genome_version', type=str, help='human genome version (default=hg19)', default='hg19')
     parser.add_argument('-g', '--genome', type=str, help='path to FASTA genome file')
     parser.add_argument('-u', '--upstream', type=int, help='number of base upstream from genomic position')
     parser.add_argument('-d', '--downstream', type=int, help='number of base downstream from genomic position')
-    parser.add_argument('-r', '--header', type=bool, help='fasta like header (default=True)', default=True)
+    parser.add_argument('-r', '--header', action='store_true', help='fasta like header')
     return parser
 
 
 def cli():
     parser = get_parser()
     args = vars(parser.parse_args())
-    main(args['query'], args['hg_version'], args['genome'], 
-         args['upstream'], args['downstream'], args['header'])
+    seq = main(args['query'], args['genome_version'], args['genome'], 
+               args['upstream'], args['downstream'], args['header'])
+    print(seq)
 
 
 if __name__ == '__main__':

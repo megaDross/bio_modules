@@ -4,6 +4,7 @@ from pyensembl import EnsemblRelease
 import ensembl_exon
 import UCSC
 import custom_exceptions as ex
+from common import correct_hg_version
 
 # TODO: function which iterates through a file of pos that write all metadata to csv
 # TODO: unit testing
@@ -36,7 +37,7 @@ class GeneMetaData(object):
 
     def __init__(self, query, hg_version, flank=50, genome=None):
         self.query = query.replace("chr", "")
-        self.hg_version = hg_version 
+        self.hg_version = correct_hg_version(hg_version)
         self.hg = EnsemblRelease(self.hg_dict.get(hg_version.lower())) # convert to ensembl release object
         self.gene, self.id, self.type, self.location = self._get_gene_info()
         self.transcript = self._get_canonical_transcript()

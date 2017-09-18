@@ -3,7 +3,7 @@ import argparse
 import warnings
 import logging
 import custom_exceptions as ex
-from unknown_primer import correct_hg_version
+from common import correct_hg_version
 
 logging.basicConfig(filename='primer_finder.error.log',
                     level=logging.ERROR,
