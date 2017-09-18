@@ -42,7 +42,8 @@ class GeneMetaData(object):
         self.gene, self.id, self.type, self.location = self._get_gene_info()
         self.transcript = self._get_canonical_transcript()
         self.exon_id, self.intron, self.exon = self._get_exon_info()
-        self.seq = UCSC.main(query, hg_version, genome, flank, flank)
+        self.seq = UCSC.main(query, hg_version, genome, flank, flank, header=False)
+        self.seq_range = self._get_seq_range(flank)
 
 
     def _get_gene_info(self):
@@ -66,8 +67,7 @@ class GeneMetaData(object):
 
 
     def _get_canonical_transcript(self):
-        ''' Determine and return the canonical transcript of the given gene.
-        '''
+        ''' Determine and return the canonical transcript of the given gene.'''
         try:
             all_transcripts = self.hg.transcript_ids_of_gene_name(self.gene)
             all_transcripts = [self.hg.transcript_by_id(x) for x in all_transcripts]
@@ -97,6 +97,14 @@ class GeneMetaData(object):
             return ensembl_exon.main(self.transcript, self.hg_version, self.query)    
 
 
+    def _get_seq_range(self, flank):
+        ''' Calculate the sequence range'''
+        chrom, pos = self.query.split(":")
+        start = int(pos) - flank
+        end = int(pos) + flank
+        return '{}:{}-{}'.format(chrom, start, end)
+
+
     def update_transcript(self, transcript):
         ''' Update transcript ID and Exon info.
         '''
@@ -104,9 +112,8 @@ class GeneMetaData(object):
         self.exon_id, self.intron, self.exon = self.get_exon_info()
 
     
-    def print_data(self):
-        ''' print all scraped data associated with the query
-        '''
+    def print_metadata(self):
+        ''' print all scraped data associated with the query'''
         s = '-'*50
         query = '{}\nchr{} in {}\n{}\n\n'.format(
                  s, self.query, self.hg_version,  s)
@@ -116,28 +123,61 @@ class GeneMetaData(object):
                       self.transcript)
         exon = 'Exon\nid: {}\nexon: {}\nintron: {}\n\n'.format(
                 self.exon_id, self.exon, self.intron)
-        scrapped_seq = '{}\n\n{}\n\n{}'.format(
-                        s, self.seq, s)
+        scrapped_seq = '{}\n\n>{}\n{}\n\n{}'.format(
+                        s, self.seq_range, self.seq, s)
         msg = (query+gene+transcript+exon+scrapped_seq)        
         print(msg)
 
 
 
+def output(infile, flank, outfile, hg=None, genome=None):
+    ''' Parse the metadata for all genomic positions 
+        detailed within infile and write to outfile
+    '''
+    with open(outfile, 'w') as out:
+        header = ('Query', 'Genome Version', 'Gene', 'Gene ID',
+                  'Gene Location', 'Type', 'Transcript', 'Exon ID',
+                  'Exon', 'Intron', 'Sequence Range', 'Sequence')
+        out.write("\t".join(header) + "\n")
+        with open(infile, 'r') as f:
+            for line in f:
+                line = line.rstrip("\n")
+                if len(line.split()) > 1:
+                    pos, hg = line.split('\t')
+                else:
+                    pos = line
+                data = GeneMetaData(pos, hg, flank, genome)
+                data_tuple = (data.query, data.hg_version, data.gene,
+                              data.id, data.location, data.type, 
+                              data.transcript, data.exon_id, data.exon,
+                              data.intron, data.seq_range, 
+                              ''.join(data.seq.split('\n')))
+                
+                out.write("\t".join(data_tuple) + "\n")
+                
+
 def get_parser():
     parser = argparse.ArgumentParser(description='Scrape a genomic positions meta-data from Ensembl')
-    parser.add_argument('query', type=str, help='genomic position')
+    parser.add_argument('-i', '--input', type=str, help='file with genomic positions')
+    parser.add_argument('-p', '--position', type=str, help='genomic position')
     parser.add_argument('-hg', '--genome_version', type=str, help='human genome verison (default=hg38)', default='hg38')
     parser.add_argument('-f', '--flank', type=int, help='desired number of bp to scrape from each side of the given genomic position (default=50)', default=50)
     parser.add_argument('-g', '--genome', type=str, help='path to genome FASTA file', default=None) 
+    parser.add_argument('-o', '--output', type=str, help='name of output file')
     return parser
 
 
 def cli():
     parser = get_parser()
     args = vars(parser.parse_args())
-    metadata = GeneMetaData(args['query'], args['genome_version'], 
-                            args['flank'], args['genome'])
-    metadata.print_data()
+
+    if args['input']:
+        output(args['input'], args['flank'], args['output'],
+               args['genome_version'], args['genome'])
+    else:
+        metadata = GeneMetaData(args['position'], args['genome_version'], 
+                                args['flank'], args['genome'])
+        metadata.print_metadata()
 
 
 if __name__ == '__main__':

@@ -1,4 +1,9 @@
-import requests, sys 
+import requests
+import sys
+
+# NOTE: Response 400 in request_ensembl() occurs when a transcript has NO exons.
+#       Try wrapping RequestException in a custom exception and using that as a 
+#       trigger to return (-, -, -).
 
 
 def main(transcript, hg_version, pos):
@@ -44,8 +49,9 @@ def request_ensembl(hg_version, transcript):
         elif hg_version == "hg38":
             grch = ""
         else:
-            print("incompatible human genome version")
-            sys.exit() 
+            # NOTE: raise a custom exception instead of printing
+            print("Incompatible human genome version")
+            sys.exit(1) 
         url = "".join(("http://",grch,"rest.ensembl.org/overlap/id/", transcript,
                        "?feature=exon;content-type=application/json;expand=1"))
         req = requests.get(url)
@@ -54,7 +60,8 @@ def request_ensembl(hg_version, transcript):
         return exon_dics
     
     except requests.exceptions.RequestException as e:
-        return e
+        if str(e.response) == '<Response [400]>':
+            return e.response
 
 
 def all_exon_regions(transcript, exon_dics):
