@@ -3,7 +3,7 @@ import requests
 import logging
 import re 
 import bs4
-import MetaData
+import metadata
 import custom_exceptions as ex
 import common
 
@@ -100,14 +100,14 @@ def get_metadata(header, seq, hg_version):
     size = "{}bp".format(len(seq))
 
     # get gene metadata from the middle of the amplicon
-    chrom, start, end  = re.split(':|-', pos_range)
+    chrom, start, end = re.split(':|-', pos_range)
     pos = int(start) - int(size.replace('bp', ''))
     query = chrom + ":" + str(pos)
-    data = MetaData.LocusMetaData(query, hg_version)
+    data = metadata.LocusMetaData(query, hg_version)
     
-    metadata = (data.gene, data.exon, data.intron, size, 
-                pos_range, round(gc, 3)*100)
-    return metadata
+    gene_metadata = (data.gene, data.exon, data.intron, size, 
+                     pos_range, round(gc, 3)*100)
+    return gene_metadata
 
 
 def parse2output(args, header):

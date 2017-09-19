@@ -60,3 +60,20 @@ class UnmatchedVariants(Exception):
             msg = "Cannot find primers for: {}".format(", ".join(unmatched))
         Exception.__init__(self, msg)
         self.unmatched = unmatched
+
+class NoGene(Exception):
+    def __init__(self, contig, position, msg=None):
+        if not msg:
+            msg = "No gene is present at chr{}:{}".format(contig, position)
+        Exception.__init__(self, msg)
+        self.contig = contig
+        self.position = position
+
+class ExonMismatch(Exception):
+    def __init__(self, pyexon_id, exon_id, msg=None):
+        if not msg:
+            msg = 'The exon ID scrapped from pyensembl ({}) and '
+            'from geneapy ({}) do not match'.format(pyexon_id, exon_id)
+        Exception.__init__(self, msg)
+        self.pyexon_id = pyexon_id
+        self.exon_id = exon_id

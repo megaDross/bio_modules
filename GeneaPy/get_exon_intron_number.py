@@ -1,3 +1,4 @@
+''' Gets Exon/Intron number (pyensembl cannot do this). It is very rough, old and inefficient. Consider rewriting.'''
 import requests
 import sys
 
