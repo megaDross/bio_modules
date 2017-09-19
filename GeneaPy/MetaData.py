@@ -11,7 +11,7 @@ from common import correct_hg_version
 # TODO: exception handeling
 # TODO: logging
 
-class GeneMetaData(object):
+class LocusMetaData(object):
     ''' Store gene, transcript and exon metadata of a given genomic position.
 
     Args:
@@ -129,6 +129,7 @@ class GeneMetaData(object):
         print(msg)
 
 
+#### PLACE IN ANOTHER SCRIPT
 
 def output(infile, flank, outfile, hg=None, genome=None):
     ''' Parse the metadata for all genomic positions 
@@ -146,7 +147,7 @@ def output(infile, flank, outfile, hg=None, genome=None):
                     pos, hg = line.split('\t')
                 else:
                     pos = line
-                data = GeneMetaData(pos, hg, flank, genome)
+                data = LocusMetaData(pos, hg, flank, genome)
                 data_tuple = (data.query, data.hg_version, data.gene,
                               data.id, data.location, data.type, 
                               data.transcript, data.exon_id, data.exon,
@@ -175,8 +176,8 @@ def cli():
         output(args['input'], args['flank'], args['output'],
                args['genome_version'], args['genome'])
     else:
-        metadata = GeneMetaData(args['position'], args['genome_version'], 
-                                args['flank'], args['genome'])
+        metadata = LocusMetaData(args['position'], args['genome_version'], 
+                                 args['flank'], args['genome'])
         metadata.print_metadata()
 
 

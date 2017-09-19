@@ -3,7 +3,7 @@ import requests
 import logging
 import re 
 import bs4
-import Ensembl
+import MetaData
 import custom_exceptions as ex
 import common
 
@@ -92,7 +92,7 @@ def seperate_data(text):
 
    
 def get_metadata(header, seq, hg_version):
-    ''' Gather metadata from the isPCR results and Ensembl.
+    ''' Gather metadata from the isPCR results and MetaData.
     '''
     pos_range = header.split(" ")[0]
     pos_range = pos_range[1:].replace("+", "-")
@@ -103,7 +103,7 @@ def get_metadata(header, seq, hg_version):
     chrom, start, end  = re.split(':|-', pos_range)
     pos = int(start) - int(size.replace('bp', ''))
     query = chrom + ":" + str(pos)
-    data = Ensembl.GeneMetaData(query, hg_version)
+    data = MetaData.LocusMetaData(query, hg_version)
     
     metadata = (data.gene, data.exon, data.intron, size, 
                 pos_range, round(gc, 3)*100)
