@@ -105,7 +105,7 @@ def get_metadata(header, seq, hg_version):
     query = chrom + ":" + str(pos)
     data = metadata.LocusMetaData(query, hg_version)
     
-    gene_metadata = (data.gene, data.exon, data.intron, size, 
+    gene_metadata = (data.gene.name, data.exon.exon_no, data.exon.intron_no, size, 
                      pos_range, round(gc, 3)*100)
     return gene_metadata
 
