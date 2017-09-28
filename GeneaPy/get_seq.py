@@ -1,10 +1,10 @@
+from modules.common import correct_hg_version
 import sys
 import requests
 import argparse
 import bs4
 import re
 import textwrap
-from common import correct_hg_version
 if not sys.platform == 'cygwin':
     import pysam
 
@@ -14,7 +14,8 @@ if not sys.platform == 'cygwin':
 # TODO: logging
 # TODO: exception handeling
 
-def main(location, hg_version='hg19', genome=None, upstream=None, downstream=None, header=True):
+def main(location, hg_version='hg19', genome=None, upstream=None, 
+         downstream=None, header=True):
     ''' Return a DNA sequence from a given genomic position or range. 
 
     Args:
@@ -34,31 +35,20 @@ def main(location, hg_version='hg19', genome=None, upstream=None, downstream=Non
         upstream and downstream variables are required to 
         return a sequence. 
     '''
-    # correct the hg version
     hg_version = correct_hg_version(hg_version)
-
-    # create a sequence range if required
     seq_range = create_region(location, upstream, downstream)
-
-    # scrape sequence from UCSC or from FASTA file
     if genome:
         seq = get_sequence_locally(seq_range, genome)
     else:
         seq = get_sequence(seq_range, hg_version)
-    
-
     # capatilise location base if it is a position
     if '-' not in location:
         seq = upper_pos(seq, upstream, downstream)
-    
-    # wrap text
     seq = textwrap.fill(seq, width=50)
 
     if header:
         seq = ">{} {}\n{}".format(seq_range, hg_version, seq)
-
     return seq
-
 
 def create_region(location, upstream, downstream):
     ''' Create a genomic range which begins and ends from 
@@ -67,17 +57,14 @@ def create_region(location, upstream, downstream):
     '''
     # PySam doesnt like chr preceding position/range
     location = location.replace('chr', '')
-
     # check location variable isn't holding a seq range
     if all(x in location for x in [':', '-']):
         return location.replace('-',',')
-
     chrom, pos = location.split(':')
     start_pos = int(pos) - upstream
     end_pos = int(pos) + downstream
     seq_range = chrom+":"+str(start_pos)+","+str(end_pos)
     return seq_range
-
 
 def get_sequence(seq_range, hg_version):
     ''' From a genomic range and human genome version, use UCSC DAS server
@@ -85,22 +72,18 @@ def get_sequence(seq_range, hg_version):
 
         http://www.biodas.org/documents/spec-1.53.html
     '''
-    # scrape for the sequence associated with the seq_range AKA genomic region 
     req = requests.get("http://genome.ucsc.edu/cgi-bin/das/"+hg_version+
                        "/dna?segment="+seq_range.replace('-', ','))
     req.raise_for_status()
     url = bs4.BeautifulSoup(req.text, features="xml").prettify()
     search = re.findall(r"[tacg{5}].*",url)
-    
-    # filters for elements which only contain nucleotides and concatenate
     seqs = [s for s in search if not s.strip("tacg")] 
     seq = "".join(seqs)
+    print(seq)
     if not seq:
         error_msg = 'No sequence was found to be associated with {}'.format(seq_range)
         raise IOError(error_msg)
-    
     return seq
-
 
 def get_sequence_locally(seq_range, genome_path):
     ''' Get the DNA sequence of the given genomic range from 
@@ -109,22 +92,17 @@ def get_sequence_locally(seq_range, genome_path):
     chrom, start, end = tuple(re.split(r"[:,]", seq_range))
     chrom = "".join(("chr",chrom))
     genome = pysam.FastaFile(genome_path)
-
     # -1 is required otherwise the first base is missing, no idea why
     seq = genome.fetch(chrom, int(start)-1, int(end))
-
     return seq
- 
 
 def upper_pos(seq, upstream, downstream):
-    ''' Capatilise the position of interest in the sequence.
-    '''
+    ''' Capatilise the position of interest in the sequence.'''
     before = seq[:upstream]
     var = seq[upstream]
     after = seq[upstream+1:len(seq)]
     altered_seq = "".join((before.lower(), var.upper(), after.lower()))
     return altered_seq 
-
 
 def get_parser():
     parser = argparse.ArgumentParser(description='scrape DNA sequence covering a given genomicposition/range')
@@ -135,7 +113,6 @@ def get_parser():
     parser.add_argument('-d', '--downstream', type=int, help='number of base downstream from genomic position')
     parser.add_argument('-r', '--header', action='store_true', help='fasta like header')
     return parser
-
 
 def cli():
     parser = get_parser()

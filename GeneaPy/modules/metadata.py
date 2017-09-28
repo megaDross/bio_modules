@@ -1,13 +1,14 @@
 from pyensembl import EnsemblRelease
-from fullexon import FullExon
+from modules.fullexon import FullExon
+from modules import pyensembl_wrappers
+from modules import common
 import get_seq
-import scrape_ensembl
-import common
 
 # TODO: unit testing
 # TODO: exception handeling
 # TODO: logging
 
+# inherit from Sequence
 class LocusMetaData(object):
     ''' Store the gene, transcript and exon metadata of a given genomic position.
 
@@ -33,7 +34,7 @@ class LocusMetaData(object):
 
     @property
     def gene(self):
-        return scrape_ensembl.get_gene_locus(
+        return pyensembl_wrappers.get_gene_locus(
             data=self.ensembl, 
             contig=self.contig, 
             position=self.position
@@ -42,7 +43,7 @@ class LocusMetaData(object):
     @property
     def transcript(self):
         if not self._transcript:
-            canonical = scrape_ensembl.get_canonical_transcript(
+            canonical = pyensembl_wrappers.get_canonical_transcript(
                 data=self.ensembl, 
                 contig=self.contig, 
                 position=self.position
@@ -57,7 +58,7 @@ class LocusMetaData(object):
 
     @property
     def exon(self):
-        pyexon = scrape_ensembl.get_exon_at_locus_of_transcript(
+        pyexon = pyensembl_wrappers.get_exon_at_locus_of_transcript(
             data=self.ensembl,
             contig=self.contig,
             position=self.position,

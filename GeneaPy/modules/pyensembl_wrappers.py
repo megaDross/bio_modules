@@ -1,9 +1,8 @@
 ''' Scrape ensembl, via pyensembl, using a genomic position as input'''
-import custom_exceptions as ex
+import modules.custom_exceptions as ex
 
 def get_canonical_locus_exon(data, contig, position):
     ''' Get the Exon object at a locus of the canonical transcript'''
-
     canonical_transcript = get_canonical_transcript(data, contig, position)
     exon_at_locus = get_exon_at_locus_of_transcript(data, contig, position,
                                                     canonical_transcript)
@@ -38,6 +37,6 @@ def get_gene_locus(data, contig, position):
     ''' Get Gene object at a given genomic position'''
     gene_name = data.gene_names_at_locus(contig=contig, position=position)
     if not gene_name:
-        raise ex.NoGene
+        raise ex.NoGene(contig, position)
     gene = data.genes_by_name(gene_name[0])[0]
     return gene

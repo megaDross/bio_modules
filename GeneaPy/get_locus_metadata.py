@@ -1,4 +1,4 @@
-from metadata import LocusMetaData
+from modules.metadata import LocusMetaData
 import argparse
 
 def output_all_metadata(infile, flank, outfile, hg, genome=None):
@@ -24,11 +24,11 @@ def restructure_metadata(data):
     query = 'chr{}:{}'.format(data.contig, data.position)
     gene_location = '{}:{}-{}'.format(data.gene.contig, data.gene.start, 
                                       data.gene.end)
-    sequence = ''.join(data.sequence.split('\n')
+    sequence = ''.join(data.sequence.split('\n'))
     data_tuple = (query, data.hg_version, data.gene.name, data.gene.id,
                   gene_location, data.gene.biotype, data.transcript.id,
                   data.exon.id, data.exon.exon_no, data.exon.intron_no,
-                  data.seq_range, data.sequence)
+                  data.seq_range, sequence)
     return data_tuple
 
 def get_parser():
@@ -41,7 +41,6 @@ def get_parser():
     parser.add_argument('-o', '--output', type=str, help='name of output file')
     return parser
 
-
 def cli():
     parser = get_parser()
     args = vars(parser.parse_args())
@@ -49,12 +48,11 @@ def cli():
         output_all_metadata(args['input'], args['flank'], args['output'],
                             args['genome_version'], args['genome'])
     else:
-        locus_metadata = LocusMetaData(args['position'], args['genome_version'], 
-                                       args['flank'], args['genome'])
-        print(locus_metadata)
+        data = LocusMetaData.from_position(args['position'], args['genome_version'], 
+                                           args['flank'], args['genome'])
+        print(data)
 
 
 if __name__ == '__main__':
     cli()
-
     # 'chr15:48733918'

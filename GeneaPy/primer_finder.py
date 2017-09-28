@@ -2,8 +2,8 @@ import pandas as pd
 import argparse
 import warnings
 import logging
-import custom_exceptions as ex
-from common import correct_hg_version
+import modules.custom_exceptions as ex
+from modules.common import correct_hg_version
 
 logging.basicConfig(filename='primer_finder.error.log',
                     level=logging.ERROR,
@@ -14,7 +14,7 @@ logging.basicConfig(filename='primer_finder.error.log',
 
 def primer_finder(db, variant=None, input_file=None, size=None, distance=None, gc=None, 
                   hg=None, gene=None, exon=None, intron=None, output=None):
-    ''' Find primers which fulfill the parsed conditions..
+    ''' Find primers which fulfill the parsed conditions.
     
     Args:
         db: a primer database (tsv format)
@@ -48,7 +48,6 @@ def primer_finder(db, variant=None, input_file=None, size=None, distance=None, g
         primers.to_csv(output, sep='\t')
     return primers
 
-
 def database2df(db):
     ''' Transform primer database to a DataFrame.'''
     db = pd.read_csv(db, delimiter='\t')
@@ -56,11 +55,9 @@ def database2df(db):
     db['Chrom'] = db.Chrom.str.replace('chr', '')
     db = db.drop('Primer_Range', axis=1)
     db['Product_Size'] = db['Product_Size'].str.replace('bp', '')
-
     nums = ['Chrom', 'Start', 'End', 'Product_Size', 'GC%']
     db = convert2numeric(db, nums)
     return db
-
 
 def filter_for_variants(db, input_file, variant):
     ''' Filter primer database for given variants'''
@@ -74,7 +71,6 @@ def filter_for_variants(db, input_file, variant):
         primers = db
     return primers
 
-
 def input2df(input_file):
     ''' Transform input file to a DataFrame.'''
     df = pd.read_csv(input_file, delimiter='\t', header=None)
@@ -85,14 +81,12 @@ def input2df(input_file):
     df = convert2numeric(df, ['Chrom', 'Pos'])
     return df
 
-
 def convert2numeric(df, cols):
     ''' Convert the given DataFrame columns to numeric type'''
     df[cols].apply(pd.to_numeric, errors='coerce', axis=1)
     for c in cols:
         df[c] = pd.to_numeric(df[c], errors='coerce')
     return df
-
 
 def get_variant_file_primers(db, var_file):
     ''' Returns a DataFrame of variants and their matching primers.'''
@@ -104,11 +98,9 @@ def get_variant_file_primers(db, var_file):
     output = output.drop(['Start', 'End'], axis=1)
     return output
 
-
 def report_unmatched_variants(before, after):
     ''' Report variants which have no primer match'''
     try:
-
         no_match = before[~before['Variant'].isin(after['Variant'])]['Variant'].tolist()
         if no_match:
             raise ex.UnmatchedVariants(no_match)
@@ -116,7 +108,6 @@ def report_unmatched_variants(before, after):
     except ex.UnmatchedVariants as e:
         for unmatched in e.unmatched:
             logging.info('Cannot find primer for {}'.format(unmatched))
-
 
 def get_variant_primers(db, var):
     ''' Returns a DataFrame of primers matching a given variant '''
@@ -127,11 +118,9 @@ def get_variant_primers(db, var):
     output['Dist_R'] = output['End'] - int(pos)
     return output
 
-
 def extra_filters(primer, size, distance, gc, gene, exon, intron, hg):
     ''' Filter primers on given argument values.'''
     try:    
-
         if size:
             primer = primer[primer.Product_Size < size]
         if distance:
@@ -153,16 +142,13 @@ def extra_filters(primer, size, distance, gc, gene, exon, intron, hg):
             primer = primer.drop('intron_no', axis=1)
         if hg:
             primer = primer[primer['Genome'] == hg]
-
         if primer.empty:
             raise ex.EmptyDataFrame()
-            
         return primer
 
     except (ValueError, ex.EmptyDataFrame):
         logging.error('No primers found for the specific filter arguments parsed')
     
-
 def get_parser():
     parser = argparse.ArgumentParser(description='Find primers for a set of given variants.')
     parser.add_argument('-d', '--database', type=str, required=True, help='primer database')
@@ -177,7 +163,6 @@ def get_parser():
     parser.add_argument('-n', '--intron', type=int, help='only amplicons lying within the given intron number')
     parser.add_argument('-o', '--output', type=str, help='output the results of processing --input', default='output_primer_finder.txt')
     return parser
-
 
 def cli():
     parser = get_parser()
