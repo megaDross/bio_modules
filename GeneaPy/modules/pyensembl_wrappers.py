@@ -16,7 +16,7 @@ def get_canonical_transcript(data, contig, position):
         length = transcript.end - transcript.start
         order_by_length.append((length, transcript))
 
-    transcripts_by_length = [x[1] for x in sorted(order_by_length, reverse=True)]
+    transcripts_by_length = [x[1] for x in sorted(order_by_length, reverse=True, key=lambda x: x[0])]
     protein_coding_by_length = [x for x in transcripts_by_length if x.biotype == 'protein_coding']
     if not protein_coding_by_length:
         raise ex.NoProteinCodingTranscript(position, position)
@@ -27,6 +27,8 @@ def get_exon_at_locus_of_transcript(data, contig, position, transcript):
     ''' Get the Exon object at a locus of a transcript'''
     locus_exons = data.exons_at_locus(contig=contig, position=position)
     transcript_exons = data.exon_ids_of_transcript_id(transcript.id)
+    #if not locus_exons:
+    #    raise ex.NoExon(data.release, contig, position)
     # find overlap between transcript exon list and locus exons
     for locus_exon in locus_exons:
         for transcript_exon in transcript_exons:

@@ -14,8 +14,8 @@ if not sys.platform == 'cygwin':
 # TODO: logging
 # TODO: exception handeling
 
-def main(location, hg_version='hg19', genome=None, upstream=None, 
-         downstream=None, header=True):
+def get_seq(location, hg_version='hg19', genome=None, upstream=None, 
+            downstream=None, header=True):
     ''' Return a DNA sequence from a given genomic position or range. 
 
     Args:
@@ -79,7 +79,6 @@ def get_sequence(seq_range, hg_version):
     search = re.findall(r"[tacg{5}].*",url)
     seqs = [s for s in search if not s.strip("tacg")] 
     seq = "".join(seqs)
-    print(seq)
     if not seq:
         error_msg = 'No sequence was found to be associated with {}'.format(seq_range)
         raise IOError(error_msg)
@@ -117,11 +116,10 @@ def get_parser():
 def cli():
     parser = get_parser()
     args = vars(parser.parse_args())
-    seq = main(args['query'], args['genome_version'], args['genome'], 
-               args['upstream'], args['downstream'], args['header'])
+    seq = get_seq(args['query'], args['genome_version'], args['genome'], 
+                  args['upstream'], args['downstream'], args['header'])
     print(seq)
 
 
 if __name__ == '__main__':
     cli()
-    # print(main('chr15:48408306','hg19',None, 5, 5))

@@ -15,7 +15,7 @@ def main(transcript, hg_version, pos):
         pos: genomic coordinate
 
     Returns:
-        (Ensembl Exon ID, Exon Number, Intron Number)
+        (Ensembl Exon ID, Intron Number, Exon Number)
     '''
     exon_dics = request_ensembl(hg_version, transcript)
     exon_region = all_exon_regions(transcript, exon_dics)

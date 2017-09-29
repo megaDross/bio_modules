@@ -2,7 +2,7 @@ from modules.metadata import LocusMetaData
 import argparse
 
 def output_all_metadata(infile, flank, outfile, hg, genome=None):
-    ''' Parse the metadata for all genomic positions 
+    ''' Parse the metadata for all genomic positions
         detailed within infile and write to outfile
     '''
     with open(outfile, 'w') as out:
@@ -13,7 +13,7 @@ def output_all_metadata(infile, flank, outfile, hg, genome=None):
                 data = LocusMetaData.from_position(position, hg, flank, genome)
                 data_tuple = restructure_metadata(data)
                 out.write("\t".join(data_tuple) + "\n")
-                
+
 def write_header(out):
     header = ('Query', 'Genome Version', 'Gene', 'Gene ID',
               'Gene Location', 'Type', 'Transcript', 'Exon ID',
@@ -22,7 +22,7 @@ def write_header(out):
 
 def restructure_metadata(data):
     query = 'chr{}:{}'.format(data.contig, data.position)
-    gene_location = '{}:{}-{}'.format(data.gene.contig, data.gene.start, 
+    gene_location = '{}:{}-{}'.format(data.gene.contig, data.gene.start,
                                       data.gene.end)
     sequence = ''.join(data.sequence.split('\n'))
     data_tuple = (query, data.hg_version, data.gene.name, data.gene.id,
@@ -37,7 +37,7 @@ def get_parser():
     parser.add_argument('-p', '--position', type=str, help='genomic position')
     parser.add_argument('-hg', '--genome_version', type=str, help='human genome verison (default=hg38)', default='hg38')
     parser.add_argument('-f', '--flank', type=int, help='desired number of bp to scrape from each side of the given genomic position (default=50)', default=50)
-    parser.add_argument('-g', '--genome', type=str, help='path to genome FASTA file', default=None) 
+    parser.add_argument('-g', '--genome', type=str, help='path to genome FASTA file', default=None)
     parser.add_argument('-o', '--output', type=str, help='name of output file')
     return parser
 
@@ -48,7 +48,7 @@ def cli():
         output_all_metadata(args['input'], args['flank'], args['output'],
                             args['genome_version'], args['genome'])
     else:
-        data = LocusMetaData.from_position(args['position'], args['genome_version'], 
+        data = LocusMetaData.from_position(args['position'], args['genome_version'],
                                            args['flank'], args['genome'])
         print(data)
 

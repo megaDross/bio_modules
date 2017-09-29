@@ -22,7 +22,7 @@ class FullExon(Exon):
     
     @property
     def intron_no(self):
-        exon_id, exon_num, intron_num = gein.main(
+        exon_id, intron_num, exon_num = gein.main(
             transcript=self.transcript_id, 
             hg_version=self.hg_version, 
             pos=self.position)

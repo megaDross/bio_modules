@@ -69,6 +69,14 @@ class NoGene(Exception):
         self.contig = contig
         self.position = position
 
+class NoExon(Exception):
+    def __init__(self, release, contig, position,  msg=None):
+        if not msg:
+            msg = "No exon is present at {}:{} in Ensembl realese {}".format(contig, position, release)
+        Exception.__init__(self, msg)
+        self.contig = contig
+        self.position = position
+
 class ExonMismatch(Exception):
     def __init__(self, pyexon_id, exon_id, msg=None):
         if not msg:

@@ -3,7 +3,7 @@ import requests
 import logging
 import re 
 import bs4
-import metadata
+from modules import metadata
 import modules.custom_exceptions as ex
 from modules.common import correct_hg_version
 
@@ -36,8 +36,8 @@ def unknown_primer(f_primer, r_primer, hg_version, primer_name,
     data = scrape_seq(primer_name, f_primer, r_primer, hg_version, 
                       max_size, min_perfect, min_good)
     header, seq = seperate_data(data)
-    metadata = get_metadata(header, seq, hg_version)
-    all_data = (primer_name, f_primer, r_primer, hg_version) + metadata
+    locus_metadata = get_metadata(header, seq, hg_version)
+    all_data = (primer_name, f_primer, r_primer, hg_version) + locus_metadata
     return all_data
 
 def check_input_errors(primer_name, f_primer, r_primer, hg_version):
@@ -96,8 +96,8 @@ def get_metadata(header, seq, hg_version):
     # get gene metadata from the middle of the amplicon
     chrom, start, end = re.split(':|-', pos_range)
     pos = int(start) - int(size.replace('bp', ''))
-    query = chrom + ":" + str(pos)
-    data = metadata.LocusMetaData(query, hg_version)
+    data = metadata.LocusMetaData(chrom, pos, hg_version)
+    print(data)
     gene_metadata = (data.gene.name, data.exon.exon_no, data.exon.intron_no, size, 
                      pos_range, round(gc, 3)*100)
     return gene_metadata

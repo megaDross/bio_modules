@@ -1,7 +1,7 @@
 from pyensembl import EnsemblRelease
 from modules.fullexon import FullExon
 from modules import pyensembl_wrappers
-from modules import common
+from modules.common import correct_hg_version, get_ensembl_release
 import get_seq
 
 # TODO: unit testing
@@ -22,24 +22,21 @@ class LocusMetaData(object):
     def __init__(self, contig, position, hg_version, flank=50, genome=None):
         self.contig = contig
         self.position = position
-        self.hg_version = common.correct_hg_version(hg_version)
+        self.hg_version = correct_hg_version(hg_version)
         self.flank = flank
         self.genome = genome
+        self.ensembl = EnsemblRelease(get_ensembl_release(self.hg_version))
+        self.gene = self._get_gene()
         self._transcript = None
+        self.sequence = self._sequence()
 
-    @property
-    def ensembl(self):
-        ensembl_hg = common.get_ensembl_release(self.hg_version)
-        return EnsemblRelease(ensembl_hg)
-
-    @property
-    def gene(self):
+    def _get_gene(self):
         return pyensembl_wrappers.get_gene_locus(
             data=self.ensembl, 
             contig=self.contig, 
             position=self.position
         ) 
-       
+ 
     @property
     def transcript(self):
         if not self._transcript:
@@ -69,14 +66,12 @@ class LocusMetaData(object):
                                         self._transcript.id, self.hg_version)
         return fullexon
 
-    @property
-    def sequence(self):
+    def _sequence(self):
         query = '{}:{}'.format(self.contig, self.position)
-        seq = get_seq.main(query, self.hg_version, self.genome, self.flank, self.flank, header=False)
+        seq = get_seq.get_seq(query, self.hg_version, self.genome, self.flank, self.flank, header=False)
         return seq
 
-    @property
-    def seq_range(self):
+    def _get_seq_range(self):
         start = self.position - self.flank
         end = self.position + self.flank
         return '{}:{}-{}'.format(self.contig, start, end)
@@ -99,6 +94,6 @@ class LocusMetaData(object):
         exon = 'Exon\nid: {}\nexon: {}\nintron: {}\n\n'.format(
                 self.exon.id, self.exon.exon_no, self.exon.intron_no)
         scrapped_seq = '{}\n\n>{}\n{}\n\n{}'.format(
-                        s, self.seq_range, self.sequence, s)
+                        s, self._get_seq_range(), self.sequence, s)
         all_metadata = (query+gene+transcript+exon+scrapped_seq)        
         return all_metadata
