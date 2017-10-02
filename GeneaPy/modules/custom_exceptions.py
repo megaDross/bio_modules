@@ -41,13 +41,12 @@ class WrongHG(Exception):
 
 class NoProteinCodingTranscript(Exception):
     ''' Raise if no protein coding transcript is present'''
-    def __init__(self, pos, gene, msg=None):
+    def __init__(self, transcript, msg=None):
         if not msg:
-            msg = "No protein coding transcript was found for {} in gene {}".format(pos, gene)
+            msg = "No protein coding transcript was found in {}".format(transcript.gene.name)
         Exception.__init__(self, msg)
         self.msg = msg
-        self.pos = pos
-        self.gene = gene
+        self.transcript = transcript
 
 class EmptyDataFrame(Exception):
     def __init__(self):
