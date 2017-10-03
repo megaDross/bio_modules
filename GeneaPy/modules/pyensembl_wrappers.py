@@ -1,6 +1,6 @@
 ''' Scrape ensembl, via pyensembl, using a genomic position as input'''
-from modules.fullexon import FullExon
-import modules.custom_exceptions as ex
+from GeneaPy.modules.fullexon import FullExon
+import GeneaPy.modules.custom_exceptions as ex
 
 def get_canonical_transcript(data, contig, position, gene=None):
     ''' Get the canonical Transcript object associated with a given position. '''
