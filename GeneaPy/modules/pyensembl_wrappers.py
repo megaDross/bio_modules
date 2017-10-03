@@ -42,6 +42,7 @@ def get_exon(pos, transcript):
         pos: position e.g. 48733600 or 15:48733600
         transcript: pyensembl Transcript object
     '''
+    total_exons = len(transcript.exons)
     if isinstance(pos, str):
         pos = int(pos.split(':')[1])
     for number, exon in enumerate(transcript.exons, 1):
@@ -49,11 +50,13 @@ def get_exon(pos, transcript):
             raise ex.NoExon(transcript.genome.release, transcript.contig, pos)
         next_exon = transcript.exons[number] # need to break if number > t.exons length
         if exon.start <= pos <= exon.end:
+            number = '{}/{}'.format(number, total_exons)
             exon = FullExon.from_pyexon(Exon=exon, position=pos, number=number, exon=True)
             return exon
         # The below operators work with negative strand, they may need to be reversed for positive strand
         elif next_exon.start < pos > exon.end:
+            number = '{}/{}'.format(number-1, total_exons-1)
             intron = FullExon(exon_id='N/A', contig=exon.contig, start=next_exon.end+1, end=exon.start-1,
                               strand=exon.strand, gene_name=exon.gene_name, gene_id=exon.gene_id,
-                              position=pos, number=number-1, exon=False)
+                              position=pos, number=number, exon=False)
             return intron
