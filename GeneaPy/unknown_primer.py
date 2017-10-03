@@ -97,8 +97,13 @@ def get_metadata(header, seq, hg_version):
     chrom, start, end = re.split(':|-', pos_range)
     pos = int(start) - int(size.replace('bp', ''))
     data = metadata.LocusMetaData(chrom, pos, hg_version)
-    print(data)
-    gene_metadata = (data.gene.name, data.exon.exon_no, data.exon.intron_no, size, 
+    if data.exon.exon:
+        exon = data.exon.number
+        intron = '-'
+    else:
+        exon = '-'
+        intron = data.exon.number
+    gene_metadata = (data.gene.name, exon, intron, size, 
                      pos_range, round(gc, 3)*100)
     return gene_metadata
 
@@ -154,7 +159,6 @@ def cli():
     args = vars(parser.parse_args())
     header = '\t'.join(('Primer', 'F_Primer', 'R_Primer', 'Genome', 'Gene', 'Exon',
                         'Intron', 'Product_Size', 'Primer_Range', 'GC%'))
-
     if args['input']:
         parse2output(args, header)
     else:

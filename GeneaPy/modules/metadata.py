@@ -43,7 +43,8 @@ class LocusMetaData(object):
                 canonical = pyensembl_wrappers.get_canonical_transcript(
                     data=self.ensembl, 
                     contig=self.contig, 
-                    position=self.position
+                    position=self.position,
+                    gene=self.gene.name
                 )
                 self._transcript = canonical
                 self._transcript.canonical = True
@@ -52,7 +53,8 @@ class LocusMetaData(object):
             all_transcripts = pyensembl_wrappers.get_transcripts_by_length(
                 data=self.ensembl,
                 contig=self.contig,
-                position=self.position
+                position=self.position,
+                gene=self.gene.name
             )
             self._transcript = all_transcripts[0]
             self._transcript.canonical = False
@@ -65,9 +67,10 @@ class LocusMetaData(object):
 
     @property
     def exon(self):
+        if not self._transcript:
+            self.transcript
         return pyensembl_wrappers.get_exon(self.position, self._transcript)
 
-    # this can be replaced with pyensembl
     def _sequence(self):
         query = '{}:{}'.format(self.contig, self.position)
         seq = get_seq.get_seq(query, self.hg_version, self.genome, self.flank, self.flank, header=False)
@@ -86,16 +89,17 @@ class LocusMetaData(object):
 
     def __str__(self):
         s = '-'*50
-        query = '{}\nchr{}:{} in {}\n{}\n\n'.format(
-                s, self.contig, self.position, self.hg_version, s)
+        query = '{}\nchr{}:{} in {}({})\n{}\n\n'.format(
+                s, self.contig, self.position, self.hg_version, self.ensembl.release, s)
         gene_location = '{}:{}-{}'.format(self.gene.contig, self.gene.start, self.gene.end)
         gene = 'Gene\nname: {}\nid: {}\nloc: {}\ntype: {}\n\n'.format(
                self.gene.name, self.gene.id, gene_location, self.gene.biotype)
         transcript = 'Transcript\nname: {}\nid: {}\ntype: {}\ncanon: {}\n\n'.format(
-                     self.transcript.name, self.transcript.id, self.transcript.biotype, self.transcript.canonical)
+                     self.transcript.name, self.transcript.id, self.transcript.biotype, 
+                     self.transcript.canonical)
         name = 'exon' if self.exon.exon else 'intron'
-        exon = '{}\nid: {}\nno: {}\n\n'.format(
-               name.capitalize(), self.exon.id, self.exon.number)
+        exon = '{}\nid: {}\nno: {}\nstrand: {}\n\n'.format(
+               name.capitalize(), self.exon.id, self.exon.number, self.exon.strand)
         scrapped_seq = '{}\n>{}\n{}\n{}'.format(
                        s, self._get_seq_range(), self.sequence, s)
         all_metadata = (query+gene+transcript+exon+scrapped_seq)        

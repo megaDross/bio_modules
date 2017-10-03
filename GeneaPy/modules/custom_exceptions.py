@@ -68,6 +68,15 @@ class NoGene(Exception):
         self.contig = contig
         self.position = position
 
+class MultipleGenes(Exception):
+    def __init__(self, contig, locus, genes, msg=None):
+        if not msg:
+            msg = "more than one gene is present at {}: {}".format('{}:{}'.format(contig, locus), ', '.join(genes))
+        Exception.__init__(self, msg)
+        self.contig = contig
+        self.locus = locus
+        self.gene = genes
+
 class NoExon(Exception):
     def __init__(self, release, contig, position,  msg=None):
         if not msg:

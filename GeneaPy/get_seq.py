@@ -8,8 +8,6 @@ import textwrap
 if not sys.platform == 'cygwin':
     import pysam
 
-# TODO: test argparse implementation
-# TODO: reduce main
 # TODO: unit testing
 # TODO: logging
 # TODO: exception handeling

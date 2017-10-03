@@ -1,4 +1,5 @@
 from modules.metadata import LocusMetaData
+import modules.custom_exceptions as ex
 import argparse
 
 def output_all_metadata(infile, flank, outfile, hg, genome=None):
@@ -9,10 +10,14 @@ def output_all_metadata(infile, flank, outfile, hg, genome=None):
         write_header(out)
         with open(infile, 'r') as f:
             for line in f:
-                position = line.rstrip("\n")
-                data = LocusMetaData.from_position(position, hg, flank, genome)
-                data_tuple = restructure_metadata(data)
-                out.write("\t".join(data_tuple) + "\n")
+                try:
+                    position = line.rstrip("\n")
+                    data = LocusMetaData.from_position(position, hg, flank, genome)
+                    data_tuple = restructure_metadata(data)
+                    out.write("\t".join(data_tuple) + "\n")
+                except ex.NoGene as e:
+                    print('ERROR: {}'.format(e))
+                    continue
 
 def write_header(out):
     header = ('Query', 'Genome Version', 'Gene', 'Gene ID',
