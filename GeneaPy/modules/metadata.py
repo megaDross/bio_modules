@@ -91,12 +91,12 @@ class LocusMetaData(object):
         gene_location = '{}:{}-{}'.format(self.gene.contig, self.gene.start, self.gene.end)
         gene = 'Gene\nname: {}\nid: {}\nloc: {}\ntype: {}\n\n'.format(
                self.gene.name, self.gene.id, gene_location, self.gene.biotype)
-        transcript = 'Transcript\nid: {}\ncanon: {}\n\n'.format(
-                     self.transcript.id, self.transcript.canonical)
+        transcript = 'Transcript\nname: {}\nid: {}\ntype: {}\ncanon: {}\n\n'.format(
+                     self.transcript.name, self.transcript.id, self.transcript.biotype, self.transcript.canonical)
         name = 'exon' if self.exon.exon else 'intron'
         exon = '{}\nid: {}\nno: {}\n\n'.format(
                name.capitalize(), self.exon.id, self.exon.number)
-        scrapped_seq = '{}\n\n>{}\n{}\n\n{}'.format(
+        scrapped_seq = '{}\n>{}\n{}\n{}'.format(
                        s, self._get_seq_range(), self.sequence, s)
         all_metadata = (query+gene+transcript+exon+scrapped_seq)        
         return all_metadata
