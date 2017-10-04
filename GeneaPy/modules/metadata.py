@@ -1,8 +1,8 @@
 from pyensembl import EnsemblRelease
-from modules import pyensembl_wrappers
-from modules.common import correct_hg_version, get_ensembl_release
-import modules.custom_exceptions as ex
-import get_seq
+from GeneaPy.modules import pyensembl_wrappers
+from GeneaPy.modules.common import correct_hg_version, get_ensembl_release
+import GeneaPy.modules.custom_exceptions as ex
+from GeneaPy import get_seq
 
 # TODO: unit testing
 # TODO: exception handeling

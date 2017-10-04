@@ -3,9 +3,9 @@ import requests
 import logging
 import re 
 import bs4
-from modules import metadata
-import modules.custom_exceptions as ex
-from modules.common import correct_hg_version
+from GeneaPy.modules import metadata
+import GeneaPy.modules.custom_exceptions as ex
+from GeneaPy.modules.common import correct_hg_version
 
 logging.basicConfig(filename='unknown_primer.error.log', 
                     level=logging.ERROR,

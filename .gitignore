@@ -1,6 +1,7 @@
 *pyc
 *txt
 *.swp
+*.log
 temp_test/
 test_files/
 

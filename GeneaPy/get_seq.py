@@ -1,4 +1,4 @@
-from modules.common import correct_hg_version
+from GeneaPy.modules.common import correct_hg_version
 import sys
 import requests
 import argparse
