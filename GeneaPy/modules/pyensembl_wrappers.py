@@ -2,46 +2,55 @@
 from GeneaPy.modules.fullexon import FullExon
 import GeneaPy.modules.custom_exceptions as ex
 
-def get_canonical_transcript(data, contig, position, gene=None):
-    ''' Get the canonical Transcript object associated with a given position. '''
-    all_transcripts = get_transcripts_by_length(data, contig, position, gene)
-    canonical_transcript = extract_canonical_transcript(all_transcripts)
-    return canonical_transcript
+def get_transcript(data, contig, position, gene_list=[]):
+    ''' Get the canonical or largest Transcript object associated with a given position. '''
+    try:
+        transcripts = data.transcripts_at_locus(contig=contig, position=position)
+        all_transcripts = get_transcripts_by_length(transcripts, gene_list)
+        canonical_transcript = get_canonical_transcript(data, contig, position, gene_list)
+        if not canonical_transcript in all_transcripts:
+            raise ex.NoProteinCodingTranscript(all_transcripts[0])
+        canonical_transcript.canonical = True
+        return canonical_transcript
+    except ex.NoProteinCodingTranscript:
+        largest_transcript = all_transcripts[0]
+        largest_transcript.canonical = False
+        return largest_transcript
 
-def get_transcripts_by_length(data, contig, position, gene=None):
+def get_transcripts_by_length(transcripts, gene_list=[]):
     ''' Return the all transcripts in order of length from a given position'''
-    transcripts = data.transcripts_at_locus(contig=contig, position=position)
-    if gene:
-        transcripts = [x for x in transcripts if gene in x.name]
-    order_by_length = []
-    for transcript in transcripts:
-        length = transcript.end - transcript.start
-        order_by_length.append((length, transcript))
-
-    transcripts_by_length = [x[1] for x in sorted(order_by_length, reverse=True, key=lambda x: x[0])]
+    if gene_list:
+        transcripts = [x for x in transcripts if x.gene.name in gene_list]
+    transcripts_by_length =  sorted(transcripts, reverse=True, key=lambda x: len(x))
     return transcripts_by_length
 
-def extract_canonical_transcript(transcripts_by_length):
-    ''' Return the longest protein coding transcript from a list of transcripts.'''
+def get_canonical_transcript(data, contig, position, gene_list=[]):
+    ''' Get the canonical transcript of a gene at a given position'''
+    gene = get_gene_locus(data, contig, position, gene_list)
+    transcripts_by_length = get_transcripts_by_length(gene.transcripts, gene_list)
     protein_coding_by_length = [x for x in transcripts_by_length if x.biotype == 'protein_coding']
     if not protein_coding_by_length:
         raise ex.NoProteinCodingTranscript(transcripts_by_length[0])
-    canonical_transcript = protein_coding_by_length[0]
-    return canonical_transcript
+    canonical = protein_coding_by_length[0]
+    return canonical
 
-def get_gene_locus(data, contig, position):
+def get_gene_locus(data, contig, position, gene_list=[]):
     ''' Get Gene object at a given genomic position'''
-    gene_name = data.gene_names_at_locus(contig=contig, position=position)
-    if not gene_name:
+    gene_names = data.gene_names_at_locus(contig=contig, position=position)
+    if not gene_names:
         raise ex.NoGene(contig, position)
     try:
-        if len(gene_name) > 1:
-            raise ex.MultipleGenes(contig, position, gene_name)
+        if len(gene_names) > 1:
+            raise ex.MultipleGenes(contig, position, gene_names)
     except ex.MultipleGenes as e:
         # should be loggining
-        print('ERROR: {}\nINFO: continuing with {}'.format(e, gene_name[0]))
+        gene_intersect = set(gene_list).intersection(set(gene_names))
+        if gene_intersect:
+            gene_names = list(gene_intersect)
+        else:
+            print('ERROR: {}\nINFO: continuing with {}'.format(e, gene_names[0]))
     finally:
-        gene = data.genes_by_name(gene_name[0])[0]
+        gene = data.genes_by_name(gene_names[0])[0]
         return gene
 
 def get_exon(pos, transcript):

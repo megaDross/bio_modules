@@ -18,12 +18,13 @@ class LocusMetaData(object):
         flank: desired number of bp to scrape from each side of the given genomic position (default=50)
         genome: path to human genome FASTA file (optional)
     '''
-    def __init__(self, contig, position, hg_version, flank=50, genome=None):
+    def __init__(self, contig, position, hg_version, flank=50, genome=None, gene_list=[]):
         self.contig = contig
         self.position = position
         self.hg_version = correct_hg_version(hg_version)
         self.flank = flank
         self.genome = genome
+        self.gene_list = gene_list
         self.ensembl = EnsemblRelease(get_ensembl_release(self.hg_version))
         self.gene = self._get_gene()
         self._transcript = None
@@ -33,33 +34,21 @@ class LocusMetaData(object):
         return pyensembl_wrappers.get_gene_locus(
             data=self.ensembl, 
             contig=self.contig, 
-            position=self.position
+            position=self.position,
+            gene_list=self.gene_list
         ) 
  
     @property
     def transcript(self):
-        try:
-            if not self._transcript:
-                canonical = pyensembl_wrappers.get_canonical_transcript(
-                    data=self.ensembl, 
-                    contig=self.contig, 
-                    position=self.position,
-                    gene=self.gene.name
-                )
-                self._transcript = canonical
-                self._transcript.canonical = True
-            return self._transcript
-        except ex.NoProteinCodingTranscript:
-            all_transcripts = pyensembl_wrappers.get_transcripts_by_length(
-                data=self.ensembl,
-                contig=self.contig,
-                position=self.position,
-                gene=self.gene.name
-            )
-            self._transcript = all_transcripts[0]
-            self._transcript.canonical = False
-            return self._transcript
-   
+        transcript = pyensembl_wrappers.get_transcript(
+            data=self.ensembl, 
+            contig=self.contig, 
+            position=self.position, 
+            gene_list=self.gene_list
+        )
+        self._transcript = transcript
+        return transcript
+
     @transcript.setter
     def transcript(self, transcript_id):
         new_transcript = self.ensembl.transcript_by_id(transcript_id)
@@ -82,10 +71,10 @@ class LocusMetaData(object):
         return '{}:{}-{}'.format(self.contig, start, end)
 
     @classmethod
-    def from_position(cls, genomic_position, hg_version, flank=50, genome=None):
+    def from_position(cls, genomic_position, hg_version, flank=50, genome=None, gene_list=[]):
         contig, position = genomic_position.lower().replace('chr', '').split(':')
         return cls(contig=int(contig), position=int(position),
-                   hg_version=hg_version, flank=flank, genome=genome)
+                   hg_version=hg_version, flank=flank, genome=genome, gene_list=gene_list)
 
     def __str__(self):
         s = '-'*50
