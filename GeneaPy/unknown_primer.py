@@ -95,8 +95,8 @@ def get_metadata(header, seq, hg_version):
     size = "{}bp".format(len(seq))
     # get gene metadata from the middle of the amplicon
     chrom, start, end = re.split(':|-', pos_range)
-    pos = int(start) - int(size.replace('bp', ''))
-    data = metadata.LocusMetaData(chrom, pos, hg_version)
+    pos = int((int(start)+int(end))/2)
+    data = metadata.LocusMetaData(chrom, pos, hg_version, seq=False)
     if data.exon.exon:
         exon = data.exon.number
         intron = '-'
@@ -123,6 +123,7 @@ def parse2output(args, header):
                                               primer_name, args['max_size'], 
                                               args['min_perfect'], args['min_good'])
                     format_metadata = '\t'.join([str(x) for x in metadata])
+                    print(format_metadata)
                     out.write(format_metadata+"\n")
 
                 except (ex.MultipleAmplicons, ex.NoAmplicon, ex.WrongHG, 

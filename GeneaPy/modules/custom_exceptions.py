@@ -48,6 +48,16 @@ class NoProteinCodingTranscript(Exception):
         self.msg = msg
         self.transcript = transcript
 
+class NoSequence(Exception):
+    ''' Raise if no sequence is found within the given range'''
+    def __init__(self, seq_range, msg=None):
+        if not msg:
+            msg = "No sequence was found at {}".format(seq_range)
+        Exception.__init__(self, msg)
+        self.msg = msg
+        self.seq_range = seq_range
+
+
 class EmptyDataFrame(Exception):
     def __init__(self):
         Exception.__init__(self)

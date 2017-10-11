@@ -1,5 +1,7 @@
+import GeneaPy.modules.custom_exceptions as ex
 from GeneaPy.modules.common import correct_hg_version
 import sys
+import time
 import requests
 import argparse
 import bs4
@@ -8,9 +10,7 @@ import textwrap
 if not sys.platform == 'cygwin':
     import pysam
 
-# TODO: unit testing
 # TODO: logging
-# TODO: exception handeling
 
 def get_seq(location, hg_version='hg19', genome=None, upstream=None, 
             downstream=None, header=True):
@@ -74,12 +74,12 @@ def get_sequence(seq_range, hg_version):
                        "/dna?segment="+seq_range.replace('-', ','))
     req.raise_for_status()
     url = bs4.BeautifulSoup(req.text, features="xml").prettify()
-    search = re.findall(r"[tacg{5}].*",url)
+    print(url)
+    search = re.findall(r"[tacg{5}].*", url)
     seqs = [s for s in search if not s.strip("tacg")] 
     seq = "".join(seqs)
     if not seq:
-        error_msg = 'No sequence was found to be associated with {}'.format(seq_range)
-        raise IOError(error_msg)
+        raise ex.NoSequence(seq_range)
     return seq
 
 def get_sequence_locally(seq_range, genome_path):

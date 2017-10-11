@@ -66,7 +66,8 @@ def get_exon(pos, transcript):
     for number, exon in enumerate(transcript.exons, 1):
         if number > len(transcript.exons):
             raise ex.NoExon(transcript.genome.release, transcript.contig, pos)
-        next_exon = transcript.exons[number] # need to break if number > t.exons length
+        if number < len(transcript.exons):
+            next_exon = transcript.exons[number] # need to break if number > t.exons length
         if exon.start <= pos <= exon.end:
             number = '{}/{}'.format(number, total_exons)
             exon = FullExon.from_pyexon(Exon=exon, position=pos, number=number, exon=True)

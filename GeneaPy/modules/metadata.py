@@ -17,14 +17,17 @@ class LocusMetaData(object):
         hg_version: human genome version
         flank: desired number of bp to scrape from each side of the given genomic position (default=50)
         genome: path to human genome FASTA file (optional)
+        gene_list: preffered gene(s) if position covers more than one gene
+        seq: decide whether to scrape sequence from UCSC or not (Boolean)
     '''
-    def __init__(self, contig, position, hg_version, flank=50, genome=None, gene_list=[]):
+    def __init__(self, contig, position, hg_version, flank=50, genome=None, gene_list=[], seq=True):
         self.contig = contig
         self.position = position
         self.hg_version = correct_hg_version(hg_version)
         self.flank = flank
         self.genome = genome
         self.gene_list = gene_list
+        self.seq = seq
         self.ensembl = EnsemblRelease(get_ensembl_release(self.hg_version))
         self.gene = self._get_gene()
         self._transcript = None
@@ -61,6 +64,8 @@ class LocusMetaData(object):
         return pyensembl_wrappers.get_exon(self.position, self._transcript)
 
     def _sequence(self):
+        if not self.seq:
+            return None
         query = '{}:{}'.format(self.contig, self.position)
         seq = get_seq.get_seq(query, self.hg_version, self.genome, self.flank, self.flank, header=False)
         return seq
