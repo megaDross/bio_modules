@@ -50,7 +50,7 @@ class TestPyensemblWrappers(unittest.TestCase):
         ''' Expects a FullExon object of an Intron on negative strand '''
         transcript = DATA.transcript_by_id('ENST00000316623')
         intron = pyensembl_wrappers.get_exon(48778271, transcript)
-        correct = FullExon('N/A', 15, 48776141, 48777570, '-', 'FBN1',
+        correct = FullExon('N/A', 15, 48777694, 48779271, '-', 'FBN1',
                            'ENSG00000166147', 48778271, '29/65', False)
         self.assertEqual(intron.__dict__, correct.__dict__)
 
@@ -87,6 +87,7 @@ class TestMetaData(unittest.TestCase):
                'position': 48778271, 
                'contig': 15, 
                'gene_list': [],
+               'seq': True,
                'hg_version': 'hg19'}
     metadata = LocusMetaData(15, 48778271, 'hg19') 
 
@@ -94,7 +95,7 @@ class TestMetaData(unittest.TestCase):
         self.assertEqual(self.metadata.__dict__, self.correct)
 
     def test_metadata_exon(self):
-        intron = FullExon(exon_id='N/A', gene_name='FBN1', contig=15, start=48776141, end=48777570, 
+        intron = FullExon(exon_id='N/A', gene_name='FBN1', contig=15, start=48777694, end=48779271, 
                           position=48778271, number='29/65', strand='-', gene_id='ENSG00000166147',
                           exon=False)
         self.assertEqual(self.metadata.exon, intron)
@@ -122,6 +123,7 @@ class TestMetaData2(unittest.TestCase):
                'position': 48555816, 
                'contig': 18, 
                'gene_list': [],
+               'seq': True,
                'hg_version': 'hg19'}
     metadata = LocusMetaData(18, 48555816, 'hg19') 
 
@@ -160,6 +162,7 @@ class TestMetaData3(unittest.TestCase):
                'position': 48555816, 
                'contig': 18, 
                'gene_list': ['SMAD4'],
+               'seq': True,
                'hg_version': 'hg19'}
     metadata = LocusMetaData(18, 48555816, 'hg19', gene_list=['SMAD4']) 
 

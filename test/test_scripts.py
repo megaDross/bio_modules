@@ -34,7 +34,7 @@ class GetSeq(unittest.TestCase):
 class UnknownPrimer(unittest.TestCase):
     def test_unknown_primer(self):
         correct = ("query","CTGTTCACAGGGCTTGTTCC","CTGGGCAGAGAGTCATTTAAAGT",
-                   "hg19", "FBN1", "-", "42/65", "421bp","chr15:48755298-48755718", 39.2)
+                   "hg19", "FBN1", "-", "41/65", "421bp","chr15:48755298-48755718", 39.2)
         primer_info = unknown_primer.unknown_primer(f_primer='CTGTTCACAGGGCTTGTTCC',
                                                     r_primer='CTGGGCAGAGAGTCATTTAAAGT',
                                                     hg_version='hg19',
