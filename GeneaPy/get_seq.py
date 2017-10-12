@@ -74,7 +74,6 @@ def get_sequence(seq_range, hg_version):
                        "/dna?segment="+seq_range.replace('-', ','))
     req.raise_for_status()
     url = bs4.BeautifulSoup(req.text, features="xml").prettify()
-    print(url)
     search = re.findall(r"[tacg{5}].*", url)
     seqs = [s for s in search if not s.strip("tacg")] 
     seq = "".join(seqs)

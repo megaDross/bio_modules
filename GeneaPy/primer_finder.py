@@ -2,15 +2,11 @@ import pandas as pd
 import argparse
 import warnings
 import logging
-import modules.custom_exceptions as ex
-from modules.common import correct_hg_version
+import GeneaPy.modules.custom_exceptions as ex
+from GeneaPy.modules.common import correct_hg_version
 
 logging.basicConfig(filename='primer_finder.error.log',
-                    level=logging.ERROR,
                     format="%(asctime)s:%(levelname)s:%(message)s")
-
-# TODO: unit testing
-# TODO: sort out logging issues
 
 def primer_finder(db, variant=None, input_file=None, size=None, distance=None, gc=None, 
                   hg=None, gene=None, exon=None, intron=None, output=None):
@@ -45,7 +41,7 @@ def primer_finder(db, variant=None, input_file=None, size=None, distance=None, g
     primers = extra_filters(primers, size, distance, gc,
                             gene, exon, intron, hg)
     if output:
-        primers.to_csv(output, sep='\t')
+        primers.to_csv(output, sep='\t', index=False)
     return primers
 
 def database2df(db):
@@ -104,7 +100,6 @@ def report_unmatched_variants(before, after):
         no_match = before[~before['Variant'].isin(after['Variant'])]['Variant'].tolist()
         if no_match:
             raise ex.UnmatchedVariants(no_match)
-
     except ex.UnmatchedVariants as e:
         for unmatched in e.unmatched:
             logging.info('Cannot find primer for {}'.format(unmatched))
@@ -167,10 +162,12 @@ def get_parser():
 def cli():
     parser = get_parser()
     args = vars(parser.parse_args())
-    primers = primer_finder(args['database'], args['variant'], args['input'],
-                            args['size'], args['distance'], args['gc'], 
-                            args['genome'], args['gene'], args['exon'], 
-                            args['intron'], args['output'])
+    primers = primer_finder(db=args['database'], variant=args['variant'], 
+                            input_file=args['input'], size=args['size'], 
+                            distance=args['distance'], gc=args['gc'], 
+                            hg=args['genome'], gene=args['gene'], 
+                            exon=args['exon'], intron=args['intron'], 
+                            output=args['output'])
     print(primers)
     
 
