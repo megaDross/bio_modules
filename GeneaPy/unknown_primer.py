@@ -8,11 +8,7 @@ import GeneaPy.modules.custom_exceptions as ex
 from GeneaPy.modules.common import correct_hg_version
 
 logging.basicConfig(filename='unknown_primer.error.log', 
-                    level=logging.ERROR,
                     format="%(asctime)s:%(levelname)s:%(message)s")
-
-# TODO: logging issues
-# TODO: unit testing
 
 def unknown_primer(f_primer, r_primer, hg_version, primer_name,
                    max_size, min_perfect, min_good):
@@ -60,11 +56,12 @@ def scrape_seq(primer_name, f_primer, r_primer, hg_version,
           'org=Human&db={}&wp_target=genome&wp_f={}' \
           '&wp_r={}&Submit=submit&wp_size={}&wp_' \
           'perfect={}&wp_good={}&boolshad.wp_flipReverse=0'
-    link = url.format(hg_version, f_primer, r_primer, max_size, min_perfect, min_good)
+    link = url.format(hg_version, f_primer, r_primer, 
+                      max_size, min_perfect, min_good)
     req = requests.get(link)              
     req.raise_for_status()              
 
-    entire_url = bs4.BeautifulSoup(req.text,"html.parser")
+    entire_url = bs4.BeautifulSoup(req.text, "html.parser")
     pre_elements = entire_url.select('pre') 
     if not pre_elements:
         raise ex.NoAmplicon(primer_name)
@@ -103,7 +100,7 @@ def get_metadata(header, seq, hg_version):
     else:
         exon = '-'
         intron = data.exon.number
-    gene_metadata = (data.gene.name, exon, intron, size, 
+    gene_metadata = (data.gene.name, data.transcript.name, exon, intron, size, 
                      pos_range, round(gc, 3)*100)
     return gene_metadata
 
@@ -158,7 +155,7 @@ def get_parser():
 def cli():
     parser = get_parser()
     args = vars(parser.parse_args())
-    header = '\t'.join(('Primer', 'F_Primer', 'R_Primer', 'Genome', 'Gene', 'Exon',
+    header = '\t'.join(('Primer', 'F_Primer', 'R_Primer', 'Genome', 'Gene', 'Transcript', 'Exon',
                         'Intron', 'Product_Size', 'Primer_Range', 'GC%'))
     if args['input']:
         parse2output(args, header)
