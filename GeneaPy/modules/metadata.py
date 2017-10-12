@@ -4,9 +4,6 @@ from GeneaPy.modules.common import correct_hg_version, get_ensembl_release
 import GeneaPy.modules.custom_exceptions as ex
 from GeneaPy import get_seq
 
-# TODO: unit testing
-# TODO: exception handeling
-# TODO: logging
 
 class LocusMetaData(object):
     ''' Store the gene, transcript and exon metadata of a given genomic position.
