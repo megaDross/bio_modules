@@ -1,6 +1,9 @@
 ''' Scrape ensembl, via pyensembl, using a genomic position as input'''
 from GeneaPy.modules.fullexon import FullExon
 import GeneaPy.modules.custom_exceptions as ex
+import logging
+
+log = logging.getLogger(__name__)
 
 def get_transcript(data, contig, position, gene_list=[]):
     ''' Get the canonical or largest Transcript object associated with a given position. '''
@@ -48,7 +51,9 @@ def get_gene_locus(data, contig, position, gene_list=[]):
         if gene_intersect:
             gene_names = list(gene_intersect)
         else:
-            print('ERROR: {}\nINFO: continuing with {}'.format(e, gene_names[0]))
+            logging.error(e)
+            logging.info('continuing with {}'.format(gene_names[0]))
+            #print('ERROR: {}\nINFO: continuing with {}'.format(e, gene_names[0]))
     finally:
         gene = data.genes_by_name(gene_names[0])[0]
         return gene
@@ -72,8 +77,8 @@ def get_exon(pos, transcript):
             number = '{}/{}'.format(number, total_exons)
             exon = FullExon.from_pyexon(Exon=exon, position=pos, number=number, exon=True)
             return exon
-        elif next_exon.start < pos > exon.end and exon.strand == '-':
-            number = '{}/{}'.format(number-1, total_exons-1)
+        elif exon.start > pos > next_exon.end and exon.strand == '-':
+            number = '{}/{}'.format(number, total_exons-1)
             intron = FullExon(exon_id='N/A', contig=exon.contig, start=next_exon.end+1, end=exon.start-1,
                               strand=exon.strand, gene_name=exon.gene_name, gene_id=exon.gene_id,
                               position=pos, number=number, exon=False)
