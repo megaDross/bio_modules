@@ -120,7 +120,6 @@ def parse2output(args, header):
                                               primer_name, args['max_size'], 
                                               args['min_perfect'], args['min_good'])
                     format_metadata = '\t'.join([str(x) for x in metadata])
-                    print(format_metadata)
                     out.write(format_metadata+"\n")
 
                 except (ex.MultipleAmplicons, ex.NoAmplicon, ex.WrongHG, 

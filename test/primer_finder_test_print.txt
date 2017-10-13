@@ -1,3 +1,0 @@
-Variant	Primer	Position	Gene_Name	Amplicon_Size	GC%	Amplicon_Number	Dist_from_F	Dist_from_R	
-query	FRD23	15:48762884	FBN1	546bp	45.42%	1	336	209
-query	CX1	15:48762884	FBN1	564bp	44.62%	1	323	240

@@ -127,7 +127,7 @@ def extra_filters(primer, size, distance, gc, gene, exon, intron, hg):
             primer = primer[primer['Gene'] == gene]
         if exon:
             exon_prep = primer[primer['Exon'] != '-']
-            primer['exon_no'], exon_total = exon_prep.Intron.str.split("/").str
+            primer['exon_no'], exon_total = exon_prep.Exon.str.split("/").str
             primer = primer[(primer.exon_no == str(exon))]
             primer = primer.drop('exon_no', axis=1)
         if intron:
@@ -156,7 +156,7 @@ def get_parser():
     parser.add_argument('-g', '--gene', type=str, help='only amplicons lying within the given gene')
     parser.add_argument('-e', '--exon', type=str, help='only amplicons produced in a given exon numer')
     parser.add_argument('-n', '--intron', type=int, help='only amplicons lying within the given intron number')
-    parser.add_argument('-o', '--output', type=str, help='output the results of processing --input', default='output_primer_finder.txt')
+    parser.add_argument('-o', '--output', type=str, required=True, help='output the results of processing --input', default='output_primer_finder.txt')
     return parser
 
 def cli():
@@ -168,7 +168,6 @@ def cli():
                             hg=args['genome'], gene=args['gene'], 
                             exon=args['exon'], intron=args['intron'], 
                             output=args['output'])
-    print(primers)
     
 
 if __name__ == '__main__':

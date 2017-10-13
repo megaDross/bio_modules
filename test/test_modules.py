@@ -1,11 +1,15 @@
+from pyensembl import EnsemblRelease, Exon, Gene, Transcript
 from GeneaPy.modules import pyensembl_wrappers
 from GeneaPy.modules.fullexon import FullExon
 from GeneaPy.modules.metadata import LocusMetaData
 from GeneaPy.modules import common
-from pyensembl import EnsemblRelease, Exon, Gene, Transcript
+import logging
 import unittest
 
 DATA = EnsemblRelease(75)
+
+log = logging.getLogger()
+log.disabled = True
 
 class TestFullExon(unittest.TestCase):
     def test_full_exon(self):
