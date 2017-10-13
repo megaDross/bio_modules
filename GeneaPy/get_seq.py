@@ -101,7 +101,7 @@ def upper_pos(seq, upstream, downstream):
     return altered_seq 
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='scrape DNA sequence covering a given genomicposition/range')
+    parser = argparse.ArgumentParser(description='scrape DNA sequence covering a given genomic position/range')
     parser.add_argument('query', type=str, help='genomic position/range')
     parser.add_argument('-hg', '--genome_version', type=str, help='human genome version (default=hg19)', default='hg19')
     parser.add_argument('-g', '--genome', type=str, help='path to FASTA genome file')

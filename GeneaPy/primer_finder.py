@@ -152,11 +152,11 @@ def get_parser():
     parser.add_argument('-s', '--size', type=int, help='maximum size of the resulting amplicon')
     parser.add_argument('-k', '--distance', type=int, help='minimum distance from forward/reverse primer')
     parser.add_argument('-c', '--gc', type=int, help='maximum GC%% of the resulting amplicon')
-    parser.add_argument('-hg', '--genome', type=str, help='only amplicons produced in specific genome version')
+    parser.add_argument('-hg', '--genome_version', type=str, help='only amplicons produced in specific genome version')
     parser.add_argument('-g', '--gene', type=str, help='only amplicons lying within the given gene')
     parser.add_argument('-e', '--exon', type=str, help='only amplicons produced in a given exon numer')
     parser.add_argument('-n', '--intron', type=int, help='only amplicons lying within the given intron number')
-    parser.add_argument('-o', '--output', type=str, required=True, help='output the results of processing --input', default='output_primer_finder.txt')
+    parser.add_argument('-o', '--output', type=str, help='output the results of processing --input', default='output_primer_finder.txt')
     return parser
 
 def cli():
@@ -165,10 +165,10 @@ def cli():
     primers = primer_finder(db=args['database'], variant=args['variant'], 
                             input_file=args['input'], size=args['size'], 
                             distance=args['distance'], gc=args['gc'], 
-                            hg=args['genome'], gene=args['gene'], 
+                            hg=args['genome_version'], gene=args['gene'], 
                             exon=args['exon'], intron=args['intron'], 
                             output=args['output'])
-    
+    print(primers.to_string(index=False)) 
 
 if __name__ == '__main__':
     cli()

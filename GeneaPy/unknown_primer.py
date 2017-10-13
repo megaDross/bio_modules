@@ -141,7 +141,7 @@ def print_metadata(args, header):
     print(header+"\n"+print_metadata)
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='retrieve a primer pairs metadata from UCSC and Ensembl')
+    parser = argparse.ArgumentParser(description='Retrieve a primer pairs metadata from UCSC and Ensembl')
     parser.add_argument('-p', '--primers', nargs=2, type=str, help='primer pair')
     parser.add_argument('-i', '--input', type=str, help='a tab delimited file containing primer info')
     parser.add_argument('-hg', '--genome_version', type=str, help='human genome version (default=hg19)', default='hg19')
