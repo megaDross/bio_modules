@@ -5,9 +5,15 @@ A collection of scripts to help aid PCR-based genetic variant validations.
 ## Install
 To install and test GeneaPy:
 ```bash
+# install GeneaPy
 git clone https://github.com/superDross/GeneaPy
 pip3 install -r GeneaPy/requirements.txt
 export PYTHONPATH=$PYTHONPATH:/path/to/GeneaPy/
+
+# download hg19 and hg 38
+pyensembl install --release 75 83 --species human
+
+# test GeneaPy
 cd GeneaPy/test
 python3 -m unittest *.py
 ```
